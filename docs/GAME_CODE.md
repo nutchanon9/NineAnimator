@@ -179,14 +179,27 @@ humanoid.Died:Connect(function()
 end)
 ```
 
-## 4. ให้อาวุธขยับแยกจากมือได้ (ข้อต่อ Handle)
+## 4. ให้อาวุธขยับแยกจากมือได้ (ข้อต่อ Handle / LeftHandle)
 
-ท่าที่มีคีย์ของข้อต่อ **อาวุธ (Handle)** เช่น "ควงดาบ" ต้องให้ Tool ยึดกับมือด้วย **Motor6D** แทน Weld ปกติ (`RightGrip`) ไม่อย่างนั้นอาวุธจะนิ่งอยู่ในมือ ใส่ Script นี้ไว้ใน Tool:
+ท่าที่มีคีย์ของข้อต่ออาวุธ เช่น "ควงดาบ" หรือท่าของชุดอาวุธ (ดาบคู่ ดาบโล่ ธนู) ต้องให้ Tool ยึดกับมือด้วย **Motor6D** แทน Weld ปกติ (`RightGrip`) ไม่อย่างนั้นอาวุธจะนิ่งอยู่ในมือ
+
+- **มือขวา:** Part ชื่อ `Handle` (Part หลักของ Tool อยู่แล้ว)
+- **มือซ้าย (ถ้ามี):** Part ชื่อ `LeftHandle` ใน Tool เช่น ดาบเล่มที่สอง โล่ หรือคันธนู ห้าม Weld กับ `Handle` เพราะ Motor6D จะเป็นตัวยึดกับมือซ้ายเอง ถ้าต้องเลื่อนจุดจับ ให้ใส่ Attribute ชนิด CFrame ชื่อ `LeftGrip` ใน Tool (ใช้เหมือน `Tool.Grip`)
+
+ใส่ Script นี้ไว้ใน Tool:
 
 ```lua
 -- Tool > WeaponMotor (Script)  ทำงานฝั่ง server
 local tool = script.Parent
-local motor
+local motors = {}
+
+local function gripC0(hand, side)
+	local attachment = hand:FindFirstChild(side .. "GripAttachment") -- R15
+	if attachment then
+		return attachment.CFrame
+	end
+	return CFrame.new(0, -1, 0) * CFrame.Angles(math.rad(-90), 0, 0) -- R6
+end
 
 tool.Equipped:Connect(function()
 	local character = tool.Parent
@@ -195,28 +208,43 @@ tool.Equipped:Connect(function()
 	if not grip then
 		return
 	end
-	-- Motor6D ที่ C0/C1 เหมือน RightGrip ทุกอย่าง ตอนไม่มีท่าเล่น อาวุธจึงอยู่ตำแหน่งเดิม
-	motor = Instance.new("Motor6D")
-	motor.Name = "HandleMotor"
-	motor.Part0 = grip.Part0
-	motor.Part1 = grip.Part1 -- ต้องเป็น Part ชื่อ "Handle" ชื่อนี้ต้องตรงกับข้อต่อในท่า
-	motor.C0 = grip.C0
-	motor.C1 = grip.C1
-	motor.Parent = hand
+	-- มือขวา: Motor6D ที่ C0/C1 เหมือน RightGrip ทุกอย่าง ตอนไม่มีท่าเล่น อาวุธจึงอยู่ตำแหน่งเดิม
+	local right = Instance.new("Motor6D")
+	right.Name = "HandleMotor"
+	right.Part0 = grip.Part0
+	right.Part1 = grip.Part1 -- Part ชื่อ "Handle" ชื่อนี้ต้องตรงกับข้อต่อในท่า
+	right.C0 = grip.C0
+	right.C1 = grip.C1
+	right.Parent = hand
 	grip:Destroy()
+	table.insert(motors, right)
+
+	-- มือซ้าย (ถ้า Tool มี Part ชื่อ LeftHandle)
+	local leftPart = tool:FindFirstChild("LeftHandle")
+	local leftHand = character:FindFirstChild("LeftHand") or character:FindFirstChild("Left Arm")
+	if leftPart and leftHand then
+		local left = Instance.new("Motor6D")
+		left.Name = "LeftHandleMotor"
+		left.Part0 = leftHand
+		left.Part1 = leftPart
+		left.C0 = gripC0(leftHand, "Left")
+		left.C1 = tool:GetAttribute("LeftGrip") or CFrame.new()
+		left.Parent = leftHand
+		table.insert(motors, left)
+	end
 end)
 
 tool.Unequipped:Connect(function()
-	if motor then
+	for _, motor in ipairs(motors) do
 		motor:Destroy()
-		motor = nil
 	end
+	motors = {}
 end)
 ```
 
 ใน Studio ถ้าจะดูท่าบนตัวละครก่อน ให้ใช้ปุ่ม **ติดอาวุธ (Motor6D)** ใน Plugin (เลือกตัวละครกับ Tool พร้อมกัน) ปุ่มนี้จะใส่ Tool เข้ามือด้วย Motor6D แบบเดียวกับสคริปต์นี้
 
-ค่าของข้อต่อ Handle ในท่า (หมุนรอบจุดจับ ตามแกนของมือ):
+ค่าของข้อต่อ Handle และ LeftHandle ในท่า (หมุนรอบจุดจับ ตามแกนของมือ):
 
 | ค่า | ผล |
 |---|---|

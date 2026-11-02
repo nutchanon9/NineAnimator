@@ -16,6 +16,9 @@
         "Head": {
           "rot": [4, -10, 0]
         },
+        "LeftHandle": {
+          "rot": [0, 90, 0]
+        },
         "Right Arm": {
           "rot": [15, 0, 8]
         },
@@ -35,6 +38,9 @@
         "Head": {
           "rot": [4, -10, 0]
         },
+        "LeftHandle": {
+          "rot": [0, 90, 0]
+        },
         "Right Arm": {
           "rot": [15, 0, 8]
         },
@@ -53,6 +59,9 @@
         },
         "Head": {
           "rot": [4, -10, 0]
+        },
+        "LeftHandle": {
+          "rot": [0, 90, 0]
         },
         "Right Arm": {
           "rot": [15, 0, 8]

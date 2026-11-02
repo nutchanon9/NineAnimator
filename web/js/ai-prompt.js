@@ -20,6 +20,7 @@
       'RightUpperLeg, RightLowerLeg (knee),  RightFoot (ankle)',
       'LeftUpperLeg,  LeftLowerLeg  (knee),  LeftFoot  (ankle)',
       'Handle       optional: the held weapon (child of RightHand), see "Weapon" below.',
+      'LeftHandle   optional: off-hand weapon part (child of LeftHand): second blade, shield or bow.',
     ],
     R6: [
       'Torso        root of the body (child of HumanoidRootPart). The ONLY joint that normally uses "pos" (studs).',
@@ -27,6 +28,7 @@
       '"Right Arm", "Left Arm"   (whole arm, no elbow on R6)',
       '"Right Leg", "Left Leg"   (whole leg, no knee on R6)',
       'Handle       optional: the held weapon (child of "Right Arm"), see "Weapon" below.',
+      'LeftHandle   optional: off-hand weapon part (child of "Left Arm"): second blade, shield or bow.',
     ],
   };
 
@@ -72,7 +74,8 @@
       '- Elbow (LowerArm): x+ bends the elbow (0 straight, ~140 fully bent). Knee (LowerLeg): x- bends the knee (0 straight, about -140 fully bent).',
       '- Torso and head:  x+ = lean back / look up,  x- = lean forward / look down.  y+ = turn LEFT, y- = turn RIGHT.  z+ = tilt to the left.',
       '- Hands/feet: x+ = tilt toward the front (toes up).',
-      '- Weapon (optional joint "Handle", child of the right hand; needs the Tool held with a Motor6D in game): [0,0,0] = normal grip, blade forward when the arm hangs. x+ tilts the blade up, y+ swings it left, z spins it around the blade, "pos" slides it in hand axes. Use it for twirls, flips and wrist flicks; leave it out otherwise.',
+      '- Weapon (optional joint "Handle", child of the right hand; needs the Tool held with a Motor6D in game): [0,0,0] = normal grip, blade forward when the arm hangs. x+ tilts the blade up, y+ swings it left, z spins it around the blade, "pos" slides it in hand axes. Use it for twirls, flips and wrist flicks; leave it out otherwise. "LeftHandle" is the same for the left hand (a shield at [0,90,0] faces forward when the left forearm is held upright in front).',
+      '- Two-handed weapons (long sword, great sword, heavy gun): the right hand holds "Handle"; place the left hand next to it on the grip (both forearms angled toward the body centre).',
       '- Arm straight forward = RightUpperArm [90,0,0]. Arm straight up = [180,0,0]. Arm out to the side (T-pose) = RightUpperArm [0,0,90], LeftUpperArm [0,0,-90].',
       '- A held tool (sword) points forward when the arm hangs down; it rotates with the hand.',
       '',

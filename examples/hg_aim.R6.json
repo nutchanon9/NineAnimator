@@ -1,0 +1,89 @@
+{
+  "format": "nineanimator/1",
+  "name": "HeavyGunAim",
+  "rig": "R6",
+  "loop": true,
+  "priority": "Idle",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-5, 10, 0],
+          "pos": [0, -0.13, 0.03]
+        },
+        "Head": {
+          "rot": [2.5, -8, 0]
+        },
+        "Right Arm": {
+          "rot": [18.5, 12.8, -60.1]
+        },
+        "Left Arm": {
+          "rot": [40.3, -24.6, 45.1]
+        },
+        "Right Leg": {
+          "rot": [25, 0, 12]
+        },
+        "Left Leg": {
+          "rot": [25, 0, -12]
+        }
+      }
+    },
+    {
+      "time": 0.8,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-6.5, 10, 0],
+          "pos": [0, -0.15, 0.03]
+        },
+        "Head": {
+          "rot": [3.25, -8, 0]
+        },
+        "Right Arm": {
+          "rot": [20.1, 13.9, -60]
+        },
+        "Left Arm": {
+          "rot": [38, -19.3, 46.4]
+        },
+        "Right Leg": {
+          "rot": [26.5, 0, 12]
+        },
+        "Left Leg": {
+          "rot": [26.5, 0, -12]
+        }
+      }
+    },
+    {
+      "time": 1.6,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-5, 10, 0],
+          "pos": [0, -0.13, 0.03]
+        },
+        "Head": {
+          "rot": [2.5, -8, 0]
+        },
+        "Right Arm": {
+          "rot": [18.5, 12.8, -60.1]
+        },
+        "Left Arm": {
+          "rot": [40.3, -24.6, 45.1]
+        },
+        "Right Leg": {
+          "rot": [25, 0, 12]
+        },
+        "Left Leg": {
+          "rot": [25, 0, -12]
+        }
+      }
+    }
+  ],
+  "markers": [],
+  "length": 1.6
+}

@@ -132,10 +132,11 @@
   const R6_LEFT = [0, 0, -1, 0, 1, 0, 1, 0, 0];
   // Rotation of the right-hand grip (R6 RightGrip.C0 / R15 RightGripAttachment): -90° about X.
   const GRIP_ROT = [1, 0, 0, 0, 0, 1, 0, -1, 0];
-  // Weapon joint: a Motor6D that replaces the tool's RightGrip weld (same C0/C1),
-  // so the held tool's Handle can be animated. Its picking/ghost box runs along
-  // the blade (+Y of the handle).
-  const handleJoint = (parent, c0p) => j('Handle', parent, 'HandleMotor', c0p, [0, 0, 0], [0.4, 3.6, 0.5], 'อาวุธ (Handle)', {
+  // Weapon joints: Motor6Ds from the hands to the weapon parts. "Handle" replaces
+  // the tool's RightGrip weld (same C0/C1); "LeftHandle" is a second part held in
+  // the left hand (off-hand blade, shield, bow). Grip C0 rotation is the same on
+  // both hands. Their picking/ghost box runs along the blade (+Y of the handle).
+  const handleJoint = (name, parent, c0p, label) => j(name, parent, name + 'Motor', c0p, [0, 0, 0], [0.4, 3.6, 0.5], label, {
     group: 'weapon', c0r: GRIP_ROT, optional: true, allowPos: true, meshOffset: [0, 1.5, 0],
   });
 
@@ -169,7 +170,8 @@
         j('LeftUpperLeg', 'LowerTorso', 'LeftHip', [-0.5, -0.2, 0], [0, 0.421, 0], [1, 1.217, 1], 'ต้นขาซ้าย', { group: 'left-leg' }),
         j('LeftLowerLeg', 'LeftUpperLeg', 'LeftKnee', [0, -0.401, 0], [0, 0.375, 0], [0.92, 1.193, 0.92], 'หน้าแข้งซ้าย (เข่า)', { group: 'left-leg' }),
         j('LeftFoot', 'LeftLowerLeg', 'LeftAnkle', [0, -0.547, 0], [0, 0.1, 0], [0.96, 0.3, 1.1], 'เท้าซ้าย', { group: 'left-leg' }),
-        handleJoint('RightHand', [0, -0.15, 0]),
+        handleJoint('Handle', 'RightHand', [0, -0.15, 0], 'อาวุธมือขวา (Handle)'),
+        handleJoint('LeftHandle', 'LeftHand', [0, -0.15, 0], 'อาวุธมือซ้าย (LeftHandle)'),
       ],
       handPart: 'RightHand',
       leftHandPart: 'LeftHand',
@@ -186,7 +188,8 @@
         j('Left Arm', 'Torso', 'Left Shoulder', [-1, 0.5, 0], [0.5, 0.5, 0], [1, 2, 1], 'แขนซ้าย', { group: 'left-arm', c0r: R6_LEFT, c1r: R6_LEFT }),
         j('Right Leg', 'Torso', 'Right Hip', [1, -1, 0], [0.5, 1, 0], [1, 2, 1], 'ขาขวา', { group: 'right-leg', c0r: R6_RIGHT, c1r: R6_RIGHT }),
         j('Left Leg', 'Torso', 'Left Hip', [-1, -1, 0], [-0.5, 1, 0], [1, 2, 1], 'ขาซ้าย', { group: 'left-leg', c0r: R6_LEFT, c1r: R6_LEFT }),
-        handleJoint('Right Arm', [0, -1, 0]),
+        handleJoint('Handle', 'Right Arm', [0, -1, 0], 'อาวุธมือขวา (Handle)'),
+        handleJoint('LeftHandle', 'Left Arm', [0, -1, 0], 'อาวุธมือซ้าย (LeftHandle)'),
       ],
       handPart: 'Right Arm',
       leftHandPart: 'Left Arm',
@@ -198,8 +201,9 @@
     for (const jt of rig.joints) {
       if (jt.c0r) { jt.c0.r = jt.c0r.slice(); delete jt.c0r; }
       if (jt.c1r) { jt.c1.r = jt.c1r.slice(); delete jt.c1r; }
-      jt.mirror = jt.name.includes('Right') ? jt.name.replace('Right', 'Left')
-        : jt.name.includes('Left') ? jt.name.replace('Left', 'Right') : jt.name;
+      jt.mirror = jt.name === 'Handle' ? 'LeftHandle' : jt.name === 'LeftHandle' ? 'Handle'
+        : jt.name.includes('Right') ? jt.name.replace('Right', 'Left')
+          : jt.name.includes('Left') ? jt.name.replace('Left', 'Right') : jt.name;
       rig.byName[jt.name] = jt;
     }
   }
@@ -557,8 +561,7 @@
     for (const name of Object.keys(poses)) {
       const jt = rig.byName[name];
       if (!jt) continue;
-      // The weapon stays in the right hand, so its key is kept as it is.
-      out[jt.mirror] = jt.group === 'weapon' ? clone(poses[name]) : mirrorPose(poses[name]);
+      out[jt.mirror] = mirrorPose(poses[name]);
     }
     return out;
   }
@@ -584,10 +587,186 @@
   }
 
   // ------------------------------------------------------------------
+  // Arm IK: move one arm so its grip point reaches a world-space target.
+  // Used for two-handed weapons (left hand on the hilt or barrel).
+  // ------------------------------------------------------------------
+  const GRIP_POINT = { R15: [0, -0.15, 0], R6: [0, -1, 0] };
+  function armChain(rig, side) {
+    return rig.id === 'R15'
+      ? { upper: side + 'UpperArm', lower: side + 'LowerArm', end: side + 'Hand' }
+      : { upper: side + ' Arm', lower: null, end: side + ' Arm' };
+  }
+  /** World position of a hand's grip point for the given joint transforms. */
+  function gripWorld(rig, ms, side) {
+    const w = computeWorld(rig, ms);
+    const end = w[armChain(rig, side).end];
+    const g = m3v(end.r, GRIP_POINT[rig.id]);
+    return [end.p[0] + g[0], end.p[1] + g[1], end.p[2] + g[2]];
+  }
+  /** A point given in a part's local frame, in world space. */
+  function pointOn(rig, ms, part, local) {
+    const w = computeWorld(rig, ms)[part];
+    const g = m3v(w.r, local);
+    return [w.p[0] + g[0], w.p[1] + g[1], w.p[2] + g[2]];
+  }
+  /** Coordinate descent with shrinking steps; p0/lo/hi in degrees. Returns { p, cost }. */
+  function minimize(p0, lo, hi, cost) {
+    const n = p0.length;
+    const p = p0.map((v, i) => clamp(v, lo[i], hi[i]));
+    let c = cost(p);
+    for (const step of [30, 12, 5, 2, 0.8, 0.3, 0.1]) {
+      let improved = true, guard = 0;
+      while (improved && guard++ < 60) {
+        improved = false;
+        for (let i = 0; i < n; i++) {
+          for (const dir of [1, -1]) {
+            const q = p.slice();
+            q[i] = clamp(q[i] + dir * step, lo[i], hi[i]);
+            const cq = cost(q);
+            if (cq < c - 1e-12) { p.splice(0, n, ...q); c = cq; improved = true; }
+          }
+        }
+      }
+    }
+    return { p, cost: c };
+  }
+
+  /**
+   * Rotate the hand on `side` (R15 wrist) so the weapon's local `axis`
+   * (default +Y, the blade) points along `dirWorld`; optionally keep its local
+   * `upAxis` close to `upWorld`. Returns the hand pose { rot }.
+   */
+  function aimWeapon(rig, ms, side, dirWorld, opts) {
+    const o = opts || {};
+    const axis = o.axis || [0, 1, 0];
+    const joint = side === 'Left' ? 'LeftHandle' : 'Handle';
+    const hand = armChain(rig, side).end;
+    const work = Object.assign({}, ms);
+    const norm = (v) => { const l = Math.hypot(...v) || 1; return v.map((x) => x / l); };
+    const d = norm(dirWorld), up = o.upWorld ? norm(o.upWorld) : null;
+    const cost = (p) => {
+      work[hand] = { r: eulerToM3(p), p: [0, 0, 0] };
+      const w = computeWorld(rig, work)[joint];
+      const a = m3v(w.r, axis);
+      let c = 1 - (a[0] * d[0] + a[1] * d[1] + a[2] * d[2]);
+      if (up) { const u = m3v(w.r, o.upAxis || [0, 0, 1]); c += 0.3 * (1 - (u[0] * up[0] + u[1] * up[1] + u[2] * up[2])); }
+      return c + 1e-7 * (p[0] * p[0] + p[1] * p[1] + p[2] * p[2]);
+    };
+    let best = null;
+    for (const seed of [[0, 0, 0], [-60, 0, 0], [60, 0, 0], [0, 60, 0], [0, -60, 0]]) {
+      const r = minimize(seed, [-180, -90, -180], [180, 90, 180], cost);
+      if (!best || r.cost < best.cost) best = r;
+    }
+    return { rot: best.p.map(roundAngle) };
+  }
+
+  /**
+   * Solve arm and wrist together so the weapon on `side` sits at `target`
+   * (grip point, world) pointing along `dirWorld` (weapon local `axis`, default
+   * +Y = blade). Bending the wrist costs a little, so the arm does most of the
+   * work. R15 only (R6 has no wrist). Returns { poses, error, angle }.
+   */
+  function solveWeaponIK(rig, ms, side, target, dirWorld, opts) {
+    const o = opts || {};
+    const ch = armChain(rig, side);
+    const joint = side === 'Left' ? 'LeftHandle' : 'Handle';
+    const axis = o.axis || [0, 1, 0];
+    const norm = (v) => { const l = Math.hypot(...v) || 1; return v.map((x) => x / l); };
+    const d = norm(dirWorld), up = o.upWorld ? norm(o.upWorld) : null;
+    const work = Object.assign({}, ms);
+    const keepPos = ms[ch.upper] ? ms[ch.upper].p : [0, 0, 0];
+    const apply = (p) => {
+      work[ch.upper] = { r: eulerToM3([p[0], p[1], p[2]]), p: keepPos };
+      work[ch.lower] = { r: eulerToM3([p[3], 0, 0]), p: [0, 0, 0] };
+      work[ch.end] = { r: eulerToM3([p[4], p[5], p[6]]), p: [0, 0, 0] };
+    };
+    const evalPose = (p) => {
+      apply(p);
+      const w = computeWorld(rig, work);
+      const end = w[ch.end], g = m3v(end.r, GRIP_POINT[rig.id]);
+      const gp = [end.p[0] + g[0], end.p[1] + g[1], end.p[2] + g[2]];
+      const a = m3v(w[joint].r, axis);
+      const dot = a[0] * d[0] + a[1] * d[1] + a[2] * d[2];
+      let upDot = 1;
+      if (up) { const u = m3v(w[joint].r, o.upAxis || [0, 0, 1]); upDot = u[0] * up[0] + u[1] * up[1] + u[2] * up[2]; }
+      return { gp, dot, upDot };
+    };
+    const cost = (p) => {
+      const e = evalPose(p);
+      const d2 = (e.gp[0] - target[0]) ** 2 + (e.gp[1] - target[1]) ** 2 + (e.gp[2] - target[2]) ** 2;
+      const wrist = (p[4] * p[4] + p[5] * p[5] + p[6] * p[6]) / 8100;
+      return d2 + 0.8 * (1 - e.dot) + 0.3 * (1 - e.upDot) + 0.02 * wrist + 1e-6 * p[1] * p[1];
+    };
+    const lo = [-180, -90, -180, 0, -100, -80, -90], hi = [180, 90, 180, 150, 100, 80, 90];
+    const cur = (n, i) => (ms[n] ? m3ToEuler(ms[n].r)[i] : 0);
+    const seeds = [
+      [cur(ch.upper, 0), cur(ch.upper, 1), cur(ch.upper, 2), ms[ch.lower] ? cur(ch.lower, 0) : 30, 0, 0, 0],
+      [60, 0, 0, 60, 0, 0, 0], [150, 0, 0, 30, 0, 0, 0], [30, 0, side === 'Left' ? 40 : -40, 90, -40, 0, 0], [90, 30, -60, 20, 0, 0, 0],
+    ];
+    let best = null;
+    for (const seed of seeds) {
+      const r = minimize(seed, lo, hi, cost);
+      if (!best || r.cost < best.cost) best = r;
+    }
+    const p = best.p;
+    const e = evalPose(p);
+    const poses = {
+      [ch.upper]: { rot: [p[0], p[1], p[2]].map(roundAngle) },
+      [ch.lower]: { rot: [roundAngle(p[3]), 0, 0] },
+      [ch.end]: { rot: [p[4], p[5], p[6]].map(roundAngle) },
+    };
+    if (keepPos.some((v) => v !== 0)) poses[ch.upper].pos = keepPos.map(round4);
+    return {
+      poses,
+      error: Math.hypot(e.gp[0] - target[0], e.gp[1] - target[1], e.gp[2] - target[2]),
+      angle: Math.acos(clamp(e.dot, -1, 1)) / DEG,
+    };
+  }
+
+  /**
+   * Solve the arm on `side` ('Left' | 'Right') so its grip reaches `target`.
+   * ms: { joint: M } for the whole body (from sampleAll / poseToM).
+   * Returns { poses: { joint: {rot} }, error } (error in studs). Upper arm
+   * gets x/y/z, the R15 elbow only bends (x 0..150). Pure coordinate
+   * descent: small, dependency-free and fast enough for a 4-angle chain.
+   */
+  function solveArmIK(rig, ms, side, target) {
+    const ch = armChain(rig, side);
+    const cur = ms[ch.upper] ? m3ToEuler(ms[ch.upper].r) : [0, 0, 0];
+    const curElbow = ch.lower && ms[ch.lower] ? m3ToEuler(ms[ch.lower].r)[0] : 20;
+    const work = Object.assign({}, ms);
+    const apply = (p) => {
+      work[ch.upper] = { r: eulerToM3([p[0], p[1], p[2]]), p: ms[ch.upper] ? ms[ch.upper].p : [0, 0, 0] };
+      if (ch.lower) work[ch.lower] = { r: eulerToM3([p[3], 0, 0]), p: [0, 0, 0] };
+    };
+    const cost = (p) => {
+      apply(p);
+      const g = gripWorld(rig, work, side);
+      const d2 = (g[0] - target[0]) ** 2 + (g[1] - target[1]) ** 2 + (g[2] - target[2]) ** 2;
+      // Tiny pull toward small twist keeps solutions natural.
+      return d2 + 1e-6 * (p[1] * p[1]);
+    };
+    const n = ch.lower ? 4 : 3;
+    const lo = [-180, -90, -180, 0], hi = [180, 90, 180, 150];
+    let best = null, bestC = Infinity;
+    const seeds = [[...cur, curElbow], [60, 0, 0, 60], [90, 0, side === 'Left' ? 30 : -30, 30], [30, 0, 0, 100]];
+    for (const seed of seeds) {
+      const r = minimize(seed.slice(0, n), lo.slice(0, n), hi.slice(0, n), cost);
+      if (r.cost < bestC) { bestC = r.cost; best = r.p; }
+    }
+    const poses = { [ch.upper]: { rot: best.slice(0, 3).map(roundAngle) } };
+    if (ms[ch.upper] && ms[ch.upper].p.some((v) => v !== 0)) poses[ch.upper].pos = ms[ch.upper].p.map(round4);
+    if (ch.lower) poses[ch.lower] = { rot: [roundAngle(best[3]), 0, 0] };
+    apply(best);
+    const g = gripWorld(rig, work, side);
+    return { poses, error: Math.hypot(g[0] - target[0], g[1] - target[1], g[2] - target[2]) };
+  }
+
+  // ------------------------------------------------------------------
   // R15 <-> R6
   // ------------------------------------------------------------------
   const R15_TO_R6 = {
-    'Head': 'Head', 'Handle': 'Handle',
+    'Head': 'Head', 'Handle': 'Handle', 'LeftHandle': 'LeftHandle',
     'RightUpperArm': 'Right Arm', 'LeftUpperArm': 'Left Arm',
     'RightUpperLeg': 'Right Leg', 'LeftUpperLeg': 'Left Leg',
   };
@@ -836,6 +1015,8 @@
     findKeyframe, ensureKeyframe, sortKeyframes, mirrorPose, mirrorPoses, convertRig, retime,
     // io
     toRbxmx, fromRbxmx,
+    // ik
+    solveArmIK, solveWeaponIK, aimWeapon, gripWorld, pointOn, GRIP_POINT,
     round4, roundAngle, rotationAngle,
   };
 });

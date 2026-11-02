@@ -51,7 +51,7 @@ local DEFAULT_RIGS = {
 			"LeftUpperArm", "LeftLowerArm", "LeftHand",
 			"RightUpperLeg", "RightLowerLeg", "RightFoot",
 			"LeftUpperLeg", "LeftLowerLeg", "LeftFoot",
-			"Handle",
+			"Handle", "LeftHandle",
 		},
 		parent = {
 			LowerTorso = "HumanoidRootPart", UpperTorso = "LowerTorso", Head = "UpperTorso",
@@ -59,23 +59,23 @@ local DEFAULT_RIGS = {
 			LeftUpperArm = "UpperTorso", LeftLowerArm = "LeftUpperArm", LeftHand = "LeftLowerArm",
 			RightUpperLeg = "LowerTorso", RightLowerLeg = "RightUpperLeg", RightFoot = "RightLowerLeg",
 			LeftUpperLeg = "LowerTorso", LeftLowerLeg = "LeftUpperLeg", LeftFoot = "LeftLowerLeg",
-			Handle = "RightHand",
+			Handle = "RightHand", LeftHandle = "LeftHand",
 		},
-		c0rot = { Handle = GRIP_ROT },
+		c0rot = { Handle = GRIP_ROT, LeftHandle = GRIP_ROT },
 	},
 	R6 = {
-		order = { "Torso", "Head", "Right Arm", "Left Arm", "Right Leg", "Left Leg", "Handle" },
+		order = { "Torso", "Head", "Right Arm", "Left Arm", "Right Leg", "Left Leg", "Handle", "LeftHandle" },
 		parent = {
 			Torso = "HumanoidRootPart", Head = "Torso",
 			["Right Arm"] = "Torso", ["Left Arm"] = "Torso",
 			["Right Leg"] = "Torso", ["Left Leg"] = "Torso",
-			Handle = "Right Arm",
+			Handle = "Right Arm", LeftHandle = "Left Arm",
 		},
 		c0rot = {
 			Torso = R6_ROOT, Head = R6_ROOT,
 			["Right Arm"] = R6_RIGHT, ["Right Leg"] = R6_RIGHT,
 			["Left Arm"] = R6_LEFT, ["Left Leg"] = R6_LEFT,
-			Handle = GRIP_ROT,
+			Handle = GRIP_ROT, LeftHandle = GRIP_ROT,
 		},
 	},
 }
@@ -839,8 +839,34 @@ local function findTool(rig)
 	return nil
 end
 
---- Put the Tool in the rig's right hand with a Motor6D named "HandleMotor"
---- (same C0/C1 as Roblox's RightGrip weld) so the Handle can be animated.
+--- Motor6D from a hand to a weapon part. C0 is the hand's grip attachment
+--- (or the Roblox default), so at rest the part sits like a held tool.
+local function attachToHand(rigType, hand, side, part, c1)
+	local motorName = side == "Left" and "LeftHandleMotor" or "HandleMotor"
+	for _, d in ipairs(hand:GetChildren()) do
+		if (d:IsA("Motor6D") or d:IsA("Weld")) and (d.Name == motorName or (side == "Right" and d.Name == "RightGrip")) then
+			d:Destroy()
+		end
+	end
+	local c0 = GRIP_C0[rigType]
+	local attachment = hand:FindFirstChild(side .. "GripAttachment")
+	if attachment and attachment:IsA("Attachment") then
+		c0 = attachment.CFrame
+	end
+	local motor = Instance.new("Motor6D")
+	motor.Name = motorName
+	motor.Part0 = hand
+	motor.Part1 = part
+	motor.C0 = c0
+	motor.C1 = c1
+	motor.Parent = hand
+	return motor
+end
+
+--- Put the Tool in the rig's hands with Motor6Ds so its weapon parts can be
+--- animated: "Handle" in the right hand (same C0/C1 as Roblox's RightGrip
+--- weld), and an optional part "LeftHandle" in the left hand (off-hand blade,
+--- shield, bow; its grip offset comes from the Tool attribute "LeftGrip").
 local function rigWeapon()
 	local rig = findRig()
 	if not rig then
@@ -864,30 +890,24 @@ local function rigWeapon()
 		handle = tool:FindFirstChild("Handle")
 		tool.Parent = rig
 	end
-	for _, d in ipairs(hand:GetChildren()) do
-		if (d:IsA("Motor6D") or d:IsA("Weld")) and (d.Name == "HandleMotor" or d.Name == "RightGrip") then
-			d:Destroy()
+	attachToHand(rigType, hand, "Right", handle, tool.Grip)
+	local extra = ""
+	local leftPart = tool:FindFirstChild("LeftHandle")
+	if leftPart and leftPart:IsA("BasePart") then
+		local leftHand = rig:FindFirstChild(rigType == "R6" and "Left Arm" or "LeftHand")
+		if leftHand then
+			local leftGrip = tool:GetAttribute("LeftGrip")
+			attachToHand(rigType, leftHand, "Left", leftPart, typeof(leftGrip) == "CFrame" and leftGrip or CFrame.new())
+			extra = " และ LeftHandle เข้ามือซ้าย"
 		end
 	end
-	local c0 = GRIP_C0[rigType]
-	local attachment = hand:FindFirstChild("RightGripAttachment")
-	if attachment and attachment:IsA("Attachment") then
-		c0 = attachment.CFrame
-	end
-	local motor = Instance.new("Motor6D")
-	motor.Name = "HandleMotor"
-	motor.Part0 = hand
-	motor.Part1 = handle
-	motor.C0 = c0
-	motor.C1 = tool.Grip
-	motor.Parent = hand
 	for _, part in ipairs(tool:GetDescendants()) do
 		if part:IsA("BasePart") then
 			part.Anchored = false
 		end
 	end
 	ChangeHistoryService:SetWaypoint("NineAnimator: rig weapon")
-	return true, 'ติด "' .. tool.Name .. '" เข้ามือขวาด้วย Motor6D แล้ว ใช้ข้อต่อ Handle ในท่าได้เลย (ในเกมต้องใช้สคริปต์ใน docs/GAME_CODE.md ข้อ 4)'
+	return true, 'ติด "' .. tool.Name .. '" เข้ามือขวา' .. extra .. ' ด้วย Motor6D แล้ว ใช้ข้อต่อ Handle / LeftHandle ในท่าได้เลย (ในเกมต้องใช้สคริปต์ใน docs/GAME_CODE.md ข้อ 4)'
 end
 
 buttonRow({

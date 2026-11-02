@@ -40,6 +40,83 @@
     return t;
   }
 
+  // ------------------------------------------------------------------
+  // Weapon models. Geometry is in the weapon joint's frame (the tool Handle):
+  // grip at the origin, blades along +Y, gun barrels along -Z (the fingers'
+  // direction), +Z toward the elbow. These are only for the preview.
+  // ------------------------------------------------------------------
+  const KITS = {
+    none: {},
+    sword: { right: 'sword' },
+    longsword: { right: 'longsword' },
+    dual: { right: 'shortblade', left: 'shortblade' },
+    greatsword: { right: 'greatsword' },
+    swordshield: { right: 'shortsword', left: 'shield' },
+    bow: { left: 'bow' },
+    heavygun: { right: 'heavygun' },
+  };
+  const BLADES = new Set(['sword', 'shortsword', 'shortblade', 'longsword', 'greatsword']);
+  const mat = (color, metal) => new THREE.MeshStandardMaterial({ color, metalness: metal || 0, roughness: metal ? 0.35 : 0.75 });
+  function part(g, geo, material, x, y, z) {
+    const m = new THREE.Mesh(geo, material);
+    m.position.set(x || 0, y || 0, z || 0);
+    g.add(m);
+    return m;
+  }
+  /** Straight blade: grip below the origin, guard, then the blade along +Y. */
+  function blade(o) {
+    const g = new THREE.Group();
+    part(g, new THREE.BoxGeometry(o.grip[0], o.grip[1], o.grip[0]), mat(o.gripColor || 0x3b2b20), 0, o.grip[1] / 2 - o.grip[1] * 0.8 + 0.05);
+    part(g, new THREE.BoxGeometry(o.guard[0], o.guard[1], o.guard[2]), mat(o.guardColor || 0xc89b3c, 0.5), 0, o.guardY);
+    part(g, new THREE.BoxGeometry(o.blade[0], o.blade[1], o.blade[2]), mat(o.bladeColor || 0xc9d1dc, 0.6), 0, o.guardY + o.guard[1] / 2 + o.blade[1] / 2);
+    return g;
+  }
+  const MODELS = {
+    sword: () => blade({ grip: [0.16, 0.7], guard: [0.14, 0.16, 0.9], guardY: 0.35, blade: [0.07, 3.0, 0.32] }),
+    shortsword: () => blade({ grip: [0.16, 0.6], guard: [0.14, 0.14, 0.8], guardY: 0.3, blade: [0.07, 2.3, 0.3] }),
+    shortblade: () => blade({ grip: [0.14, 0.55], guard: [0.12, 0.12, 0.5], guardY: 0.28, blade: [0.06, 1.9, 0.24], bladeColor: 0xb8c2d0 }),
+    longsword: () => {
+      const g = blade({ grip: [0.15, 1.15], guard: [0.5, 0.08, 0.5], guardY: 0.3, blade: [0.06, 4.2, 0.2], gripColor: 0x2a2440, guardColor: 0x8a7a50 });
+      return g;
+    },
+    greatsword: () => blade({ grip: [0.2, 1.25], guard: [0.26, 0.26, 1.5], guardY: 0.38, blade: [0.14, 4.6, 0.95], bladeColor: 0x9aa4b2, guardColor: 0x5a4a3a }),
+    shield: () => {
+      const g = new THREE.Group();
+      const face = part(g, new THREE.CylinderGeometry(1.1, 1.1, 0.14, 28), mat(0x8c2f2f), -0.28, 0, 0.35);
+      face.rotation.z = Math.PI / 2; // disc faces the hand's outside (-X)
+      part(g, new THREE.SphereGeometry(0.22, 12, 8), mat(0xc89b3c, 0.5), -0.36, 0, 0.35);
+      return g;
+    },
+    bow: () => {
+      // Built in the hand's frame (limbs along the hand's X, bulging along -Y,
+      // i.e. away from the body when the arm points at the target), then turned
+      // into the handle frame.
+      const g = new THREE.Group();
+      const inner = new THREE.Group();
+      inner.rotation.x = Math.PI / 2;
+      const R = 1.9, arc = 1.3;
+      const limb = part(inner, new THREE.TorusGeometry(R, 0.07, 6, 28, arc), mat(0x7a4a24), 0, R, 0);
+      limb.rotation.z = -Math.PI / 2 - arc / 2;
+      const endY = R - R * Math.cos(arc / 2), endX = R * Math.sin(arc / 2);
+      part(inner, new THREE.BoxGeometry(endX * 2, 0.02, 0.02), new THREE.MeshBasicMaterial({ color: 0xe8e2d0 }), 0, endY, 0);
+      g.add(inner);
+      return g;
+    },
+    heavygun: () => {
+      const g = new THREE.Group();
+      const metal = mat(0x4a5058, 0.6), dark = mat(0x23262b, 0.5), wood = mat(0x6b4426);
+      part(g, new THREE.BoxGeometry(0.2, 0.6, 0.28), dark, 0, 0.05, 0);          // grip in the fist
+      part(g, new THREE.BoxGeometry(0.55, 0.6, 3.2), metal, 0, 0.62, -0.7);      // body over the forearm
+      const barrel = part(g, new THREE.CylinderGeometry(0.2, 0.2, 2.0, 16), dark, 0, 0.7, -3.25);
+      barrel.rotation.x = Math.PI / 2;
+      part(g, new THREE.BoxGeometry(0.62, 0.62, 0.35), metal, 0, 0.7, -4.2);     // muzzle
+      const scope = part(g, new THREE.CylinderGeometry(0.1, 0.1, 0.9, 12), dark, 0, 1.08, -0.6);
+      scope.rotation.x = Math.PI / 2;
+      part(g, new THREE.BoxGeometry(0.4, 0.55, 1.1), wood, 0, 0.45, 1.4);        // stock toward the shoulder
+      return g;
+    },
+  };
+
   /** Box geometry for a joint, shifted by its optional meshOffset (e.g. along a blade). */
   function boxFor(jt) {
     const geo = new THREE.BoxGeometry(...jt.size);
@@ -116,8 +193,7 @@
 
       this.rigGroup = new THREE.Group();
       scene.add(this.rigGroup);
-      this.props = { sword: this.buildSword(), bow: this.buildBow(), shield: this.buildShield() };
-      for (const p of Object.values(this.props)) scene.add(p);
+      this.buildKit(this.prop);
       this.ghostGroups = [new THREE.Group(), new THREE.Group()];
       this.ghostGroups.forEach((g) => scene.add(g));
 
@@ -146,54 +222,28 @@
       this.render();
     }
 
-    buildSword() {
-      const g = new THREE.Group();
-      const steel = new THREE.MeshStandardMaterial({ color: 0xc9d1dc, metalness: 0.6, roughness: 0.3 });
-      const dark = new THREE.MeshStandardMaterial({ color: 0x3b2b20, roughness: 0.8 });
-      const gold = new THREE.MeshStandardMaterial({ color: 0xc89b3c, metalness: 0.5, roughness: 0.4 });
-      const add = (geo, mat, y) => { const m = new THREE.Mesh(geo, mat); m.position.y = y; m.castShadow = true; g.add(m); };
-      // Handle space (Roblox tool Handle at the grip): blade along +Y.
-      add(new THREE.BoxGeometry(0.16, 0.7, 0.16), dark, -0.05);
-      add(new THREE.BoxGeometry(0.14, 0.16, 0.9), gold, 0.35);
-      add(new THREE.BoxGeometry(0.07, 3.0, 0.32), steel, 1.93);
-      return this.finishProp(g, 'right');
+    /** Build the weapon models for a kit and attach them to the scene. */
+    buildKit(kitName) {
+      for (const g of Object.values(this.kitGroups || {})) {
+        if (!g) continue;
+        this.scene.remove(g);
+        g.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
+      }
+      const kit = KITS[kitName] || KITS.none;
+      this.kitGroups = {};
+      for (const [hand, joint] of [['right', 'Handle'], ['left', 'LeftHandle']]) {
+        const model = kit[hand];
+        if (!model) { this.kitGroups[hand] = null; continue; }
+        const g = MODELS[model]();
+        g.matrixAutoUpdate = false;
+        g.userData.joint = joint;
+        g.userData.blade = BLADES.has(model);
+        g.traverse((o) => { o.userData.joint = joint; if (o.isMesh) o.castShadow = true; });
+        this.scene.add(g);
+        this.kitGroups[hand] = g;
+      }
     }
 
-    finishProp(g, hand) {
-      g.matrixAutoUpdate = false;
-      g.userData.hand = hand;
-      g.traverse((o) => { o.raycast = () => {}; });
-      return g;
-    }
-
-    /** Bow held in the left hand: vertical along the hand's local X, bulging away from the body. */
-    buildBow() {
-      const g = new THREE.Group();
-      const wood = new THREE.MeshStandardMaterial({ color: 0x7a4a24, roughness: 0.7 });
-      const R = 1.9, arc = 1.3;
-      const limb = new THREE.Mesh(new THREE.TorusGeometry(R, 0.07, 6, 28, arc), wood);
-      limb.rotation.z = -Math.PI / 2 - arc / 2;
-      limb.position.set(0, R, 0);
-      limb.castShadow = true;
-      g.add(limb);
-      const endY = R - R * Math.cos(arc / 2), endX = R * Math.sin(arc / 2);
-      const string = new THREE.Mesh(new THREE.BoxGeometry(endX * 2, 0.02, 0.02), new THREE.MeshBasicMaterial({ color: 0xe8e2d0 }));
-      string.position.set(0, endY, 0);
-      g.add(string);
-      return this.finishProp(g, 'left');
-    }
-
-    /** Round shield strapped to the back of the left forearm (faces forward when the forearm is raised to block). */
-    buildShield() {
-      const g = new THREE.Group();
-      const face = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.14, 24), new THREE.MeshStandardMaterial({ color: 0x8c2f2f, roughness: 0.6 }));
-      face.rotation.x = Math.PI / 2;
-      face.castShadow = true;
-      const boss = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 8), new THREE.MeshStandardMaterial({ color: 0xc89b3c, metalness: 0.5, roughness: 0.4 }));
-      boss.position.z = 0.1;
-      g.add(face, boss);
-      return this.finishProp(g, 'shield');
-    }
 
     setRig(rigId) {
       if (this.rigId === rigId) return;
@@ -246,31 +296,33 @@
         grp.children.forEach((m) => {
           setMatrix(m.matrix, world[m.userData.joint]);
           m.matrixWorldNeedsUpdate = true;
-          if (m.userData.joint === 'Handle') m.visible = this.prop === 'sword';
+          if (m.userData.joint === 'Handle' || m.userData.joint === 'LeftHandle') m.visible = this.weaponGhost(m.userData.joint);
         });
       });
       this.render();
     }
 
     setProp(name) {
-      this.prop = name;
+      this.prop = KITS[name] ? name : 'none';
+      this.buildKit(this.prop);
       if (this.world) this.placeProps();
-      this.render();
+      this.setSelected(this.selected);
+    }
+
+    /** Joints that the current kit draws a weapon for. */
+    weaponJoints() {
+      return Object.values(this.kitGroups).filter(Boolean).map((g) => g.userData.joint);
+    }
+
+    weaponGhost(joint) {
+      const g = Object.values(this.kitGroups).find((x) => x && x.userData.joint === joint);
+      return !!(g && g.userData.blade);
     }
 
     placeProps() {
-      for (const [name, g] of Object.entries(this.props)) {
-        g.visible = name === this.prop;
-        if (!g.visible) continue;
-        let attach;
-        if (g.userData.hand === 'right') attach = this.world.Handle;
-        else if (g.userData.hand === 'left') attach = this.world[this.rig.leftHandPart];
-        else {
-          // shield: back (+Z) of the left forearm
-          const part = this.rig.id === 'R15' ? 'LeftLowerArm' : 'Left Arm';
-          attach = C.cfMul(this.world[part], C.cf(this.rig.id === 'R15' ? [0, -0.1, 0.6] : [0, -0.45, 0.6]));
-        }
-        setMatrix(g.matrix, attach);
+      for (const g of Object.values(this.kitGroups)) {
+        if (!g) continue;
+        setMatrix(g.matrix, this.world[g.userData.joint]);
         g.matrixWorldNeedsUpdate = true;
       }
     }
@@ -291,11 +343,15 @@
 
     setSelected(name) {
       this.selected = name;
-      this.props.sword.traverse((o) => {
-        if (!o.material) return;
-        o.material.emissive = name === 'Handle' ? this.selectColor : new THREE.Color(0x000000);
-        o.material.emissiveIntensity = name === 'Handle' ? 0.4 : 0;
-      });
+      for (const g of Object.values(this.kitGroups)) {
+        if (!g) continue;
+        const on = g.userData.joint === name;
+        g.traverse((o) => {
+          if (!o.material || !o.material.emissive) return;
+          o.material.emissive = on ? this.selectColor : new THREE.Color(0x000000);
+          o.material.emissiveIntensity = on ? 0.4 : 0;
+        });
+      }
       for (const [n, mesh] of Object.entries(this.meshes)) {
         const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
         mats.forEach((m) => {
@@ -349,9 +405,10 @@
       const ndc = new THREE.Vector2(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
       this.raycaster.setFromCamera(ndc, this.camera);
       this.rigGroup.updateMatrixWorld(true);
-      // Hidden meshes still take part in raycasts, so pick the weapon only while the sword is shown.
-      const targets = Object.values(this.meshes).filter((m) => m.userData.joint !== 'Handle' || this.prop === 'sword');
-      const hit = this.raycaster.intersectObjects(targets, false)[0];
+      // Hidden weapon boxes still take part in raycasts, so use the weapon models instead.
+      const targets = Object.values(this.meshes).filter((m) => m.visible);
+      for (const g of Object.values(this.kitGroups)) if (g) targets.push(g);
+      const hit = this.raycaster.intersectObjects(targets, true)[0];
       return hit ? hit.object.userData.joint : null;
     }
 

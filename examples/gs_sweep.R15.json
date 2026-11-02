@@ -1,0 +1,282 @@
+{
+  "format": "nineanimator/1",
+  "name": "GreatSwordSweep",
+  "rig": "R15",
+  "loop": false,
+  "priority": "Action",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "UpperTorso": {
+          "rot": [-6, 10, 0]
+        },
+        "Head": {
+          "rot": [3, -8, 0]
+        },
+        "RightUpperArm": {
+          "rot": [17.8, -34.1, -55.5]
+        },
+        "RightLowerArm": {
+          "rot": [3.9, 0, 0]
+        },
+        "RightHand": {
+          "rot": [-52.4, -20.3, 0.1]
+        },
+        "LeftUpperArm": {
+          "rot": [-24.2, -35, 73]
+        },
+        "LeftLowerArm": {
+          "rot": [93.7, 0, 0]
+        },
+        "LeftHand": {
+          "rot": [0, 0, 0]
+        },
+        "LowerTorso": {
+          "rot": [0, 0, 0],
+          "pos": [0, -0.13, 0.03]
+        },
+        "RightUpperLeg": {
+          "rot": [25, 0, 10]
+        },
+        "RightLowerLeg": {
+          "rot": [-45, 0, 0]
+        },
+        "RightFoot": {
+          "rot": [20, 0, 0]
+        },
+        "LeftUpperLeg": {
+          "rot": [25, 0, -10]
+        },
+        "LeftLowerLeg": {
+          "rot": [-45, 0, 0]
+        },
+        "LeftFoot": {
+          "rot": [20, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.35,
+      "easing": "Cubic",
+      "direction": "In",
+      "poses": {
+        "UpperTorso": {
+          "rot": [0, -50, 0]
+        },
+        "Head": {
+          "rot": [0, 40, 0]
+        },
+        "RightUpperArm": {
+          "rot": [-30.9, -5.3, -105]
+        },
+        "RightLowerArm": {
+          "rot": [115.8, 0, 0]
+        },
+        "RightHand": {
+          "rot": [3.3, 0.3, 3.3]
+        },
+        "LeftUpperArm": {
+          "rot": [50, -26.5, 54.1]
+        },
+        "LeftLowerArm": {
+          "rot": [26.2, 0, 0]
+        },
+        "LeftHand": {
+          "rot": [0, 0, 0]
+        },
+        "LowerTorso": {
+          "rot": [0, -20, 0],
+          "pos": [0, -0.13, 0.03]
+        },
+        "RightUpperLeg": {
+          "rot": [25, 0, 12]
+        },
+        "RightLowerLeg": {
+          "rot": [-45, 0, 0]
+        },
+        "RightFoot": {
+          "rot": [20, 0, 0]
+        },
+        "LeftUpperLeg": {
+          "rot": [25, 0, -12]
+        },
+        "LeftLowerLeg": {
+          "rot": [-45, 0, 0]
+        },
+        "LeftFoot": {
+          "rot": [20, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.62,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "UpperTorso": {
+          "rot": [-5, 45, 0]
+        },
+        "Head": {
+          "rot": [2.5, -36, 0]
+        },
+        "RightUpperArm": {
+          "rot": [74.9, 16.1, -67.7]
+        },
+        "RightLowerArm": {
+          "rot": [0, 0, 0]
+        },
+        "RightHand": {
+          "rot": [-64.6, -14.8, 0.6]
+        },
+        "LeftUpperArm": {
+          "rot": [51.2, -45.4, 72.7]
+        },
+        "LeftLowerArm": {
+          "rot": [43.1, 0, 0]
+        },
+        "LeftHand": {
+          "rot": [0, 0, 0]
+        },
+        "LowerTorso": {
+          "rot": [0, 20, 0],
+          "pos": [0, -0.2, 0.02]
+        },
+        "RightUpperLeg": {
+          "rot": [30, 0, 12]
+        },
+        "RightLowerLeg": {
+          "rot": [-55, 0, 0]
+        },
+        "RightFoot": {
+          "rot": [25, 0, 0]
+        },
+        "LeftUpperLeg": {
+          "rot": [30, 0, -12]
+        },
+        "LeftLowerLeg": {
+          "rot": [-55, 0, 0]
+        },
+        "LeftFoot": {
+          "rot": [25, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.85,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "UpperTorso": {
+          "rot": [-6, 50, 0]
+        },
+        "Head": {
+          "rot": [3, -40, 0]
+        },
+        "RightUpperArm": {
+          "rot": [75.2, 17.2, -68.4]
+        },
+        "RightLowerArm": {
+          "rot": [0, 0, 0]
+        },
+        "RightHand": {
+          "rot": [-66.4, -16, -0.1]
+        },
+        "LeftUpperArm": {
+          "rot": [45.9, -43.6, 72.1]
+        },
+        "LeftLowerArm": {
+          "rot": [44.8, 0, 0]
+        },
+        "LeftHand": {
+          "rot": [0, 0, 0]
+        },
+        "LowerTorso": {
+          "rot": [0, 22, 0],
+          "pos": [0, -0.2, 0.02]
+        },
+        "RightUpperLeg": {
+          "rot": [30, 0, 12]
+        },
+        "RightLowerLeg": {
+          "rot": [-55, 0, 0]
+        },
+        "RightFoot": {
+          "rot": [25, 0, 0]
+        },
+        "LeftUpperLeg": {
+          "rot": [30, 0, -12]
+        },
+        "LeftLowerLeg": {
+          "rot": [-55, 0, 0]
+        },
+        "LeftFoot": {
+          "rot": [25, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 1.6,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "UpperTorso": {
+          "rot": [-6, 10, 0]
+        },
+        "Head": {
+          "rot": [3, -8, 0]
+        },
+        "RightUpperArm": {
+          "rot": [17.8, -34.1, -55.5]
+        },
+        "RightLowerArm": {
+          "rot": [3.9, 0, 0]
+        },
+        "RightHand": {
+          "rot": [-52.4, -20.3, 0.1]
+        },
+        "LeftUpperArm": {
+          "rot": [-24.2, -35, 73]
+        },
+        "LeftLowerArm": {
+          "rot": [93.7, 0, 0]
+        },
+        "LeftHand": {
+          "rot": [0, 0, 0]
+        },
+        "LowerTorso": {
+          "rot": [0, 0, 0],
+          "pos": [0, -0.13, 0.03]
+        },
+        "RightUpperLeg": {
+          "rot": [25, 0, 10]
+        },
+        "RightLowerLeg": {
+          "rot": [-45, 0, 0]
+        },
+        "RightFoot": {
+          "rot": [20, 0, 0]
+        },
+        "LeftUpperLeg": {
+          "rot": [25, 0, -10]
+        },
+        "LeftLowerLeg": {
+          "rot": [-45, 0, 0]
+        },
+        "LeftFoot": {
+          "rot": [20, 0, 0]
+        }
+      }
+    }
+  ],
+  "markers": [
+    {
+      "time": 0.52,
+      "name": "Hit",
+      "value": "Sweep"
+    }
+  ],
+  "length": 1.6
+}

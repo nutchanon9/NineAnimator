@@ -115,7 +115,7 @@ test('every preset has a category and a known prop', () => {
   const cats = new Set(P.CATEGORIES.map((c) => c[0]));
   for (const p of P.LIST) {
     assert.ok(cats.has(p.cat), p.id);
-    assert.ok(['none', 'sword', 'bow', 'shield'].includes(p.prop), p.id);
+    assert.ok(['none', 'sword', 'longsword', 'dual', 'greatsword', 'heavygun', 'bow', 'swordshield'].includes(p.prop), p.id);
   }
 });
 
@@ -137,6 +137,35 @@ test('weapon joint "Handle": blade forward at rest, exported under the hand', ()
     const names = [...xml.matchAll(/<string name="Name">([^<]+)<\/string>/g)].map((m) => m[1]);
     assert.ok(names.indexOf(hand) >= 0 && names.indexOf(hand) < names.indexOf('Handle'), id + ': ' + names.join(','));
   }
-  // Mirroring swaps the arms but leaves the weapon key alone.
-  assert.deepStrictEqual(C.mirrorPoses(C.RIGS.R15, { Handle: { rot: [10, 20, 30] } }).Handle.rot, [10, 20, 30]);
+  // Mirroring swaps the weapons between the hands like the arms.
+  const m = C.mirrorPoses(C.RIGS.R15, { Handle: { rot: [10, 20, 30] } });
+  assert.deepStrictEqual(m.LeftHandle.rot, [10, -20, -30]);
+  assert.strictEqual(m.Handle, undefined);
+});
+
+test('arm IK reaches a reachable target on both rigs', () => {
+  for (const [id, upper, lower] of [['R15', 'LeftUpperArm', 'LeftLowerArm'], ['R6', 'Left Arm', null]]) {
+    const rig = C.RIGS[id];
+    const goal = { [upper]: C.poseToM({ rot: [70, 10, 25] }) };
+    if (lower) goal[lower] = C.poseToM({ rot: [60, 0, 0] });
+    const target = C.gripWorld(rig, goal, 'Left');
+    const res = C.solveArmIK(rig, { UpperTorso: C.poseToM({ rot: [0, 0, 0] }) }, 'Left', target);
+    assert.ok(res.error < 0.02, `${id} error ${res.error}`);
+    assert.ok(res.poses[upper]);
+  }
+});
+
+test('two-handed weapon presets keep the left hand on the weapon', () => {
+  const rig = C.RIGS.R15;
+  const grips = { ls_ready: [0, -0.6, 0], ls_combo: [0, -0.6, 0], gs_ready: [0, -0.7, 0], gs_charge: [0, -0.7, 0], gs_sweep: [0, -0.7, 0], hg_aim: [0, 0.3, -0.6], hg_fire: [0, 0.3, -0.6] };
+  for (const [id, point] of Object.entries(grips)) {
+    const a = C.validate(P.get(id)).anim;
+    for (const k of a.keyframes) {
+      const ms = C.sampleAll(a, k.time);
+      const target = C.pointOn(rig, ms, 'Handle', point);
+      const g = C.gripWorld(rig, ms, 'Left');
+      const d = Math.hypot(g[0] - target[0], g[1] - target[1], g[2] - target[2]);
+      assert.ok(d < 0.15, `${id} @${k.time}: left hand ${d.toFixed(2)} studs from the grip`);
+    }
+  }
 });

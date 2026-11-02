@@ -7,7 +7,8 @@ NineAnimator is a free Roblox animation toolkit: a static web editor (`web/`), a
 - `web/js/nine-core.js`: **all non-UI logic**: rotation math, R6/R15 rig data, format validation, interpolation, R15↔R6 conversion, `.rbxmx` export/import. UMD, no deps, used by the browser, the CLI and the tests. Change behaviour here first.
 - `web/js/presets.js`: built-in animations (R15, generated or hand-keyed), each with a menu category and a preview prop. Tests require every joint to turn < 175° between its consecutive keys; check new presets visually (see `test/`).
 - `web/js/ai-prompt.js`: the prompt users paste into chat AIs. Keep it in sync with `docs/FORMAT.md`.
-- Weapon joint `Handle` (optional, `group: 'weapon'`, parent = right hand, C0 rotation = the grip's −90° about X): in the viewer the sword prop is drawn at it and its hidden box is used for picking. It mirrors to itself.
+- Weapon joints `Handle` / `LeftHandle` (optional, `group: 'weapon'`, parent = right/left hand, C0 rotation = the grip's −90° about X). They mirror into each other. The viewer draws a weapon "kit" (viewer.js `KITS`/`MODELS`) at them; geometry is in the handle frame (blade +Y, gun barrel −Z).
+- IK (`nine-core.js`): `solveArmIK` (reach a point), `solveWeaponIK` (arm + wrist so the weapon sits at a point and points a direction), `aimWeapon`. Presets build two-handed poses with `wield(torso, grip, dir, leftPoint)` in `presets.js`; the editor's "มือซ้ายจับอาวุธ" button uses `solveArmIK`. See `docs/WEAPONS.md`.
 - `web/js/viewer.js`: three.js preview (r147 UMD from jsDelivr), orbit camera, drag-to-rotate.
 - `web/js/app.js`, `web/index.html`, `web/css/style.css`: editor UI (Thai labels).
 - `plugin/NineAnimator.plugin.lua`: Studio plugin. Its JSON↔KeyframeSequence maths must match `nine-core.js` (`Pose.CFrame = C0rot⁻¹ · M · C0rot`). Keep it parseable as Lua 5.1 (no Luau type annotations, `continue` or compound assignment) so it can be syntax-checked with `luaparse`.

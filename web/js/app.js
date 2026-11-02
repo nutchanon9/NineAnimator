@@ -225,7 +225,9 @@
   function select(name) {
     state.selected = name || null;
     // The weapon joint is only visible with the sword prop.
-    if (name === 'Handle' && $('#prop').value !== 'sword') setProp('sword');
+    if (name && viewer.weaponJoints && C.RIGS[state.anim.rig].byName[name].group === 'weapon' && !viewer.weaponJoints().includes(name)) {
+      setProp(name === 'Handle' ? 'sword' : 'dual');
+    }
     viewer.setSelected(state.selected);
     renderInspector(); renderTimeline();
   }
@@ -270,6 +272,7 @@
     }
   }
   function shortName(jt) {
+    if (jt.group === 'weapon') return jt.name === 'LeftHandle' ? 'มือซ้าย' : 'มือขวา';
     return jt.label.replace(/ขวา|ซ้าย/g, '').replace(/\s*\(.*\)/, '').trim() || jt.label;
   }
 
@@ -658,6 +661,7 @@
     $('#btn-copy').addEventListener('click', copyPose);
     $('#btn-paste').addEventListener('click', () => pastePose(false));
     $('#btn-reset-body').addEventListener('click', resetBody);
+    $('#btn-two-hand').addEventListener('click', leftHandToWeapon);
     $('#btn-undo').addEventListener('click', undo);
     $('#btn-redo').addEventListener('click', redo);
     $('#kf-easing').addEventListener('change', (e) => { const k = currentKeyframe(); if (!k) return; pushUndo(); k.easing = e.target.value; save(); renderAll(); });
@@ -725,9 +729,30 @@
     });
   }
   function setProp(name) {
-    $('#prop').value = name;
+    if (name === 'shield') name = 'swordshield'; // older saved preference
     viewer.setProp(name);
-    prefs.set('prop', name);
+    $('#prop').value = viewer.prop;
+    prefs.set('prop', viewer.prop);
+    renderJointList();
+  }
+  // Where the left hand grabs each two-handed weapon, in the Handle's frame.
+  const TWO_HAND_POINT = {
+    longsword: [0, -0.6, 0], greatsword: [0, -0.7, 0], heavygun: [0, 0.3, -0.6], sword: [0, -0.45, 0],
+  };
+  /** Solve the left arm so the left hand holds the right-hand weapon, at this keyframe. */
+  function leftHandToWeapon() {
+    const rig = C.RIGS[state.anim.rig];
+    const point = TWO_HAND_POINT[viewer.prop] || [0, -0.5, 0];
+    pause();
+    const t = snap(state.time);
+    const ms = C.sampleAll(state.anim, t);
+    const target = C.pointOn(rig, ms, 'Handle', point);
+    const res = C.solveArmIK(rig, ms, 'Left', target);
+    pushUndo();
+    const k = C.ensureKeyframe(state.anim, t);
+    Object.assign(k.poses, res.poses);
+    save(); renderAll(); drawPose();
+    toast(res.error < 0.15 ? 'มือซ้ายจับอาวุธแล้ว' : `มือซ้ายเอื้อมไม่ถึง (ห่าง ${res.error.toFixed(2)} stud) ลองขยับมือขวาเข้าหาลำตัว`, res.error < 0.15 ? 'info' : 'error');
   }
   function retime(factor) {
     pause();

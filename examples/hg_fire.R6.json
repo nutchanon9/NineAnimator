@@ -1,0 +1,236 @@
+{
+  "format": "nineanimator/1",
+  "name": "HeavyGunFire",
+  "rig": "R6",
+  "loop": false,
+  "priority": "Action",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Linear",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-5, 10, 0]
+        },
+        "Head": {
+          "rot": [2.5, -8, 0]
+        },
+        "Right Arm": {
+          "rot": [18.5, 12.8, -60.1]
+        },
+        "Left Arm": {
+          "rot": [40.3, -24.6, 45.1]
+        }
+      }
+    },
+    {
+      "time": 0.15,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "Torso": {
+          "rot": [-5, 10, 0]
+        },
+        "Head": {
+          "rot": [2.5, -8, 0]
+        },
+        "Right Arm": {
+          "rot": [18.5, 12.8, -60.1]
+        },
+        "Left Arm": {
+          "rot": [40.3, -24.6, 45.1]
+        }
+      }
+    },
+    {
+      "time": 0.21,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [8, 8, 0]
+        },
+        "Head": {
+          "rot": [-4, -6.4, 0]
+        },
+        "Right Arm": {
+          "rot": [15.4, 34.9, -58.6]
+        },
+        "Left Arm": {
+          "rot": [28, -27.4, 56.3]
+        }
+      }
+    },
+    {
+      "time": 0.47,
+      "easing": "Linear",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-5, 10, 0]
+        },
+        "Head": {
+          "rot": [2.5, -8, 0]
+        },
+        "Right Arm": {
+          "rot": [18.5, 12.8, -60.1]
+        },
+        "Left Arm": {
+          "rot": [40.3, -24.6, 45.1]
+        }
+      }
+    },
+    {
+      "time": 0.55,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "Torso": {
+          "rot": [-5, 10, 0]
+        },
+        "Head": {
+          "rot": [2.5, -8, 0]
+        },
+        "Right Arm": {
+          "rot": [18.5, 12.8, -60.1]
+        },
+        "Left Arm": {
+          "rot": [40.3, -24.6, 45.1]
+        }
+      }
+    },
+    {
+      "time": 0.61,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [8, 8, 0]
+        },
+        "Head": {
+          "rot": [-4, -6.4, 0]
+        },
+        "Right Arm": {
+          "rot": [15.4, 34.9, -58.6]
+        },
+        "Left Arm": {
+          "rot": [28, -27.4, 56.3]
+        }
+      }
+    },
+    {
+      "time": 0.87,
+      "easing": "Linear",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-5, 10, 0]
+        },
+        "Head": {
+          "rot": [2.5, -8, 0]
+        },
+        "Right Arm": {
+          "rot": [18.5, 12.8, -60.1]
+        },
+        "Left Arm": {
+          "rot": [40.3, -24.6, 45.1]
+        }
+      }
+    },
+    {
+      "time": 0.95,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "Torso": {
+          "rot": [-5, 10, 0]
+        },
+        "Head": {
+          "rot": [2.5, -8, 0]
+        },
+        "Right Arm": {
+          "rot": [18.5, 12.8, -60.1]
+        },
+        "Left Arm": {
+          "rot": [40.3, -24.6, 45.1]
+        }
+      }
+    },
+    {
+      "time": 1.01,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [8, 8, 0]
+        },
+        "Head": {
+          "rot": [-4, -6.4, 0]
+        },
+        "Right Arm": {
+          "rot": [15.4, 34.9, -58.6]
+        },
+        "Left Arm": {
+          "rot": [28, -27.4, 56.3]
+        }
+      }
+    },
+    {
+      "time": 1.27,
+      "easing": "Linear",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-5, 10, 0]
+        },
+        "Head": {
+          "rot": [2.5, -8, 0]
+        },
+        "Right Arm": {
+          "rot": [18.5, 12.8, -60.1]
+        },
+        "Left Arm": {
+          "rot": [40.3, -24.6, 45.1]
+        }
+      }
+    },
+    {
+      "time": 1.5,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-5, 10, 0]
+        },
+        "Head": {
+          "rot": [2.5, -8, 0]
+        },
+        "Right Arm": {
+          "rot": [18.5, 12.8, -60.1]
+        },
+        "Left Arm": {
+          "rot": [40.3, -24.6, 45.1]
+        }
+      }
+    }
+  ],
+  "markers": [
+    {
+      "time": 0.15,
+      "name": "Fire",
+      "value": ""
+    },
+    {
+      "time": 0.55,
+      "name": "Fire",
+      "value": ""
+    },
+    {
+      "time": 0.95,
+      "name": "Fire",
+      "value": ""
+    }
+  ],
+  "length": 1.5
+}

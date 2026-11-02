@@ -1,0 +1,89 @@
+{
+  "format": "nineanimator/1",
+  "name": "GreatSwordReady",
+  "rig": "R6",
+  "loop": true,
+  "priority": "Idle",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-6, 10, 0],
+          "pos": [0, -0.13, 0.03]
+        },
+        "Head": {
+          "rot": [3, -8, 0]
+        },
+        "Right Arm": {
+          "rot": [17.8, -34.1, -55.5]
+        },
+        "Left Arm": {
+          "rot": [-24.2, -35, 73]
+        },
+        "Right Leg": {
+          "rot": [25, 0, 10]
+        },
+        "Left Leg": {
+          "rot": [25, 0, -10]
+        }
+      }
+    },
+    {
+      "time": 0.9,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-8, 10, 0],
+          "pos": [0, -0.16, 0.03]
+        },
+        "Head": {
+          "rot": [4, -8, 0]
+        },
+        "Right Arm": {
+          "rot": [17.4, -34, -55.5]
+        },
+        "Left Arm": {
+          "rot": [-38.1, -21.9, 87.3]
+        },
+        "Right Leg": {
+          "rot": [27, 0, 10]
+        },
+        "Left Leg": {
+          "rot": [27, 0, -10]
+        }
+      }
+    },
+    {
+      "time": 1.8,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-6, 10, 0],
+          "pos": [0, -0.13, 0.03]
+        },
+        "Head": {
+          "rot": [3, -8, 0]
+        },
+        "Right Arm": {
+          "rot": [17.8, -34.1, -55.5]
+        },
+        "Left Arm": {
+          "rot": [-24.2, -35, 73]
+        },
+        "Right Leg": {
+          "rot": [25, 0, 10]
+        },
+        "Left Leg": {
+          "rot": [25, 0, -10]
+        }
+      }
+    }
+  ],
+  "markers": [],
+  "length": 1.8
+}

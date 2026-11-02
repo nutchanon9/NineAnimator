@@ -1,0 +1,89 @@
+{
+  "format": "nineanimator/1",
+  "name": "DualReady",
+  "rig": "R6",
+  "loop": true,
+  "priority": "Idle",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-8, 0, 0],
+          "pos": [0, -0.2, 0.02]
+        },
+        "Head": {
+          "rot": [6, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [25, 0, 25]
+        },
+        "Left Arm": {
+          "rot": [25, 0, -25]
+        },
+        "Right Leg": {
+          "rot": [30, 0, 10]
+        },
+        "Left Leg": {
+          "rot": [30, 0, -10]
+        }
+      }
+    },
+    {
+      "time": 0.5,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-12, 0, 0],
+          "pos": [0, -0.25, 0.03]
+        },
+        "Head": {
+          "rot": [6, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [25, 0, 25]
+        },
+        "Left Arm": {
+          "rot": [25, 0, -25]
+        },
+        "Right Leg": {
+          "rot": [34, 0, 10]
+        },
+        "Left Leg": {
+          "rot": [34, 0, -10]
+        }
+      }
+    },
+    {
+      "time": 1,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-8, 0, 0],
+          "pos": [0, -0.2, 0.02]
+        },
+        "Head": {
+          "rot": [6, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [25, 0, 25]
+        },
+        "Left Arm": {
+          "rot": [25, 0, -25]
+        },
+        "Right Leg": {
+          "rot": [30, 0, 10]
+        },
+        "Left Leg": {
+          "rot": [30, 0, -10]
+        }
+      }
+    }
+  ],
+  "markers": [],
+  "length": 1
+}
