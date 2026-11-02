@@ -1,0 +1,141 @@
+{
+  "format": "nineanimator/1",
+  "name": "MinionTaunt",
+  "rig": "R6",
+  "loop": true,
+  "priority": "Action",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "Torso": {
+          "rot": [-10, 0, 0],
+          "pos": [0, -0.36, 0]
+        },
+        "Head": {
+          "rot": [15, 20, 0]
+        },
+        "Right Arm": {
+          "rot": [160, 0, 30]
+        },
+        "Left Arm": {
+          "rot": [160, 0, -30]
+        },
+        "Right Leg": {
+          "rot": [40, 0, 12]
+        },
+        "Left Leg": {
+          "rot": [40, 0, -12]
+        }
+      }
+    },
+    {
+      "time": 0.3,
+      "easing": "Cubic",
+      "direction": "In",
+      "poses": {
+        "Torso": {
+          "rot": [5, 0, 0],
+          "pos": [0, 0.4, 0]
+        },
+        "Head": {
+          "rot": [5, -20, 0]
+        },
+        "Right Arm": {
+          "rot": [140, 0, 55]
+        },
+        "Left Arm": {
+          "rot": [140, 0, -55]
+        },
+        "Right Leg": {
+          "rot": [10, 0, 8]
+        },
+        "Left Leg": {
+          "rot": [10, 0, -8]
+        }
+      }
+    },
+    {
+      "time": 0.6,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "Torso": {
+          "rot": [-10, 0, 0],
+          "pos": [0, -0.36, 0]
+        },
+        "Head": {
+          "rot": [15, 20, 0]
+        },
+        "Right Arm": {
+          "rot": [160, 0, 30]
+        },
+        "Left Arm": {
+          "rot": [160, 0, -30]
+        },
+        "Right Leg": {
+          "rot": [40, 0, 12]
+        },
+        "Left Leg": {
+          "rot": [40, 0, -12]
+        }
+      }
+    },
+    {
+      "time": 0.9,
+      "easing": "Cubic",
+      "direction": "In",
+      "poses": {
+        "Torso": {
+          "rot": [5, 0, 0],
+          "pos": [0, 0.4, 0]
+        },
+        "Head": {
+          "rot": [5, -20, 0]
+        },
+        "Right Arm": {
+          "rot": [140, 0, 55]
+        },
+        "Left Arm": {
+          "rot": [140, 0, -55]
+        },
+        "Right Leg": {
+          "rot": [10, 0, 8]
+        },
+        "Left Leg": {
+          "rot": [10, 0, -8]
+        }
+      }
+    },
+    {
+      "time": 1.2,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-10, 0, 0],
+          "pos": [0, -0.36, 0]
+        },
+        "Head": {
+          "rot": [15, 20, 0]
+        },
+        "Right Arm": {
+          "rot": [160, 0, 30]
+        },
+        "Left Arm": {
+          "rot": [160, 0, -30]
+        },
+        "Right Leg": {
+          "rot": [40, 0, 12]
+        },
+        "Left Leg": {
+          "rot": [40, 0, -12]
+        }
+      }
+    }
+  ],
+  "markers": [],
+  "length": 1.2
+}

@@ -1,0 +1,126 @@
+{
+  "format": "nineanimator/1",
+  "name": "MinionThrow",
+  "rig": "R6",
+  "loop": false,
+  "priority": "Action",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-30, 0, 0],
+          "pos": [0, -0.36, 0]
+        },
+        "Head": {
+          "rot": [30, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [30, 0, 20]
+        },
+        "Left Arm": {
+          "rot": [30, 0, -20]
+        },
+        "Right Leg": {
+          "rot": [40, 0, 12]
+        },
+        "Left Leg": {
+          "rot": [40, 0, -12]
+        }
+      }
+    },
+    {
+      "time": 0.4,
+      "easing": "Cubic",
+      "direction": "In",
+      "poses": {
+        "Torso": {
+          "rot": [5, -30, 0],
+          "pos": [0, -0.27, 0.01]
+        },
+        "Head": {
+          "rot": [-2.5, 24, 0]
+        },
+        "Right Arm": {
+          "rot": [150, 0, 20]
+        },
+        "Left Arm": {
+          "rot": [40, 0, -30]
+        },
+        "Right Leg": {
+          "rot": [35, 0, 12]
+        },
+        "Left Leg": {
+          "rot": [35, 0, -12]
+        }
+      }
+    },
+    {
+      "time": 0.55,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "Torso": {
+          "rot": [-22.05, 34.34, 4.12],
+          "pos": [0, -0.36, 0]
+        },
+        "Head": {
+          "rot": [10, -20, 0]
+        },
+        "Right Arm": {
+          "rot": [70, 0, -15]
+        },
+        "Left Arm": {
+          "rot": [-10, 0, -30]
+        },
+        "Right Leg": {
+          "rot": [40, 0, 12]
+        },
+        "Left Leg": {
+          "rot": [40, 0, -12]
+        }
+      }
+    },
+    {
+      "time": 1.1,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-30, 0, 0],
+          "pos": [0, -0.36, 0]
+        },
+        "Head": {
+          "rot": [30, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [30, 0, 20]
+        },
+        "Left Arm": {
+          "rot": [30, 0, -20]
+        },
+        "Right Leg": {
+          "rot": [40, 0, 12]
+        },
+        "Left Leg": {
+          "rot": [40, 0, -12]
+        }
+      }
+    }
+  ],
+  "markers": [
+    {
+      "time": 0.1,
+      "name": "Warn",
+      "value": "Throw"
+    },
+    {
+      "time": 0.52,
+      "name": "Throw",
+      "value": ""
+    }
+  ],
+  "length": 1.1
+}

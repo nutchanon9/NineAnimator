@@ -203,3 +203,13 @@ test('boss attacks warn at least 0.4 s before they hit', () => {
     assert.ok(hits[0].time - warn.time >= 0.4, `${p.id}: warn ${warn.time}s, hit ${hits[0].time}s`);
   }
 });
+
+test('minion attacks warn before they hit', () => {
+  for (const p of P.LIST.filter((x) => x.cat === 'minion')) {
+    const a = p.make();
+    const hits = a.markers.filter((m) => m.name === 'Hit');
+    if (!hits.length) continue;
+    const warn = a.markers.find((m) => m.name === 'Warn');
+    assert.ok(warn && hits[0].time - warn.time >= 0.2, `${p.id}: needs a Warn at least 0.2 s before its first Hit`);
+  }
+});

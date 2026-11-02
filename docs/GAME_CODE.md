@@ -257,7 +257,7 @@ end)
 
 แอนิเมชันใน Roblox ไม่ได้ขยับ HumanoidRootPart ท่าอย่างพุ่งฟัน ม้วนหลบ หรือถอยหลังฟัน ตัวละครจึงจะเด้งกลับที่เดิมตอนจบท่า ท่าพวกนี้ในเว็บจึงมี marker ชื่อ `Move` ที่บอกว่าต้องดันตัวไปทางไหน แรงแค่ไหน และนานเท่าไร เช่น `forward 45 0.2` คือพุ่งไปข้างหน้าด้วยความเร็ว 45 stud/วิ นาน 0.2 วินาที
 
-ทิศที่ใช้ได้: `forward`, `back`, `left`, `right`, `up`
+ทิศที่ใช้ได้: `forward`, `back`, `left`, `right`, `up` ท่าที่ต้องพุ่งไปข้างหน้าพร้อมลอยขึ้น จะใส่ `Move` 2 อันที่เวลาเดียวกัน เช่น `forward 30 0.3` กับ `up 25 0.2`
 
 ```lua
 -- ModuleScript ใน ReplicatedStorage ชื่อ MoveMarker
@@ -285,7 +285,10 @@ local function push(character, dirName, speed, duration)
 	velocity.RelativeTo = Enum.ActuatorRelativeTo.Attachment0 -- ทิศตามที่ตัวละครหันอยู่
 	velocity.MaxForce = math.huge
 	if dirName == "up" then
-		velocity.VectorVelocity = dir * speed
+		-- ล็อกแค่แกนตั้ง จึงใช้คู่กับ Move แนวนอนในจังหวะเดียวกันได้ (เช่น กระโดดตะครุบไปข้างหน้า)
+		velocity.VelocityConstraintMode = Enum.VelocityConstraintMode.Line
+		velocity.LineDirection = Vector3.new(0, 1, 0)
+		velocity.LineVelocity = speed
 	else
 		-- ไม่ล็อกแกน Y ให้แรงโน้มถ่วงยังทำงาน
 		velocity.VelocityConstraintMode = Enum.VelocityConstraintMode.Plane
@@ -499,6 +502,8 @@ while humanoid.Health > 0 do
 	track.Stopped:Wait()
 end
 ```
+
+**มอนสเตอร์ตัวเล็ก/ลูกน้อง** (หมวด **มอนสเตอร์ตัวเล็ก / ลูกน้อง**) ใช้สคริปต์เดียวกันนี้ได้เลย ท่าโจมตีของลูกน้องก็มี `Warn` เหมือนกัน แต่เตือนสั้นกว่า (ประมาณ 0.2-0.4 วินาที) เพราะโจมตีเร็ว ใช้วงเตือนเล็กลงและลดดาเมจ นอกจากนี้มี marker `Spawn` ตอนโผล่ออกมา (เล่นเอฟเฟกต์ควัน) ส่วนท่ากระเด็นลอยมี `Move` back กับ up พร้อมกัน ใช้คู่กับสคริปต์ข้อ 5 ได้เลย
 
 บอสส่วนใหญ่มักเป็นตัว R15 ที่ขยายขนาดให้ใหญ่ขึ้น แอนิเมชันใช้กับตัวที่ขยายแล้วได้เลย เพราะการหมุนข้อต่อยังเหมือนเดิม แต่ระยะเลื่อนตัว เช่น การย่อตัวหรือกระโดด จะไม่ขยายตามขนาดตัว ถ้าบอสใหญ่มาก ให้เพิ่มความเร็วในค่า `Move` แทน
 

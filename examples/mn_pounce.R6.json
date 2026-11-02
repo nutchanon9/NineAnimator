@@ -1,0 +1,167 @@
+{
+  "format": "nineanimator/1",
+  "name": "MinionPounce",
+  "rig": "R6",
+  "loop": false,
+  "priority": "Action",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-30, 0, 0],
+          "pos": [0, -0.36, 0]
+        },
+        "Head": {
+          "rot": [30, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [30, 0, 20]
+        },
+        "Left Arm": {
+          "rot": [30, 0, -20]
+        },
+        "Right Leg": {
+          "rot": [40, 0, 12]
+        },
+        "Left Leg": {
+          "rot": [40, 0, -12]
+        }
+      }
+    },
+    {
+      "time": 0.3,
+      "easing": "Cubic",
+      "direction": "In",
+      "poses": {
+        "Torso": {
+          "rot": [-40, 0, 0],
+          "pos": [0, -0.93, 0.02]
+        },
+        "Head": {
+          "rot": [45, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [-40, 0, 20]
+        },
+        "Left Arm": {
+          "rot": [-40, 0, -20]
+        },
+        "Right Leg": {
+          "rot": [70, 0, 12]
+        },
+        "Left Leg": {
+          "rot": [70, 0, -12]
+        }
+      }
+    },
+    {
+      "time": 0.5,
+      "easing": "Cubic",
+      "direction": "In",
+      "poses": {
+        "Torso": {
+          "rot": [-45, 0, 0],
+          "pos": [0, 1, -0.5]
+        },
+        "Head": {
+          "rot": [40, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [100, 0, 20]
+        },
+        "Left Arm": {
+          "rot": [100, 0, -20]
+        },
+        "Right Leg": {
+          "rot": [-15, 0, 6]
+        },
+        "Left Leg": {
+          "rot": [-5, 0, -6]
+        }
+      }
+    },
+    {
+      "time": 0.75,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "Torso": {
+          "rot": [-35, 0, 0],
+          "pos": [0, -0.62, 0.02]
+        },
+        "Head": {
+          "rot": [40, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [60, 0, 20]
+        },
+        "Left Arm": {
+          "rot": [60, 0, -20]
+        },
+        "Right Leg": {
+          "rot": [55, 0, 12]
+        },
+        "Left Leg": {
+          "rot": [55, 0, -12]
+        }
+      }
+    },
+    {
+      "time": 1.1,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-30, 0, 0],
+          "pos": [0, -0.36, 0]
+        },
+        "Head": {
+          "rot": [30, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [30, 0, 20]
+        },
+        "Left Arm": {
+          "rot": [30, 0, -20]
+        },
+        "Right Leg": {
+          "rot": [40, 0, 12]
+        },
+        "Left Leg": {
+          "rot": [40, 0, -12]
+        }
+      }
+    }
+  ],
+  "markers": [
+    {
+      "time": 0.05,
+      "name": "Warn",
+      "value": "Pounce"
+    },
+    {
+      "time": 0.35,
+      "name": "Move",
+      "value": "forward 35 0.3"
+    },
+    {
+      "time": 0.35,
+      "name": "Move",
+      "value": "up 25 0.15"
+    },
+    {
+      "time": 0.73,
+      "name": "Hit",
+      "value": "Pounce"
+    },
+    {
+      "time": 0.75,
+      "name": "Land",
+      "value": ""
+    }
+  ],
+  "length": 1.1
+}

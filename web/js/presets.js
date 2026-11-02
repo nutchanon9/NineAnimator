@@ -217,6 +217,10 @@
     idle: (b) => merge(legs(25, -45, { spread: 16 }), { UpperTorso: rot(-12 + b * 3), Head: rot(10 - b * 2), RightUpperArm: rot(15, 0, 25 + b * 3), LeftUpperArm: rot(15, 0, -25 - b * 3), RightLowerArm: rot(30), LeftLowerArm: rot(30) }),
     kneel: { LowerTorso: pos(0, 0, 0, [0, -0.85, 0]), RightUpperLeg: rot(0, 0, 8), RightLowerLeg: rot(-90), RightFoot: rot(0), LeftUpperLeg: rot(90, 0, -8), LeftLowerLeg: rot(-90), LeftFoot: rot(0) },
   };
+  // Small monster / minion: crouched, hunched, arms dangling like claws.
+  const MINION = {
+    idle: (b, tilt) => merge(legs(40 - b * 5, -75 + b * 10, { spread: 12 }), { UpperTorso: rot(-30 + b * 3), Head: rot(30 - b * 3, 0, tilt || 0), RightUpperArm: rot(30, 0, 20 + b * 4), LeftUpperArm: rot(30, 0, -20 - b * 4), RightLowerArm: rot(40), LeftLowerArm: rot(40), RightHand: rot(-20), LeftHand: rot(-20) }),
+  };
   // Dual blades: both arms low and forward, blades forward.
   const DB_GUARD = { UpperTorso: rot(-8), Head: rot(6), RightUpperArm: rot(25, 0, 25), RightLowerArm: rot(50), RightHand: rot(-50), LeftUpperArm: rot(25, 0, -25), LeftLowerArm: rot(50), LeftHand: rot(-50) };
 
@@ -1601,6 +1605,145 @@
         kf(2.6, BOSS.idle(0)),
       ], [{ time: 0.1, name: 'Warn', value: 'Grab' }, { time: 0.5, name: 'Grab', value: '' }, { time: 1.52, name: 'Throw', value: '' }]),
     },
+
+    // ===== Small monster / minion (v0.11): quick, with short "Warn" telegraphs =====
+    {
+      id: 'mn_idle', cat: 'minion', label: 'ลูกน้อง: ยืนกระตุก (Idle)', prop: 'none',
+      make: () => anim('MinionIdle', 'Idle', true, 1.2, [kf(0, MINION.idle(0)), kf(0.3, MINION.idle(0, 15)), kf(0.6, MINION.idle(1)), kf(0.9, MINION.idle(0, -15)), kf(1.2, MINION.idle(0))]),
+    },
+    {
+      id: 'mn_walk', cat: 'minion', label: 'ลูกน้อง: เดินย่อง (Walk)', prop: 'none',
+      make: () => cycle('MinionWalk', 'Movement', 0.8, 8, gait({ hip: 30, hipBias: 30, kneeBase: 45, knee: 30, arm: 20, armOut: 15, elbow: 40, elbowSwing: 10, twist: 10, lean: -20, chest: -20, bounce: 0.1, drop: 0.3, foot: 0.8 })),
+    },
+    {
+      id: 'mn_run', cat: 'minion', label: 'ลูกน้อง: วิ่งพุ่ง (Run)', prop: 'none',
+      make: () => {
+        const g = gait({ hip: 45, hipBias: 30, kneeBase: 40, knee: 70, arm: 0, armOut: 0, elbow: 0, elbowSwing: 0, twist: 6, lean: -35, chest: -20, bounce: 0.15, drop: 0.3, foot: 0.8 });
+        return cycle('MinionRun', 'Movement', 0.45, 8, (ph) => merge(g(ph), { RightUpperArm: rot(-50, 0, 20), LeftUpperArm: rot(-50, 0, -20), RightLowerArm: rot(20), LeftLowerArm: rot(20) }));
+      },
+    },
+    {
+      id: 'mn_bite', cat: 'minion', label: 'ลูกน้อง: พุ่งกัด (Lunge bite)', prop: 'none',
+      make: () => {
+        const lunge = merge(legs(30, -50, { spread: 10, lean: -25 }), { LowerTorso: pos(-25, 0, 0, [0, -0.3, -0.6]), UpperTorso: rot(-35), Head: rot(45), RightUpperArm: rot(70, 0, 15), LeftUpperArm: rot(70, 0, -15), RightLowerArm: rot(20), LeftLowerArm: rot(20) });
+        return anim('MinionBite', 'Action', false, 0.8, [
+          kf(0, MINION.idle(0)),
+          kf(0.25, merge(legs(55, -100, { spread: 12 }), { UpperTorso: rot(-10), Head: rot(20), RightUpperArm: rot(-30, 0, 20), LeftUpperArm: rot(-30, 0, -20), RightLowerArm: rot(30), LeftLowerArm: rot(30) }), 'Cubic', 'In'),
+          kf(0.38, lunge, 'Cubic', 'Out'), kf(0.55, lunge, 'Cubic', 'InOut'), kf(0.8, MINION.idle(0)),
+        ], [{ time: 0.05, name: 'Warn', value: 'Bite' }, { time: 0.27, name: 'Move', value: 'forward 30 0.15' }, { time: 0.36, name: 'Hit', value: 'Bite' }]);
+      },
+    },
+    {
+      id: 'mn_scratch', cat: 'minion', label: 'ลูกน้อง: ข่วนสองครั้ง (Claw x2)', prop: 'none',
+      make: () => {
+        const base = MINION.idle(0);
+        return anim('MinionClaw', 'Action', false, 0.9, [
+          kf(0, base),
+          kf(0.15, merge(base, turn(-20, -20), { RightUpperArm: rot(140, 0, 30), RightLowerArm: rot(40) }), 'Cubic', 'In'),
+          kf(0.25, merge(base, turn(-35, 20), { RightUpperArm: rot(30, 0, -35), RightLowerArm: rot(20) }), 'Cubic', 'Out'),
+          kf(0.35, merge(base, turn(-20, 20), { RightUpperArm: rot(30, 0, -35), RightLowerArm: rot(20), LeftUpperArm: rot(140, 0, -30), LeftLowerArm: rot(40) }), 'Cubic', 'In'),
+          kf(0.45, merge(base, turn(-35, -20), { RightUpperArm: rot(30, 0, 10), LeftUpperArm: rot(30, 0, 35), LeftLowerArm: rot(20) }), 'Cubic', 'Out'),
+          kf(0.9, base),
+        ], [{ time: 0.0, name: 'Warn', value: 'Claw' }, { time: 0.24, name: 'Hit', value: '1' }, { time: 0.44, name: 'Hit', value: '2' }]);
+      },
+    },
+    {
+      id: 'mn_pounce', cat: 'minion', label: 'ลูกน้อง: กระโดดตะครุบ (Pounce)', prop: 'none',
+      make: () => anim('MinionPounce', 'Action', false, 1.1, [
+        kf(0, MINION.idle(0)),
+        kf(0.3, merge(legs(70, -125, { spread: 12 }), { UpperTorso: rot(-40), Head: rot(45), RightUpperArm: rot(-40, 0, 20), LeftUpperArm: rot(-40, 0, -20), RightLowerArm: rot(30), LeftLowerArm: rot(30) }), 'Cubic', 'In'),
+        kf(0.5, { LowerTorso: pos(-20, 0, 0, [0, 1.0, -0.5]), RightUpperLeg: rot(-15, 0, 6), LeftUpperLeg: rot(-5, 0, -6), RightLowerLeg: rot(-40), LeftLowerLeg: rot(-60), RightFoot: rot(30), LeftFoot: rot(30), UpperTorso: rot(-25), Head: rot(40), RightUpperArm: rot(100, 0, 20), LeftUpperArm: rot(100, 0, -20), RightLowerArm: rot(10), LeftLowerArm: rot(10), RightHand: rot(-30), LeftHand: rot(-30) }, 'Cubic', 'In'),
+        kf(0.75, merge(legs(55, -100, { spread: 12 }), { UpperTorso: rot(-35), Head: rot(40), RightUpperArm: rot(60, 0, 20), LeftUpperArm: rot(60, 0, -20), RightLowerArm: rot(20), LeftLowerArm: rot(20) }), 'Cubic', 'Out'),
+        kf(1.1, MINION.idle(0)),
+      ], [
+        { time: 0.05, name: 'Warn', value: 'Pounce' }, { time: 0.35, name: 'Move', value: 'forward 35 0.3' }, { time: 0.35, name: 'Move', value: 'up 25 0.15' },
+        { time: 0.73, name: 'Hit', value: 'Pounce' }, { time: 0.75, name: 'Land', value: '' },
+      ]),
+    },
+    {
+      id: 'mn_headbutt', cat: 'minion', label: 'ลูกน้อง: พุ่งโขก (Headbutt)', prop: 'none',
+      make: () => {
+        const dash = merge(legs(35, -60, { spread: 10, lean: -30 }), { UpperTorso: rot(-40), Head: rot(-10), RightUpperArm: rot(-45, 0, 25), LeftUpperArm: rot(-45, 0, -25), RightLowerArm: rot(20), LeftLowerArm: rot(20) });
+        return anim('MinionHeadbutt', 'Action', false, 1.0, [
+          kf(0, MINION.idle(0)),
+          kf(0.3, merge(MINION.idle(0), { UpperTorso: rot(5), Head: rot(10) }), 'Cubic', 'In'),
+          kf(0.45, dash, 'Cubic', 'Out'),
+          kf(0.6, merge(dash, { LowerTorso: pos(-15, 0, 0, [0, -0.3, 0.15]), UpperTorso: rot(-20), Head: rot(15) }), 'Cubic', 'InOut'),
+          kf(1.0, MINION.idle(0)),
+        ], [{ time: 0.05, name: 'Warn', value: 'Headbutt' }, { time: 0.32, name: 'Move', value: 'forward 40 0.2' }, { time: 0.45, name: 'Hit', value: 'Headbutt' }]);
+      },
+    },
+    {
+      id: 'mn_throw', cat: 'minion', label: 'ลูกน้อง: ขว้างของ (Throw)', prop: 'none',
+      make: () => anim('MinionThrow', 'Action', false, 1.1, [
+        kf(0, MINION.idle(0)),
+        kf(0.4, merge(legs(35, -65, { spread: 12 }), turn(5, -30), { RightUpperArm: rot(150, 0, 20), RightLowerArm: rot(100), LeftUpperArm: rot(40, 0, -30), LeftLowerArm: rot(30) }), 'Cubic', 'In'),
+        kf(0.55, merge(legs(40, -75, { spread: 12, twist: 10 }), turn(-20, 25), { RightUpperArm: rot(70, 0, -15), RightLowerArm: rot(10), LeftUpperArm: rot(-10, 0, -30), LeftLowerArm: rot(30) }), 'Cubic', 'Out'),
+        kf(1.1, MINION.idle(0)),
+      ], [{ time: 0.1, name: 'Warn', value: 'Throw' }, { time: 0.52, name: 'Throw', value: '' }]),
+    },
+    {
+      id: 'mn_taunt', cat: 'minion', label: 'ลูกน้อง: กระโดดยั่ว (Taunt)', prop: 'none',
+      make: () => {
+        const low = merge(legs(40, -75, { spread: 12 }), { UpperTorso: rot(-10), Head: rot(15, 20), RightUpperArm: rot(160, 0, 30), LeftUpperArm: rot(160, 0, -30), RightLowerArm: rot(30), LeftLowerArm: rot(30) });
+        const high = { LowerTorso: pos(0, 0, 0, [0, 0.4, 0]), RightUpperLeg: rot(10, 0, 8), LeftUpperLeg: rot(10, 0, -8), RightLowerLeg: rot(-20), LeftLowerLeg: rot(-20), RightFoot: rot(20), LeftFoot: rot(20), UpperTorso: rot(5), Head: rot(5, -20), RightUpperArm: rot(140, 0, 55), LeftUpperArm: rot(140, 0, -55), RightLowerArm: rot(20), LeftLowerArm: rot(20) };
+        return anim('MinionTaunt', 'Action', true, 1.2, [kf(0, low, 'Cubic', 'Out'), kf(0.3, high, 'Cubic', 'In'), kf(0.6, low, 'Cubic', 'Out'), kf(0.9, high, 'Cubic', 'In'), kf(1.2, low)]);
+      },
+    },
+    {
+      id: 'mn_hit', cat: 'minion', label: 'ลูกน้อง: สะดุ้งโดนตี (Flinch)', prop: 'none',
+      make: () => anim('MinionFlinch', 'Action2', false, 0.4, [
+        kf(0, MINION.idle(0), 'Cubic', 'Out'),
+        kf(0.06, merge(MINION.idle(0), { LowerTorso: pos(8, 0, 0, [0, -0.3, 0.2]), UpperTorso: rot(5, 0, 10), Head: rot(10, 0, -15), RightUpperArm: rot(50, 0, 40), LeftUpperArm: rot(50, 0, -40) }), 'Cubic', 'InOut'),
+        kf(0.4, MINION.idle(0)),
+      ]),
+    },
+    {
+      id: 'mn_knockback', cat: 'minion', label: 'ลูกน้อง: กระเด็นลอย (Knockback)', prop: 'none',
+      make: () => {
+        const lying = { LowerTorso: pos(85, 0, 0, [0, -1.55, 0.9]), UpperTorso: rot(5), Head: rot(-10, 20, 0), RightUpperLeg: rot(20, 0, 10), LeftUpperLeg: rot(35, 0, -8), RightLowerLeg: rot(-30), LeftLowerLeg: rot(-50), RightFoot: rot(20), LeftFoot: rot(20), RightUpperArm: rot(0, 0, 60), LeftUpperArm: rot(10, 0, -55), RightLowerArm: rot(15), LeftLowerArm: rot(25) };
+        return anim('MinionKnockback', 'Action3', false, 2.0, [
+          kf(0, MINION.idle(0), 'Cubic', 'Out'),
+          kf(0.08, merge(MINION.idle(0), { LowerTorso: pos(15, 0, 0, [0, -0.2, 0.3]), UpperTorso: rot(15), Head: rot(20), RightUpperArm: rot(40, 0, 40), LeftUpperArm: rot(40, 0, -40) }), 'Cubic', 'Out'),
+          kf(0.25, { LowerTorso: pos(45, 0, 0, [0, 0.8, 0.8]), RightUpperLeg: rot(40, 0, 10), LeftUpperLeg: rot(20, 0, -10), RightLowerLeg: rot(-30), LeftLowerLeg: rot(-30), RightFoot: rot(10), LeftFoot: rot(10), UpperTorso: rot(10), Head: rot(15), RightUpperArm: rot(60, 0, 50), LeftUpperArm: rot(60, 0, -50), RightLowerArm: rot(20), LeftLowerArm: rot(20) }, 'Cubic', 'In'),
+          kf(0.45, lying, 'Bounce', 'Out'), kf(0.9, lying, 'Cubic', 'InOut'),
+          kf(1.3, { LowerTorso: pos(0, 0, 0, [0, -1.45, 0.3]), UpperTorso: rot(-15), Head: rot(5), RightUpperLeg: rot(85, 0, 8), LeftUpperLeg: rot(70, 0, -8), RightLowerLeg: rot(-15), LeftLowerLeg: rot(-60), RightFoot: rot(0), LeftFoot: rot(20), RightUpperArm: rot(-35, 0, 25), LeftUpperArm: rot(-35, 0, -25), RightLowerArm: rot(10), LeftLowerArm: rot(10) }, 'Cubic', 'InOut'),
+          kf(1.6, merge(legs(80, -120, { spread: 10, lean: -15 }), { UpperTorso: rot(-25), Head: rot(30), RightUpperArm: rot(40, 0, 10), LeftUpperArm: rot(40, 0, -10), RightLowerArm: rot(40), LeftLowerArm: rot(40) }), 'Cubic', 'Out'),
+          kf(2.0, MINION.idle(0)),
+        ], [{ time: 0.06, name: 'Move', value: 'back 30 0.3' }, { time: 0.06, name: 'Move', value: 'up 20 0.15' }, { time: 0.45, name: 'Land', value: '' }]);
+      },
+    },
+    {
+      id: 'mn_death', cat: 'minion', label: 'ลูกน้อง: ล้มตาย (Death)', prop: 'none',
+      make: () => {
+        // Lying on the left side: the torso is 2 studs wide, so its centre sits ~1 stud up.
+        const side = { LowerTorso: pos(0, 30, 85, [-0.9, -0.95, 0]), UpperTorso: rot(-20), Head: rot(-10, 0, 20), RightUpperLeg: rot(50, 0, 5), LeftUpperLeg: rot(40, 0, -5), RightLowerLeg: rot(-80), LeftLowerLeg: rot(-70), RightFoot: rot(10), LeftFoot: rot(10), RightUpperArm: rot(60, 0, -20), LeftUpperArm: rot(70, 0, 20), RightLowerArm: rot(90), LeftLowerArm: rot(80) };
+        return anim('MinionDeath', 'Action4', false, 1.4, [
+          kf(0, MINION.idle(0), 'Cubic', 'Out'),
+          kf(0.1, merge(MINION.idle(0), { UpperTorso: rot(20), Head: rot(30), RightUpperArm: rot(60, 0, 50), LeftUpperArm: rot(60, 0, -50) }), 'Cubic', 'In'),
+          kf(0.4, merge(legs(60, -110, { spread: 10 }), { LowerTorso: pos(10, 45, 30, [0, -0.6, 0]), UpperTorso: rot(-20), Head: rot(10), RightUpperArm: rot(40, 0, 30), LeftUpperArm: rot(40, 0, -30), RightLowerArm: rot(60), LeftLowerArm: rot(60) }), 'Cubic', 'In'),
+          kf(0.7, side, 'Bounce', 'Out'), kf(1.4, side),
+        ], [{ time: 0.7, name: 'Land', value: '' }]);
+      },
+    },
+    {
+      id: 'mn_spawn', cat: 'minion', label: 'ลูกน้อง: โผล่ออกมา (Spawn)', prop: 'none',
+      make: () => {
+        const curl = (h) => ({ LowerTorso: pos(0, 0, 0, [0, h, 0]), RightUpperLeg: rot(110, 0, 8), LeftUpperLeg: rot(110, 0, -8), RightLowerLeg: rot(-140), LeftLowerLeg: rot(-140), RightFoot: rot(30), LeftFoot: rot(30), UpperTorso: rot(-50), Head: rot(-30), RightUpperArm: rot(60, 0, -30), LeftUpperArm: rot(60, 0, 30), RightLowerArm: rot(120), LeftLowerArm: rot(120) });
+        return anim('MinionSpawn', 'Action', false, 1.4, [
+          kf(0, curl(-1.35), 'Linear'), kf(0.5, curl(-1.2), 'Cubic', 'In'),
+          kf(0.75, { LowerTorso: pos(0, 0, 0, [0, 0.3, 0]), RightUpperLeg: rot(10, 0, 8), LeftUpperLeg: rot(10, 0, -8), RightLowerLeg: rot(-20), LeftLowerLeg: rot(-20), RightFoot: rot(10), LeftFoot: rot(10), UpperTorso: rot(10), Head: rot(30), RightUpperArm: rot(120, 0, 60), LeftUpperArm: rot(120, 0, -60), RightLowerArm: rot(20), LeftLowerArm: rot(20) }, 'Cubic', 'In'),
+          kf(1.0, merge(MINION.idle(1)), 'Cubic', 'Out'), kf(1.4, MINION.idle(0)),
+        ], [{ time: 0.0, name: 'Spawn', value: '' }, { time: 0.6, name: 'Roar', value: '' }]);
+      },
+    },
+    {
+      id: 'mn_cower', cat: 'minion', label: 'ลูกน้อง: หมอบกลัว (Cower)', prop: 'none',
+      make: () => {
+        const p = (b) => merge(legs(60, -110, { spread: 10 }), { UpperTorso: rot(-40 - b), Head: rot(-20, b * 3), RightUpperArm: rot(140, 0, -20 - b), LeftUpperArm: rot(140, 0, 20 + b), RightLowerArm: rot(120), LeftLowerArm: rot(120) });
+        return anim('MinionCower', 'Action', true, 0.6, [kf(0, p(0), 'Linear'), kf(0.15, p(2), 'Linear'), kf(0.3, p(0), 'Linear'), kf(0.45, p(-2), 'Linear'), kf(0.6, p(0))]);
+      },
+    },
   ];
 
   const CATEGORIES = [
@@ -1617,6 +1760,7 @@
     ['combo', 'คอมโบยาว'],
     ['skill', 'สกิลพิเศษ (อัลติเมต)'],
     ['boss', 'บอส / มอนสเตอร์'],
+    ['minion', 'มอนสเตอร์ตัวเล็ก / ลูกน้อง'],
   ];
 
   return {
