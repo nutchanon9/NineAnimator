@@ -126,3 +126,17 @@ test('validate warns about turns of 180° or more between keys', () => {
   assert.strictEqual(C.validate({ rig: 'R15', keyframes: [k(0, 0), k(1, 120), k(2, 240)] }).warnings.length, 0);
   assert.strictEqual(C.validate({ rig: 'R15', keyframes: [k(0, -90), k(1, 180)] }).warnings.length, 0);
 });
+
+test('weapon joint "Handle": blade forward at rest, exported under the hand', () => {
+  for (const [id, hand] of [['R15', 'RightHand'], ['R6', 'Right Arm']]) {
+    const rig = C.RIGS[id];
+    const blade = (w) => [w.Handle.r[1], w.Handle.r[4], w.Handle.r[7]]; // handle +Y
+    close(blade(C.computeWorld(rig, {})), [0, 0, -1]);
+    close(blade(C.computeWorld(rig, { Handle: C.poseToM({ rot: [90, 0, 0] }) })), [0, 1, 0]);
+    const xml = C.toRbxmx({ rig: id, keyframes: [{ time: 0, poses: { Handle: { rot: [0, 0, 0] } } }] });
+    const names = [...xml.matchAll(/<string name="Name">([^<]+)<\/string>/g)].map((m) => m[1]);
+    assert.ok(names.indexOf(hand) >= 0 && names.indexOf(hand) < names.indexOf('Handle'), id + ': ' + names.join(','));
+  }
+  // Mirroring swaps the arms but leaves the weapon key alone.
+  assert.deepStrictEqual(C.mirrorPoses(C.RIGS.R15, { Handle: { rot: [10, 20, 30] } }).Handle.rot, [10, 20, 30]);
+});

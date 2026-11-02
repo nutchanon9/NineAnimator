@@ -179,6 +179,52 @@ humanoid.Died:Connect(function()
 end)
 ```
 
+## 4. ให้อาวุธขยับแยกจากมือได้ (ข้อต่อ Handle)
+
+ท่าที่มีคีย์ของข้อต่อ **อาวุธ (Handle)** เช่น "ควงดาบ" ต้องให้ Tool ยึดกับมือด้วย **Motor6D** แทน Weld ปกติ (`RightGrip`) ไม่อย่างนั้นอาวุธจะนิ่งอยู่ในมือ ใส่ Script นี้ไว้ใน Tool:
+
+```lua
+-- Tool > WeaponMotor (Script)  ทำงานฝั่ง server
+local tool = script.Parent
+local motor
+
+tool.Equipped:Connect(function()
+	local character = tool.Parent
+	local hand = character:FindFirstChild("RightHand") or character:FindFirstChild("Right Arm")
+	local grip = hand and hand:WaitForChild("RightGrip", 2)
+	if not grip then
+		return
+	end
+	-- Motor6D ที่ C0/C1 เหมือน RightGrip ทุกอย่าง ตอนไม่มีท่าเล่น อาวุธจึงอยู่ตำแหน่งเดิม
+	motor = Instance.new("Motor6D")
+	motor.Name = "HandleMotor"
+	motor.Part0 = grip.Part0
+	motor.Part1 = grip.Part1 -- ต้องเป็น Part ชื่อ "Handle" ชื่อนี้ต้องตรงกับข้อต่อในท่า
+	motor.C0 = grip.C0
+	motor.C1 = grip.C1
+	motor.Parent = hand
+	grip:Destroy()
+end)
+
+tool.Unequipped:Connect(function()
+	if motor then
+		motor:Destroy()
+		motor = nil
+	end
+end)
+```
+
+ใน Studio ถ้าจะดูท่าบนตัวละครก่อน ให้ใช้ปุ่ม **ติดอาวุธ (Motor6D)** ใน Plugin (เลือกตัวละครกับ Tool พร้อมกัน) ปุ่มนี้จะใส่ Tool เข้ามือด้วย Motor6D แบบเดียวกับสคริปต์นี้
+
+ค่าของข้อต่อ Handle ในท่า (หมุนรอบจุดจับ ตามแกนของมือ):
+
+| ค่า | ผล |
+|---|---|
+| `rot` x+ | ปลายใบกระดกขึ้น (ตอนแขนห้อย ใบชี้ไปข้างหน้า) |
+| `rot` y+ | ปลายใบปัดไปทางซ้าย |
+| `rot` z | หมุนรอบตัวใบ (เปลี่ยนด้านคม) |
+| `pos` | เลื่อนอาวุธออกจากมือ หน่วย stud ตามแกนของมือ เช่น `[0, 0, -1]` คือเลื่อนไปข้างหน้ามือ 1 stud |
+
 ## Priority ใช้ตัวไหน
 
 | ท่า | Priority | เหตุผล |

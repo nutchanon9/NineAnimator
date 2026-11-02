@@ -224,7 +224,7 @@ textarea { width: 100%; resize: vertical; font-family: var(--font-mono); font-si
 #joint-editor[data-keyed="true"] .key-state { color: var(--accent); }
 #joint-editor { display: grid; gap: 12px; }
 .axis-rows { display: grid; gap: 8px; }
-.axis-row { display: grid; grid-template-columns: 18px minmax(0, 1fr) 66px; grid-template-areas: "tag name num" "range range range"; gap: 2px 8px; align-items: center; }
+.axis-row { display: grid; grid-template-columns: 18px minmax(0, 1fr) 76px; grid-template-areas: "tag name num" "range range range"; gap: 2px 8px; align-items: center; }
 .axis-tag { grid-area: tag; font: 600 var(--fs-xs)/1 var(--font-mono); }
 .axis-tag.x { color: var(--axis-x); }
 .axis-tag.y { color: var(--axis-y); }

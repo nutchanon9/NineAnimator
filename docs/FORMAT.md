@@ -90,6 +90,8 @@ Handy reference poses: arm straight forward `[90,0,0]`, arm straight up `[180,0,
 
 **R6** (6 joints): `Torso` [HumanoidRootPart, root], `Head`, `Right Arm`, `Left Arm`, `Right Leg`, `Left Leg` (all children of Torso; note the spaces).
 
+**Weapon joint** (both rigs, optional): `Handle` [RightHand on R15, `Right Arm` on R6]. It is the held Tool's `Handle` part, driven by a Motor6D that replaces the `RightGrip` weld with the same C0/C1 (see docs/GAME_CODE.md §4). Its C0 rotation is the grip's −90° about X, and the rotation is expressed in the hand's axes like every other joint. At `[0,0,0]` the tool sits exactly as a normally held tool, with the blade pointing forward when the arm hangs. `rot` x+ tilts the blade up, y+ swings it to the left, and z spins it around the blade. `pos` slides the tool in hand axes. The weapon key is not changed by left/right mirroring.
+
 Name matching is forgiving: case, spaces, `_` and `-` are ignored (`right upper arm` → `RightUpperArm`, `RightArm` → `Right Arm`).
 
 ## Loose input

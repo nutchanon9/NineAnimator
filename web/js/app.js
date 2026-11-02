@@ -220,14 +220,17 @@
   // Selection & inspector
   // ---------------------------------------------------------------
   const GROUPS = [
-    ['body', 'ลำตัว'], ['right-arm', 'แขนขวา'], ['left-arm', 'แขนซ้าย'], ['right-leg', 'ขาขวา'], ['left-leg', 'ขาซ้าย'],
+    ['body', 'ลำตัว'], ['right-arm', 'แขนขวา'], ['left-arm', 'แขนซ้าย'], ['right-leg', 'ขาขวา'], ['left-leg', 'ขาซ้าย'], ['weapon', 'อาวุธ'],
   ];
   function select(name) {
     state.selected = name || null;
+    // The weapon joint is only visible with the sword prop.
+    if (name === 'Handle' && $('#prop').value !== 'sword') setProp('sword');
     viewer.setSelected(state.selected);
     renderInspector(); renderTimeline();
   }
   function axisLabels(jt) {
+    if (jt.group === 'weapon') return ['กระดกใบ ขึ้น / ลง', 'ปัดใบ ซ้าย / ขวา', 'หมุนรอบใบ'];
     if (jt.group === 'body') return ['ก้ม / เงย', 'หัน ซ้าย / ขวา', 'เอียงข้าง'];
     if (/LowerArm/.test(jt.name)) return ['งอศอก', 'บิด', 'ปัดข้าง'];
     if (/LowerLeg/.test(jt.name)) return ['งอเข่า (ค่าลบ)', 'บิด', 'ปัดข้าง'];
@@ -282,7 +285,12 @@
       $('#joint-code').textContent = jt.name;
       const labels = axisLabels(jt);
       $$('.axis-row[data-kind="rot"]').forEach((row, i) => { $('.axis-name', row).textContent = labels[i]; });
-      $('#pos-rows').hidden = jt.name !== rig.rootJoint;
+      $('#pos-rows').hidden = !(jt.name === rig.rootJoint || jt.allowPos);
+      $('#pos-label').textContent = jt.group === 'weapon' ? 'เลื่อนอาวุธในมือ (stud, ตามแกนของมือ)' : 'ตำแหน่งลำตัว (stud)';
+      const posNames = jt.group === 'weapon'
+        ? ['ซ้าย / ขวา ของมือ', 'ตามแนวแขน (+ เข้าหาศอก)', 'หน้า (−) / หลัง (+) ของมือ']
+        : ['ซ้าย / ขวา', 'ขึ้น / ย่อ', 'หน้า (−) / หลัง (+)'];
+      $$('.axis-row[data-kind="pos"]').forEach((row, i) => { $('.axis-name', row).textContent = posNames[i]; });
       const k = currentKeyframe();
       $('#btn-clear-joint').disabled = !(k && k.poses[jt.name]);
     }

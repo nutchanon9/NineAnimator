@@ -130,6 +130,14 @@
   const R6_ROOT = [-1, 0, 0, 0, 0, 1, 0, 1, 0];
   const R6_RIGHT = [0, 0, 1, 0, 1, 0, -1, 0, 0];
   const R6_LEFT = [0, 0, -1, 0, 1, 0, 1, 0, 0];
+  // Rotation of the right-hand grip (R6 RightGrip.C0 / R15 RightGripAttachment): -90° about X.
+  const GRIP_ROT = [1, 0, 0, 0, 0, 1, 0, -1, 0];
+  // Weapon joint: a Motor6D that replaces the tool's RightGrip weld (same C0/C1),
+  // so the held tool's Handle can be animated. Its picking/ghost box runs along
+  // the blade (+Y of the handle).
+  const handleJoint = (parent, c0p) => j('Handle', parent, 'HandleMotor', c0p, [0, 0, 0], [0.4, 3.6, 0.5], 'อาวุธ (Handle)', {
+    group: 'weapon', c0r: GRIP_ROT, optional: true, allowPos: true, meshOffset: [0, 1.5, 0],
+  });
 
   function j(name, parent, motor, c0p, c1p, size, label, extra) {
     return Object.assign({
@@ -161,10 +169,10 @@
         j('LeftUpperLeg', 'LowerTorso', 'LeftHip', [-0.5, -0.2, 0], [0, 0.421, 0], [1, 1.217, 1], 'ต้นขาซ้าย', { group: 'left-leg' }),
         j('LeftLowerLeg', 'LeftUpperLeg', 'LeftKnee', [0, -0.401, 0], [0, 0.375, 0], [0.92, 1.193, 0.92], 'หน้าแข้งซ้าย (เข่า)', { group: 'left-leg' }),
         j('LeftFoot', 'LeftLowerLeg', 'LeftAnkle', [0, -0.547, 0], [0, 0.1, 0], [0.96, 0.3, 1.1], 'เท้าซ้าย', { group: 'left-leg' }),
+        handleJoint('RightHand', [0, -0.15, 0]),
       ],
       handPart: 'RightHand',
       leftHandPart: 'LeftHand',
-      gripOffset: [0, -0.1, 0],
     },
     R6: {
       id: 'R6',
@@ -178,10 +186,10 @@
         j('Left Arm', 'Torso', 'Left Shoulder', [-1, 0.5, 0], [0.5, 0.5, 0], [1, 2, 1], 'แขนซ้าย', { group: 'left-arm', c0r: R6_LEFT, c1r: R6_LEFT }),
         j('Right Leg', 'Torso', 'Right Hip', [1, -1, 0], [0.5, 1, 0], [1, 2, 1], 'ขาขวา', { group: 'right-leg', c0r: R6_RIGHT, c1r: R6_RIGHT }),
         j('Left Leg', 'Torso', 'Left Hip', [-1, -1, 0], [-0.5, 1, 0], [1, 2, 1], 'ขาซ้าย', { group: 'left-leg', c0r: R6_LEFT, c1r: R6_LEFT }),
+        handleJoint('Right Arm', [0, -1, 0]),
       ],
       handPart: 'Right Arm',
       leftHandPart: 'Left Arm',
-      gripOffset: [0, -1, 0],
     },
   };
   // Move the optional c0r/c1r rotations into place and build lookups.
@@ -251,7 +259,7 @@
     rig._restHeight = 0;
     const w = computeWorld(rig, null);
     let minY = Infinity;
-    for (const jt of rig.joints) minY = Math.min(minY, w[jt.name].p[1] - jt.size[1] / 2);
+    for (const jt of rig.joints) if (!jt.optional) minY = Math.min(minY, w[jt.name].p[1] - jt.size[1] / 2);
     rig._restHeight = round4(-minY);
     return rig._restHeight;
   }
@@ -549,7 +557,8 @@
     for (const name of Object.keys(poses)) {
       const jt = rig.byName[name];
       if (!jt) continue;
-      out[jt.mirror] = mirrorPose(poses[name]);
+      // The weapon stays in the right hand, so its key is kept as it is.
+      out[jt.mirror] = jt.group === 'weapon' ? clone(poses[name]) : mirrorPose(poses[name]);
     }
     return out;
   }
@@ -578,7 +587,7 @@
   // R15 <-> R6
   // ------------------------------------------------------------------
   const R15_TO_R6 = {
-    'Head': 'Head',
+    'Head': 'Head', 'Handle': 'Handle',
     'RightUpperArm': 'Right Arm', 'LeftUpperArm': 'Left Arm',
     'RightUpperLeg': 'Right Leg', 'LeftUpperLeg': 'Left Leg',
   };

@@ -40,6 +40,13 @@
     return t;
   }
 
+  /** Box geometry for a joint, shifted by its optional meshOffset (e.g. along a blade). */
+  function boxFor(jt) {
+    const geo = new THREE.BoxGeometry(...jt.size);
+    if (jt.meshOffset) geo.translate(...jt.meshOffset);
+    return geo;
+  }
+
   /** Write a NineCore CFrame into a THREE.Matrix4. */
   function setMatrix(m4, w) {
     m4.set(w.r[0], w.r[1], w.r[2], w.p[0], w.r[3], w.r[4], w.r[5], w.p[1], w.r[6], w.r[7], w.r[8], w.p[2], 0, 0, 0, 1);
@@ -144,11 +151,11 @@
       const steel = new THREE.MeshStandardMaterial({ color: 0xc9d1dc, metalness: 0.6, roughness: 0.3 });
       const dark = new THREE.MeshStandardMaterial({ color: 0x3b2b20, roughness: 0.8 });
       const gold = new THREE.MeshStandardMaterial({ color: 0xc89b3c, metalness: 0.5, roughness: 0.4 });
-      const add = (geo, mat, z) => { const m = new THREE.Mesh(geo, mat); m.position.z = z; m.castShadow = true; g.add(m); };
-      // Grip space: origin at the bottom of the hand, blade along -Z.
-      add(new THREE.BoxGeometry(0.16, 0.16, 0.7), dark, 0.05);
-      add(new THREE.BoxGeometry(0.14, 0.9, 0.16), gold, -0.35);
-      add(new THREE.BoxGeometry(0.07, 0.32, 3.0), steel, -1.93);
+      const add = (geo, mat, y) => { const m = new THREE.Mesh(geo, mat); m.position.y = y; m.castShadow = true; g.add(m); };
+      // Handle space (Roblox tool Handle at the grip): blade along +Y.
+      add(new THREE.BoxGeometry(0.16, 0.7, 0.16), dark, -0.05);
+      add(new THREE.BoxGeometry(0.14, 0.16, 0.9), gold, 0.35);
+      add(new THREE.BoxGeometry(0.07, 3.0, 0.32), steel, 1.93);
       return this.finishProp(g, 'right');
     }
 
@@ -196,7 +203,7 @@
       this.meshes = {};
       const headTex = rigId === 'R6' ? faceTexture(256, 128) : faceTexture(160, 160);
       for (const jt of this.rig.joints) {
-        const geo = new THREE.BoxGeometry(...jt.size);
+        const geo = boxFor(jt);
         const base = new THREE.MeshStandardMaterial({ color: partColor(jt.name), roughness: 0.75, metalness: 0 });
         let mat = base;
         if (jt.name === 'Head') {
@@ -207,6 +214,8 @@
         mesh.castShadow = true;
         mesh.matrixAutoUpdate = false;
         mesh.userData.joint = jt.name;
+        // The weapon joint is drawn by the sword prop; its box is only for picking.
+        if (jt.optional) mesh.visible = false;
         this.rigGroup.add(mesh);
         this.meshes[jt.name] = mesh;
       }
@@ -215,7 +224,7 @@
       this.ghostGroups.forEach((grp, i) => {
         grp.children.slice().forEach((m) => { grp.remove(m); m.geometry.dispose(); });
         for (const jt of this.rig.joints) {
-          const m = new THREE.Mesh(new THREE.BoxGeometry(...jt.size), new THREE.MeshBasicMaterial({
+          const m = new THREE.Mesh(boxFor(jt), new THREE.MeshBasicMaterial({
             color: this.ghostColors[i], transparent: true, opacity: 0.16, depthWrite: false,
           }));
           m.matrixAutoUpdate = false;
@@ -234,7 +243,11 @@
         grp.visible = !!ms;
         if (!ms) return;
         const world = C.computeWorld(this.rig, ms);
-        grp.children.forEach((m) => { setMatrix(m.matrix, world[m.userData.joint]); m.matrixWorldNeedsUpdate = true; });
+        grp.children.forEach((m) => {
+          setMatrix(m.matrix, world[m.userData.joint]);
+          m.matrixWorldNeedsUpdate = true;
+          if (m.userData.joint === 'Handle') m.visible = this.prop === 'sword';
+        });
       });
       this.render();
     }
@@ -250,7 +263,7 @@
         g.visible = name === this.prop;
         if (!g.visible) continue;
         let attach;
-        if (g.userData.hand === 'right') attach = C.cfMul(this.world[this.rig.handPart], C.cf(this.rig.gripOffset));
+        if (g.userData.hand === 'right') attach = this.world.Handle;
         else if (g.userData.hand === 'left') attach = this.world[this.rig.leftHandPart];
         else {
           // shield: back (+Z) of the left forearm
@@ -278,6 +291,11 @@
 
     setSelected(name) {
       this.selected = name;
+      this.props.sword.traverse((o) => {
+        if (!o.material) return;
+        o.material.emissive = name === 'Handle' ? this.selectColor : new THREE.Color(0x000000);
+        o.material.emissiveIntensity = name === 'Handle' ? 0.4 : 0;
+      });
       for (const [n, mesh] of Object.entries(this.meshes)) {
         const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
         mats.forEach((m) => {
@@ -331,7 +349,9 @@
       const ndc = new THREE.Vector2(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
       this.raycaster.setFromCamera(ndc, this.camera);
       this.rigGroup.updateMatrixWorld(true);
-      const hit = this.raycaster.intersectObjects(Object.values(this.meshes), false)[0];
+      // Hidden meshes still take part in raycasts, so pick the weapon only while the sword is shown.
+      const targets = Object.values(this.meshes).filter((m) => m.userData.joint !== 'Handle' || this.prop === 'sword');
+      const hit = this.raycaster.intersectObjects(targets, false)[0];
       return hit ? hit.object.userData.joint : null;
     }
 

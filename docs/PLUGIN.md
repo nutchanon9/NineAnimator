@@ -58,6 +58,17 @@ end)
 - กด **ส่งออก JSON** แล้วคลิกในกล่อง กด Ctrl+A, Ctrl+C
 - เอาไปวางในเว็บ (ปุ่ม **ให้ AI ช่วยคิดท่า** > ช่องที่ 3) หรือส่งให้ AI พร้อมบอกว่าอยากแก้ตรงไหน
 
+### ท่าที่ขยับอาวุธ (ข้อต่อ Handle)
+
+ท่าอย่าง "ควงดาบ" มีคีย์ของอาวุธเองด้วย จะดูท่าพวกนี้ใน Studio ได้ต้องติดอาวุธเข้ามือด้วย Motor6D ก่อน
+
+1. ใส่ Tool ที่มี Part ชื่อ `Handle` ไว้ใน Workspace หรือใน StarterPack
+2. ใน Explorer คลิกตัวละคร แล้วกด Ctrl ค้างไว้แล้วคลิก Tool
+3. กด **ติดอาวุธ (Motor6D)** Plugin จะใส่ Tool เข้ามือขวา โดยใช้ Motor6D ชื่อ `HandleMotor` ที่ C0/C1 เหมือนตอนถือปกติ
+4. กด **▶ ดูบนตัว** ได้ตามปกติ
+
+ในเกมจริงต้องใส่สคริปต์ใน [GAME_CODE.md ข้อ 4](GAME_CODE.md) ไว้ใน Tool ด้วย ส่วน Animation Editor ของ Roblox ก็จะเห็นข้อต่อนี้และแก้ต่อได้
+
 ### ส่งให้ Animation Editor
 
 ปุ่ม **ส่งให้ Animation Editor** คัดลอก KeyframeSequence ไปไว้ที่ `ServerStorage > RBX_ANIMSAVES > (ชื่อตัวละคร)` ซึ่งเป็นที่ที่ Animation Editor ของ Roblox เก็บงานที่เซฟไว้ เปิด Animation Editor กับตัวละครนั้นแล้วเลือกท่าจากเมนู Load เพื่อแก้ละเอียดต่อได้

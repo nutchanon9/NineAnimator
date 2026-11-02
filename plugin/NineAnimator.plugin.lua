@@ -36,6 +36,12 @@ local FLIP_LEGACY_DIRECTION = true
 local R6_ROOT = CFrame.new(0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 1, 0)
 local R6_RIGHT = CFrame.new(0, 0, 0, 0, 0, 1, 0, 1, 0, -1, 0, 0)
 local R6_LEFT = CFrame.new(0, 0, 0, 0, 0, -1, 0, 1, 0, 1, 0, 0)
+-- Rotation of the right-hand tool grip (R6 RightGrip.C0, R15 RightGripAttachment).
+local GRIP_ROT = CFrame.Angles(math.rad(-90), 0, 0)
+local GRIP_C0 = {
+	R15 = CFrame.new(0, -0.15, 0) * GRIP_ROT,
+	R6 = CFrame.new(0, -1, 0) * GRIP_ROT,
+}
 
 local DEFAULT_RIGS = {
 	R15 = {
@@ -45,6 +51,7 @@ local DEFAULT_RIGS = {
 			"LeftUpperArm", "LeftLowerArm", "LeftHand",
 			"RightUpperLeg", "RightLowerLeg", "RightFoot",
 			"LeftUpperLeg", "LeftLowerLeg", "LeftFoot",
+			"Handle",
 		},
 		parent = {
 			LowerTorso = "HumanoidRootPart", UpperTorso = "LowerTorso", Head = "UpperTorso",
@@ -52,20 +59,23 @@ local DEFAULT_RIGS = {
 			LeftUpperArm = "UpperTorso", LeftLowerArm = "LeftUpperArm", LeftHand = "LeftLowerArm",
 			RightUpperLeg = "LowerTorso", RightLowerLeg = "RightUpperLeg", RightFoot = "RightLowerLeg",
 			LeftUpperLeg = "LowerTorso", LeftLowerLeg = "LeftUpperLeg", LeftFoot = "LeftLowerLeg",
+			Handle = "RightHand",
 		},
-		c0rot = {},
+		c0rot = { Handle = GRIP_ROT },
 	},
 	R6 = {
-		order = { "Torso", "Head", "Right Arm", "Left Arm", "Right Leg", "Left Leg" },
+		order = { "Torso", "Head", "Right Arm", "Left Arm", "Right Leg", "Left Leg", "Handle" },
 		parent = {
 			Torso = "HumanoidRootPart", Head = "Torso",
 			["Right Arm"] = "Torso", ["Left Arm"] = "Torso",
 			["Right Leg"] = "Torso", ["Left Leg"] = "Torso",
+			Handle = "Right Arm",
 		},
 		c0rot = {
 			Torso = R6_ROOT, Head = R6_ROOT,
 			["Right Arm"] = R6_RIGHT, ["Right Leg"] = R6_RIGHT,
 			["Left Arm"] = R6_LEFT, ["Left Leg"] = R6_LEFT,
+			Handle = GRIP_ROT,
 		},
 	},
 }
@@ -811,7 +821,80 @@ buttonRow({
 	end },
 })
 
+--- Find a Tool to rig: a selected Tool, a Tool inside the selected rig, or
+--- the Tool that contains a selected part.
+local function findTool(rig)
+	for _, obj in ipairs(Selection:Get()) do
+		local node = obj
+		while node and node ~= game do
+			if node:IsA("Tool") then
+				return node
+			end
+			node = node.Parent
+		end
+	end
+	if rig then
+		return rig:FindFirstChildOfClass("Tool")
+	end
+	return nil
+end
+
+--- Put the Tool in the rig's right hand with a Motor6D named "HandleMotor"
+--- (same C0/C1 as Roblox's RightGrip weld) so the Handle can be animated.
+local function rigWeapon()
+	local rig = findRig()
+	if not rig then
+		return false, "เลือกตัวละคร (Model ที่มี Humanoid) และ Tool ที่จะถือ"
+	end
+	local rigType = rigTypeOf(rig) or "R15"
+	local hand = rig:FindFirstChild(rigType == "R6" and "Right Arm" or "RightHand")
+	if not hand then
+		return false, "ตัวละครนี้ไม่มีมือขวา (RightHand / Right Arm)"
+	end
+	local tool = findTool(rig)
+	if not tool then
+		return false, "เลือก Tool ด้วย (กด Ctrl ค้างแล้วคลิกทั้งตัวละครและ Tool ใน Explorer)"
+	end
+	local handle = tool:FindFirstChild("Handle")
+	if not handle or not handle:IsA("BasePart") then
+		return false, 'Tool "' .. tool.Name .. '" ต้องมี Part ชื่อ Handle'
+	end
+	if tool.Parent ~= rig then
+		tool = tool:Clone()
+		handle = tool:FindFirstChild("Handle")
+		tool.Parent = rig
+	end
+	for _, d in ipairs(hand:GetChildren()) do
+		if (d:IsA("Motor6D") or d:IsA("Weld")) and (d.Name == "HandleMotor" or d.Name == "RightGrip") then
+			d:Destroy()
+		end
+	end
+	local c0 = GRIP_C0[rigType]
+	local attachment = hand:FindFirstChild("RightGripAttachment")
+	if attachment and attachment:IsA("Attachment") then
+		c0 = attachment.CFrame
+	end
+	local motor = Instance.new("Motor6D")
+	motor.Name = "HandleMotor"
+	motor.Part0 = hand
+	motor.Part1 = handle
+	motor.C0 = c0
+	motor.C1 = tool.Grip
+	motor.Parent = hand
+	for _, part in ipairs(tool:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.Anchored = false
+		end
+	end
+	ChangeHistoryService:SetWaypoint("NineAnimator: rig weapon")
+	return true, 'ติด "' .. tool.Name .. '" เข้ามือขวาด้วย Motor6D แล้ว ใช้ข้อต่อ Handle ในท่าได้เลย (ในเกมต้องใช้สคริปต์ใน docs/GAME_CODE.md ข้อ 4)'
+end
+
 buttonRow({
+	{ "ติดอาวุธ (Motor6D)", function()
+		local ok, msg = rigWeapon()
+		setStatus(msg, not ok)
+	end },
 	{ "ส่งให้ Animation Editor", function()
 		local kfs = currentKfs()
 		local rig = findRig()

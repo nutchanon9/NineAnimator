@@ -19,6 +19,7 @@ Joint names (use exactly these keys inside "poses"):
 - LeftUpperArm,  LeftLowerArm  (elbow), LeftHand  (wrist)
 - RightUpperLeg, RightLowerLeg (knee),  RightFoot (ankle)
 - LeftUpperLeg,  LeftLowerLeg  (knee),  LeftFoot  (ankle)
+- Handle       optional: the held weapon (child of RightHand), see "Weapon" below.
 
 ## Format
 - "rot": [x, y, z] in DEGREES, applied like CFrame.Angles(x, y, z), relative to the parent part at the joint. [0,0,0] = default standing pose (arms and legs hang straight down).
@@ -34,6 +35,7 @@ Joint names (use exactly these keys inside "poses"):
 - Elbow (LowerArm): x+ bends the elbow (0 straight, ~140 fully bent). Knee (LowerLeg): x- bends the knee (0 straight, about -140 fully bent).
 - Torso and head:  x+ = lean back / look up,  x- = lean forward / look down.  y+ = turn LEFT, y- = turn RIGHT.  z+ = tilt to the left.
 - Hands/feet: x+ = tilt toward the front (toes up).
+- Weapon (optional joint "Handle", child of the right hand; needs the Tool held with a Motor6D in game): [0,0,0] = normal grip, blade forward when the arm hangs. x+ tilts the blade up, y+ swings it left, z spins it around the blade, "pos" slides it in hand axes. Use it for twirls, flips and wrist flicks; leave it out otherwise.
 - Arm straight forward = RightUpperArm [90,0,0]. Arm straight up = [180,0,0]. Arm out to the side (T-pose) = RightUpperArm [0,0,90], LeftUpperArm [0,0,-90].
 - A held tool (sword) points forward when the arm hangs down; it rotates with the hand.
 

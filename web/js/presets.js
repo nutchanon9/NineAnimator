@@ -284,6 +284,20 @@
       },
     },
     {
+      id: 'twirl', cat: 'combat', label: 'ควงดาบ (Sword twirl, ขยับอาวุธ)', prop: 'sword',
+      make: () => {
+        // Uses the weapon joint "Handle": two full spins in 90° steps.
+        const arm = { RightUpperArm: rot(35, 0, 15), RightLowerArm: rot(80), RightHand: rot(-10) };
+        const ready = { RightUpperArm: rot(20, 0, 5), RightLowerArm: rot(70), RightHand: rot(-40), Handle: rot(0) };
+        const keys = [kf(0, merge(ready), 'Cubic', 'InOut'), kf(0.2, merge(arm, { Handle: rot(0) }), 'Linear')];
+        [-90, 180, 90, 0, -90, 180, 90, 0].forEach((x, i) => {
+          keys.push(kf(r(0.3 + i * 0.1), merge(arm, { Handle: rot(x) }), i === 7 ? 'Cubic' : 'Linear', 'Out'));
+        });
+        keys.push(kf(1.3, merge(ready)));
+        return anim('SwordTwirl', 'Action', false, 1.3, keys);
+      },
+    },
+    {
       id: 'block', cat: 'combat', label: 'ยกโล่กัน (Shield block)', prop: 'shield',
       make: () => {
         const a = { LeftUpperArm: rot(75, 0, 28), LeftLowerArm: rot(95), LeftHand: rot(0), RightUpperArm: rot(15, 0, 8), RightLowerArm: rot(55), RightHand: rot(-35), UpperTorso: rot(-6, 12), Head: rot(4, -10) };
