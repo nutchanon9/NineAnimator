@@ -1,0 +1,125 @@
+{
+  "format": "nineanimator/1",
+  "name": "IdleLook",
+  "rig": "R6",
+  "loop": true,
+  "priority": "Idle",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [0, 0, 0]
+        },
+        "Head": {
+          "rot": [-3, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [0, 0, 5]
+        },
+        "Left Arm": {
+          "rot": [0, 0, -5]
+        }
+      }
+    },
+    {
+      "time": 1,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [0, 8, 0]
+        },
+        "Head": {
+          "rot": [-3, 40, 0]
+        },
+        "Right Arm": {
+          "rot": [0, 0, 5]
+        },
+        "Left Arm": {
+          "rot": [0, 0, -5]
+        }
+      }
+    },
+    {
+      "time": 1.6,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [0, 8, 0]
+        },
+        "Head": {
+          "rot": [-3, 42, 0]
+        },
+        "Right Arm": {
+          "rot": [0, 0, 5]
+        },
+        "Left Arm": {
+          "rot": [0, 0, -5]
+        }
+      }
+    },
+    {
+      "time": 2.6,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [0, -8, 0]
+        },
+        "Head": {
+          "rot": [-3, -40, 0]
+        },
+        "Right Arm": {
+          "rot": [0, 0, 5]
+        },
+        "Left Arm": {
+          "rot": [0, 0, -5]
+        }
+      }
+    },
+    {
+      "time": 3.2,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [0, -8, 0]
+        },
+        "Head": {
+          "rot": [-3, -42, 0]
+        },
+        "Right Arm": {
+          "rot": [0, 0, 5]
+        },
+        "Left Arm": {
+          "rot": [0, 0, -5]
+        }
+      }
+    },
+    {
+      "time": 4,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [0, 0, 0]
+        },
+        "Head": {
+          "rot": [-3, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [0, 0, 5]
+        },
+        "Left Arm": {
+          "rot": [0, 0, -5]
+        }
+      }
+    }
+  ],
+  "markers": [],
+  "length": 4
+}

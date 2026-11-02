@@ -169,3 +169,14 @@ test('two-handed weapon presets keep the left hand on the weapon', () => {
     }
   }
 });
+
+test('Move markers use "<direction> <speed> <seconds>" (what GAME_CODE.md parses)', () => {
+  let count = 0;
+  for (const p of P.LIST) {
+    for (const m of p.make().markers.filter((x) => x.name === 'Move')) {
+      count++;
+      assert.match(m.value, /^(forward|back|left|right|up) \d+(\.\d+)? \d+(\.\d+)?$/, `${p.id}: "${m.value}"`);
+    }
+  }
+  assert.ok(count >= 6);
+});

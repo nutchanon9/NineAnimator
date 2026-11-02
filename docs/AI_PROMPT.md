@@ -29,7 +29,7 @@ Joint names (use exactly these keys inside "poses"):
 - "easing" (per keyframe, controls the motion FROM this key to the next): Linear | Constant | Cubic | Elastic | Bounce. "direction": In | Out | InOut.
 - "priority": Idle | Movement | Action | Action2 | Action3 | Action4. Walk/run = Movement, attacks/items/emotes = Action.
 - "loop": true for idle/walk/run/stances. For loops, make the last keyframe identical to the first.
-- "markers": [{ "time", "name", "value" }] fire AnimationTrack:GetMarkerReachedSignal(name) in Roblox. Put a "Hit" marker on the impact frame of attacks.
+- "markers": [{ "time", "name", "value" }] fire AnimationTrack:GetMarkerReachedSignal(name) in Roblox. Put a "Hit" marker on the impact frame of attacks. For dashes, rolls, leaps and backsteps add a "Move" marker with value "<forward|back|left|right|up> <speed> <seconds>" (e.g. "forward 40 0.2"), because animations do not move the character itself.
 
 ## Angle directions (same on R6 and R15)
 - Arms and legs:  x+ = swing forward/up,  x- = swing backward.  z+ = toward the character's RIGHT side (right limb out, left limb in), z- = toward the LEFT.  y = twist along the limb.

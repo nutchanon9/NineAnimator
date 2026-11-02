@@ -253,6 +253,74 @@ end)
 | `rot` z | หมุนรอบตัวใบ (เปลี่ยนด้านคม) |
 | `pos` | เลื่อนอาวุธออกจากมือ หน่วย stud ตามแกนของมือ เช่น `[0, 0, -1]` คือเลื่อนไปข้างหน้ามือ 1 stud |
 
+## 5. ให้ตัวละครพุ่ง ถอย หรือกระโดดไปจริง (marker `Move`)
+
+แอนิเมชันใน Roblox ไม่ได้ขยับ HumanoidRootPart ท่าอย่างพุ่งฟัน ม้วนหลบ หรือถอยหลังฟัน ตัวละครจึงจะเด้งกลับที่เดิมตอนจบท่า ท่าพวกนี้ในเว็บจึงมี marker ชื่อ `Move` ที่บอกว่าต้องดันตัวไปทางไหน แรงแค่ไหน และนานเท่าไร เช่น `forward 45 0.2` คือพุ่งไปข้างหน้าด้วยความเร็ว 45 stud/วิ นาน 0.2 วินาที
+
+ทิศที่ใช้ได้: `forward`, `back`, `left`, `right`, `up`
+
+```lua
+-- ModuleScript ใน ReplicatedStorage ชื่อ MoveMarker
+-- ใช้: require(ReplicatedStorage.MoveMarker).attach(track, character)
+local MoveMarker = {}
+
+local DIRS = {
+	forward = Vector3.new(0, 0, -1),
+	back = Vector3.new(0, 0, 1),
+	left = Vector3.new(-1, 0, 0),
+	right = Vector3.new(1, 0, 0),
+	up = Vector3.new(0, 1, 0),
+}
+
+local function push(character, dirName, speed, duration)
+	local root = character:FindFirstChild("HumanoidRootPart")
+	local dir = DIRS[dirName]
+	if not root or not dir then
+		return
+	end
+	local attachment = Instance.new("Attachment")
+	attachment.Parent = root
+	local velocity = Instance.new("LinearVelocity")
+	velocity.Attachment0 = attachment
+	velocity.RelativeTo = Enum.ActuatorRelativeTo.Attachment0 -- ทิศตามที่ตัวละครหันอยู่
+	velocity.MaxForce = math.huge
+	if dirName == "up" then
+		velocity.VectorVelocity = dir * speed
+	else
+		-- ไม่ล็อกแกน Y ให้แรงโน้มถ่วงยังทำงาน
+		velocity.VelocityConstraintMode = Enum.VelocityConstraintMode.Plane
+		velocity.PrimaryTangentAxis = Vector3.new(1, 0, 0)
+		velocity.SecondaryTangentAxis = Vector3.new(0, 0, 1)
+		velocity.PlaneVelocity = Vector2.new(dir.X * speed, dir.Z * speed)
+	end
+	velocity.Parent = root
+	task.delay(duration, function()
+		velocity:Destroy()
+		attachment:Destroy()
+	end)
+end
+
+function MoveMarker.attach(track, character)
+	return track:GetMarkerReachedSignal("Move"):Connect(function(value)
+		local dirName, speed, duration = string.match(value, "^(%a+)%s+([%d%.]+)%s+([%d%.]+)$")
+		if dirName then
+			push(character, dirName, tonumber(speed), tonumber(duration))
+		end
+	end)
+end
+
+return MoveMarker
+```
+
+ใช้ใน LocalScript ที่เล่นท่า (ตัวละครของผู้เล่นขยับจากฝั่ง client ได้เลย เพราะ client เป็นเจ้าของฟิสิกส์ของตัวละครตัวเอง):
+
+```lua
+local MoveMarker = require(game:GetService("ReplicatedStorage"):WaitForChild("MoveMarker"))
+local track = animator:LoadAnimation(dashAnimation)
+MoveMarker.attach(track, player.Character)
+track:Play()
+```
+
 ## Priority ใช้ตัวไหน
 
 | ท่า | Priority | เหตุผล |

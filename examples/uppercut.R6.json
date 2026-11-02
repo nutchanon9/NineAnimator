@@ -1,0 +1,147 @@
+{
+  "format": "nineanimator/1",
+  "name": "Uppercut",
+  "rig": "R6",
+  "loop": false,
+  "priority": "Action",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "Torso": {
+          "rot": [-5, 0, 0],
+          "pos": [0, -0.13, 0.03]
+        },
+        "Head": {
+          "rot": [4, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [55, 0, -12]
+        },
+        "Left Arm": {
+          "rot": [60, 0, 12]
+        },
+        "Right Leg": {
+          "rot": [25, 0, 6]
+        },
+        "Left Leg": {
+          "rot": [25, 0, -6]
+        }
+      }
+    },
+    {
+      "time": 0.14,
+      "easing": "Cubic",
+      "direction": "In",
+      "poses": {
+        "Torso": {
+          "rot": [-14, -15, 0],
+          "pos": [0, -0.46, -0.01]
+        },
+        "Head": {
+          "rot": [10, 12, 0]
+        },
+        "Right Arm": {
+          "rot": [10, 0, -10]
+        },
+        "Left Arm": {
+          "rot": [60, 0, 12]
+        },
+        "Right Leg": {
+          "rot": [45, 0, 8]
+        },
+        "Left Leg": {
+          "rot": [45, 0, -8]
+        }
+      }
+    },
+    {
+      "time": 0.25,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "Torso": {
+          "rot": [10, 30, 0],
+          "pos": [0, -0.01, -0.01]
+        },
+        "Head": {
+          "rot": [-8, -24, 0]
+        },
+        "Right Arm": {
+          "rot": [150, 0, -20]
+        },
+        "Left Arm": {
+          "rot": [50, 0, 15]
+        },
+        "Right Leg": {
+          "rot": [5, 0, 6]
+        },
+        "Left Leg": {
+          "rot": [5, 0, -6]
+        }
+      }
+    },
+    {
+      "time": 0.4,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [8, 28, 0],
+          "pos": [0, -0.02, 0.01]
+        },
+        "Head": {
+          "rot": [-6, -22, 0]
+        },
+        "Right Arm": {
+          "rot": [145, 0, -20]
+        },
+        "Left Arm": {
+          "rot": [60, 0, 12]
+        },
+        "Right Leg": {
+          "rot": [10, 0, 6]
+        },
+        "Left Leg": {
+          "rot": [10, 0, -6]
+        }
+      }
+    },
+    {
+      "time": 0.7,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-5, 0, 0],
+          "pos": [0, -0.13, 0.03]
+        },
+        "Head": {
+          "rot": [4, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [55, 0, -12]
+        },
+        "Left Arm": {
+          "rot": [60, 0, 12]
+        },
+        "Right Leg": {
+          "rot": [25, 0, 6]
+        },
+        "Left Leg": {
+          "rot": [25, 0, -6]
+        }
+      }
+    }
+  ],
+  "markers": [
+    {
+      "time": 0.23,
+      "name": "Hit",
+      "value": "Uppercut"
+    }
+  ],
+  "length": 0.7
+}

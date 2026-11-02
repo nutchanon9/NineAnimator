@@ -1,0 +1,74 @@
+{
+  "format": "nineanimator/1",
+  "name": "Clap",
+  "rig": "R6",
+  "loop": true,
+  "priority": "Action",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "In",
+      "poses": {
+        "Torso": {
+          "rot": [0, 0, 0]
+        },
+        "Head": {
+          "rot": [4, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [-1.2, 26.9, -34]
+        },
+        "Left Arm": {
+          "rot": [-1.2, -26.9, 34]
+        }
+      }
+    },
+    {
+      "time": 0.18,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "Torso": {
+          "rot": [-2, 0, 0]
+        },
+        "Head": {
+          "rot": [4, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [20.7, 18.4, -58.5]
+        },
+        "Left Arm": {
+          "rot": [20.7, -18.4, 58.5]
+        }
+      }
+    },
+    {
+      "time": 0.5,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [0, 0, 0]
+        },
+        "Head": {
+          "rot": [4, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [-1.2, 26.9, -34]
+        },
+        "Left Arm": {
+          "rot": [-1.2, -26.9, 34]
+        }
+      }
+    }
+  ],
+  "markers": [
+    {
+      "time": 0.18,
+      "name": "Clap",
+      "value": ""
+    }
+  ],
+  "length": 0.5
+}

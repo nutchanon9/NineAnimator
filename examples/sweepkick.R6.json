@@ -1,0 +1,199 @@
+{
+  "format": "nineanimator/1",
+  "name": "SweepKick",
+  "rig": "R6",
+  "loop": false,
+  "priority": "Action",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "Torso": {
+          "rot": [-5, 0, 0],
+          "pos": [0, -0.13, 0.03]
+        },
+        "Head": {
+          "rot": [4, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [55, 0, -12]
+        },
+        "Left Arm": {
+          "rot": [60, 0, 12]
+        },
+        "Right Leg": {
+          "rot": [25, 0, 6]
+        },
+        "Left Leg": {
+          "rot": [25, 0, -6]
+        }
+      }
+    },
+    {
+      "time": 0.15,
+      "easing": "Linear",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-25, 0, 0],
+          "pos": [0, -0.95, 0]
+        },
+        "Head": {
+          "rot": [20, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [55, 0, -10]
+        },
+        "Left Arm": {
+          "rot": [55, 0, 10]
+        },
+        "Right Leg": {
+          "rot": [10, 0, 75]
+        },
+        "Left Leg": {
+          "rot": [70, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.3,
+      "easing": "Linear",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-90, -65, -90],
+          "pos": [0, -0.95, 0]
+        },
+        "Head": {
+          "rot": [20, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [55, 0, -10]
+        },
+        "Left Arm": {
+          "rot": [55, 0, 10]
+        },
+        "Right Leg": {
+          "rot": [10, 0, 75]
+        },
+        "Left Leg": {
+          "rot": [70, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.45,
+      "easing": "Linear",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-155, 0, 180],
+          "pos": [0, -0.95, 0]
+        },
+        "Head": {
+          "rot": [20, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [55, 0, -10]
+        },
+        "Left Arm": {
+          "rot": [55, 0, 10]
+        },
+        "Right Leg": {
+          "rot": [10, 0, 75]
+        },
+        "Left Leg": {
+          "rot": [70, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.6,
+      "easing": "Linear",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-90, 65, 90],
+          "pos": [0, -0.95, 0]
+        },
+        "Head": {
+          "rot": [20, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [55, 0, -10]
+        },
+        "Left Arm": {
+          "rot": [55, 0, 10]
+        },
+        "Right Leg": {
+          "rot": [10, 0, 75]
+        },
+        "Left Leg": {
+          "rot": [70, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.75,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-25, 0, 0],
+          "pos": [0, -0.95, 0]
+        },
+        "Head": {
+          "rot": [20, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [55, 0, -10]
+        },
+        "Left Arm": {
+          "rot": [55, 0, 10]
+        },
+        "Right Leg": {
+          "rot": [10, 0, 75]
+        },
+        "Left Leg": {
+          "rot": [70, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 1.1,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-5, 0, 0],
+          "pos": [0, -0.13, 0.03]
+        },
+        "Head": {
+          "rot": [4, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [55, 0, -12]
+        },
+        "Left Arm": {
+          "rot": [60, 0, 12]
+        },
+        "Right Leg": {
+          "rot": [25, 0, 6]
+        },
+        "Left Leg": {
+          "rot": [25, 0, -6]
+        }
+      }
+    }
+  ],
+  "markers": [
+    {
+      "time": 0.45,
+      "name": "Hit",
+      "value": "Sweep"
+    }
+  ],
+  "length": 1.1
+}

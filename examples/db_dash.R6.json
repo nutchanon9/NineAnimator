@@ -138,6 +138,11 @@
   ],
   "markers": [
     {
+      "time": 0.12,
+      "name": "Move",
+      "value": "forward 45 0.2"
+    },
+    {
       "time": 0.33,
       "name": "Hit",
       "value": "X"

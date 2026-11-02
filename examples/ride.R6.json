@@ -1,0 +1,89 @@
+{
+  "format": "nineanimator/1",
+  "name": "Ride",
+  "rig": "R6",
+  "loop": true,
+  "priority": "Movement",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-11, 0, 0],
+          "pos": [0, -0.05, 0]
+        },
+        "Head": {
+          "rot": [8, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [35, 0, -10]
+        },
+        "Left Arm": {
+          "rot": [35, 0, 10]
+        },
+        "Right Leg": {
+          "rot": [75, 0, 28]
+        },
+        "Left Leg": {
+          "rot": [75, 0, -28]
+        }
+      }
+    },
+    {
+      "time": 0.4,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-10, 0, 0],
+          "pos": [0, 0.03, 0]
+        },
+        "Head": {
+          "rot": [11, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [39, 0, -10]
+        },
+        "Left Arm": {
+          "rot": [39, 0, 10]
+        },
+        "Right Leg": {
+          "rot": [75, 0, 28]
+        },
+        "Left Leg": {
+          "rot": [75, 0, -28]
+        }
+      }
+    },
+    {
+      "time": 0.8,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-11, 0, 0],
+          "pos": [0, -0.05, 0]
+        },
+        "Head": {
+          "rot": [8, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [35, 0, -10]
+        },
+        "Left Arm": {
+          "rot": [35, 0, 10]
+        },
+        "Right Leg": {
+          "rot": [75, 0, 28]
+        },
+        "Left Leg": {
+          "rot": [75, 0, -28]
+        }
+      }
+    }
+  ],
+  "markers": [],
+  "length": 0.8
+}

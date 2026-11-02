@@ -1,0 +1,133 @@
+{
+  "format": "nineanimator/1",
+  "name": "BlockImpact",
+  "rig": "R6",
+  "loop": false,
+  "priority": "Action2",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "Torso": {
+          "rot": [-6, 12, 0],
+          "pos": [0, -0.13, 0.03]
+        },
+        "Head": {
+          "rot": [3, -9.6, 0]
+        },
+        "LeftHandle": {
+          "rot": [0, 90, 0]
+        },
+        "Right Arm": {
+          "rot": [15, 0, 8]
+        },
+        "Left Arm": {
+          "rot": [75, 0, 28]
+        },
+        "Right Leg": {
+          "rot": [25, 0, 6]
+        },
+        "Left Leg": {
+          "rot": [25, 0, -6]
+        }
+      }
+    },
+    {
+      "time": 0.08,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [14, 15, 0],
+          "pos": [0, -0.2, 0.4]
+        },
+        "Head": {
+          "rot": [-5, -12, 0]
+        },
+        "LeftHandle": {
+          "rot": [0, 90, 0]
+        },
+        "Right Arm": {
+          "rot": [15, 0, 8]
+        },
+        "Left Arm": {
+          "rot": [65, 0, 30]
+        },
+        "Right Leg": {
+          "rot": [30, 0, 6]
+        },
+        "Left Leg": {
+          "rot": [30, 0, -6]
+        }
+      }
+    },
+    {
+      "time": 0.25,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [6, 14, 0],
+          "pos": [0, -0.2, 0.35]
+        },
+        "Head": {
+          "rot": [-2, -11.2, 0]
+        },
+        "LeftHandle": {
+          "rot": [0, 90, 0]
+        },
+        "Right Arm": {
+          "rot": [15, 0, 8]
+        },
+        "Left Arm": {
+          "rot": [75, 0, 28]
+        },
+        "Right Leg": {
+          "rot": [30, 0, 6]
+        },
+        "Left Leg": {
+          "rot": [30, 0, -6]
+        }
+      }
+    },
+    {
+      "time": 0.6,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-6, 12, 0],
+          "pos": [0, -0.13, 0.03]
+        },
+        "Head": {
+          "rot": [3, -9.6, 0]
+        },
+        "LeftHandle": {
+          "rot": [0, 90, 0]
+        },
+        "Right Arm": {
+          "rot": [15, 0, 8]
+        },
+        "Left Arm": {
+          "rot": [75, 0, 28]
+        },
+        "Right Leg": {
+          "rot": [25, 0, 6]
+        },
+        "Left Leg": {
+          "rot": [25, 0, -6]
+        }
+      }
+    }
+  ],
+  "markers": [
+    {
+      "time": 0,
+      "name": "Move",
+      "value": "back 12 0.15"
+    }
+  ],
+  "length": 0.6
+}
