@@ -1,0 +1,104 @@
+{
+  "format": "nineanimator/1",
+  "name": "ShieldBlock",
+  "rig": "R15",
+  "loop": true,
+  "priority": "Action",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "LeftUpperArm": {
+          "rot": [75, 0, 28]
+        },
+        "LeftLowerArm": {
+          "rot": [95, 0, 0]
+        },
+        "LeftHand": {
+          "rot": [0, 0, 0]
+        },
+        "RightUpperArm": {
+          "rot": [15, 0, 8]
+        },
+        "RightLowerArm": {
+          "rot": [55, 0, 0]
+        },
+        "RightHand": {
+          "rot": [-35, 0, 0]
+        },
+        "UpperTorso": {
+          "rot": [-6, 12, 0]
+        },
+        "Head": {
+          "rot": [4, -10, 0]
+        }
+      }
+    },
+    {
+      "time": 0.6,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "LeftUpperArm": {
+          "rot": [78, 0, 28]
+        },
+        "LeftLowerArm": {
+          "rot": [95, 0, 0]
+        },
+        "LeftHand": {
+          "rot": [0, 0, 0]
+        },
+        "RightUpperArm": {
+          "rot": [15, 0, 8]
+        },
+        "RightLowerArm": {
+          "rot": [55, 0, 0]
+        },
+        "RightHand": {
+          "rot": [-35, 0, 0]
+        },
+        "UpperTorso": {
+          "rot": [-8, 12, 0]
+        },
+        "Head": {
+          "rot": [4, -10, 0]
+        }
+      }
+    },
+    {
+      "time": 1.2,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "LeftUpperArm": {
+          "rot": [75, 0, 28]
+        },
+        "LeftLowerArm": {
+          "rot": [95, 0, 0]
+        },
+        "LeftHand": {
+          "rot": [0, 0, 0]
+        },
+        "RightUpperArm": {
+          "rot": [15, 0, 8]
+        },
+        "RightLowerArm": {
+          "rot": [55, 0, 0]
+        },
+        "RightHand": {
+          "rot": [-35, 0, 0]
+        },
+        "UpperTorso": {
+          "rot": [-6, 12, 0]
+        },
+        "Head": {
+          "rot": [4, -10, 0]
+        }
+      }
+    }
+  ],
+  "markers": [],
+  "length": 1.2
+}

@@ -1,0 +1,59 @@
+{
+  "format": "nineanimator/1",
+  "name": "SwordHold",
+  "rig": "R15",
+  "loop": true,
+  "priority": "Action",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "RightUpperArm": {
+          "rot": [20, 0, 5]
+        },
+        "RightLowerArm": {
+          "rot": [70, 0, 0]
+        },
+        "RightHand": {
+          "rot": [-40, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 1,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "RightUpperArm": {
+          "rot": [22, 0, 5]
+        },
+        "RightLowerArm": {
+          "rot": [74, 0, 0]
+        },
+        "RightHand": {
+          "rot": [-42, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 2,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "RightUpperArm": {
+          "rot": [20, 0, 5]
+        },
+        "RightLowerArm": {
+          "rot": [70, 0, 0]
+        },
+        "RightHand": {
+          "rot": [-40, 0, 0]
+        }
+      }
+    }
+  ],
+  "markers": [],
+  "length": 2
+}

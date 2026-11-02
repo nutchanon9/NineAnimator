@@ -1,0 +1,136 @@
+{
+  "format": "nineanimator/1",
+  "name": "Swim",
+  "rig": "R6",
+  "loop": true,
+  "priority": "Movement",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Linear",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-75, 8, 0]
+        },
+        "Head": {
+          "rot": [45, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [180, 0, 12]
+        },
+        "Left Arm": {
+          "rot": [0, 0, -12]
+        },
+        "Right Leg": {
+          "rot": [12, 0, 0]
+        },
+        "Left Leg": {
+          "rot": [-12, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.3,
+      "easing": "Linear",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-75, -8, 0]
+        },
+        "Head": {
+          "rot": [45, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [90, 0, 12]
+        },
+        "Left Arm": {
+          "rot": [-90, 0, -30]
+        },
+        "Right Leg": {
+          "rot": [-12, 0, 0]
+        },
+        "Left Leg": {
+          "rot": [12, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.6,
+      "easing": "Linear",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-75, 8, 0]
+        },
+        "Head": {
+          "rot": [45, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [0, 0, 12]
+        },
+        "Left Arm": {
+          "rot": [180, 0, -12]
+        },
+        "Right Leg": {
+          "rot": [12, 0, 0]
+        },
+        "Left Leg": {
+          "rot": [-12, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.9,
+      "easing": "Linear",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-75, -8, 0]
+        },
+        "Head": {
+          "rot": [45, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [-90, 0, 30]
+        },
+        "Left Arm": {
+          "rot": [90, 0, -12]
+        },
+        "Right Leg": {
+          "rot": [-12, 0, 0]
+        },
+        "Left Leg": {
+          "rot": [12, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 1.2,
+      "easing": "Linear",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-75, 8, 0]
+        },
+        "Head": {
+          "rot": [45, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [180, 0, 12]
+        },
+        "Left Arm": {
+          "rot": [0, 0, -12]
+        },
+        "Right Leg": {
+          "rot": [12, 0, 0]
+        },
+        "Left Leg": {
+          "rot": [-12, 0, 0]
+        }
+      }
+    }
+  ],
+  "markers": [],
+  "length": 1.2
+}

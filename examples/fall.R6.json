@@ -1,0 +1,86 @@
+{
+  "format": "nineanimator/1",
+  "name": "Fall",
+  "rig": "R6",
+  "loop": true,
+  "priority": "Movement",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [6, 0, 0]
+        },
+        "Head": {
+          "rot": [-6, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [125, 0, 45]
+        },
+        "Left Arm": {
+          "rot": [125, 0, -45]
+        },
+        "Right Leg": {
+          "rot": [25, 0, 0]
+        },
+        "Left Leg": {
+          "rot": [-5, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.4,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [8, 0, 0]
+        },
+        "Head": {
+          "rot": [-8, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [135, 0, 55]
+        },
+        "Left Arm": {
+          "rot": [135, 0, -55]
+        },
+        "Right Leg": {
+          "rot": [10, 0, 0]
+        },
+        "Left Leg": {
+          "rot": [15, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.8,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [6, 0, 0]
+        },
+        "Head": {
+          "rot": [-6, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [125, 0, 45]
+        },
+        "Left Arm": {
+          "rot": [125, 0, -45]
+        },
+        "Right Leg": {
+          "rot": [25, 0, 0]
+        },
+        "Left Leg": {
+          "rot": [-5, 0, 0]
+        }
+      }
+    }
+  ],
+  "markers": [],
+  "length": 0.8
+}

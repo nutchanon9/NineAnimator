@@ -1,0 +1,87 @@
+{
+  "format": "nineanimator/1",
+  "name": "Jump",
+  "rig": "R6",
+  "loop": false,
+  "priority": "Movement",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "Torso": {
+          "rot": [-8, 0, 0],
+          "pos": [0, -0.13, 0.03]
+        },
+        "Head": {
+          "rot": [6, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [-15, 0, 8]
+        },
+        "Left Arm": {
+          "rot": [-15, 0, -8]
+        },
+        "Right Leg": {
+          "rot": [25, 0, 6]
+        },
+        "Left Leg": {
+          "rot": [25, 0, -6]
+        }
+      }
+    },
+    {
+      "time": 0.15,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [4, 0, 0]
+        },
+        "Head": {
+          "rot": [-4, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [150, 0, 20]
+        },
+        "Left Arm": {
+          "rot": [150, 0, -20]
+        },
+        "Right Leg": {
+          "rot": [0, 0, 3]
+        },
+        "Left Leg": {
+          "rot": [0, 0, -3]
+        }
+      }
+    },
+    {
+      "time": 0.35,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [2, 0, 0]
+        },
+        "Head": {
+          "rot": [-2, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [140, 0, 25]
+        },
+        "Left Arm": {
+          "rot": [140, 0, -25]
+        },
+        "Right Leg": {
+          "rot": [25, 0, 3]
+        },
+        "Left Leg": {
+          "rot": [5, 0, -3]
+        }
+      }
+    }
+  ],
+  "markers": [],
+  "length": 0.35
+}

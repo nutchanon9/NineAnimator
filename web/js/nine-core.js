@@ -163,6 +163,7 @@
         j('LeftFoot', 'LeftLowerLeg', 'LeftAnkle', [0, -0.547, 0], [0, 0.1, 0], [0.96, 0.3, 1.1], 'เท้าซ้าย', { group: 'left-leg' }),
       ],
       handPart: 'RightHand',
+      leftHandPart: 'LeftHand',
       gripOffset: [0, -0.1, 0],
     },
     R6: {
@@ -179,6 +180,7 @@
         j('Left Leg', 'Torso', 'Left Hip', [-1, -1, 0], [-0.5, 1, 0], [1, 2, 1], 'ขาซ้าย', { group: 'left-leg', c0r: R6_LEFT, c1r: R6_LEFT }),
       ],
       handPart: 'Right Arm',
+      leftHandPart: 'Left Arm',
       gripOffset: [0, -1, 0],
     },
   };
@@ -383,6 +385,7 @@
     const priority = pick(PRIORITIES, data.priority, 'Action');
     if (priority === null) errors.push(`priority "${data.priority}" ไม่ถูกต้อง ใช้: ${PRIORITIES.join(', ')}`);
 
+    const rawRot = new WeakMap(); // pose -> rotation as written (before wrapping to ±180)
     const anim = {
       format: FORMAT,
       name: typeof data.name === 'string' && data.name.trim() ? data.name.trim() : 'Animation',
@@ -416,6 +419,7 @@
         const rot = vec3(p.rot ?? p.rotation ?? p.r, 'rot', errors, `${where}.${raw}`);
         const pos = vec3(p.pos ?? p.position ?? p.p, 'pos', errors, `${where}.${raw}`);
         const pose = { rot: (rot || [0, 0, 0]).map(roundAngle) };
+        rawRot.set(pose, rot || [0, 0, 0]);
         if (pos && pos.some((v) => v !== 0)) pose.pos = pos.map(round4);
         poses[name] = pose;
       }
@@ -427,6 +431,22 @@
         warnings.push(`มีคีย์เฟรมเวลาซ้ำกันที่ ${anim.keyframes[i].time}s รวมเป็นอันเดียว`);
         Object.assign(anim.keyframes[i - 1].poses, anim.keyframes[i].poses);
         anim.keyframes.splice(i, 1); i--;
+      }
+    }
+
+    // Rotations are interpolated the short way round, so a turn of 180° or
+    // more between two keys of one joint would play in the wrong direction.
+    const seen = new Set(anim.keyframes.flatMap((k) => Object.keys(k.poses)));
+    for (const name of seen) {
+      const keys = anim.keyframes.filter((k) => k.poses[name]);
+      for (let i = 1; i < keys.length; i++) {
+        const pa = keys[i - 1].poses[name], pb = keys[i].poses[name];
+        const ra = rawRot.get(pa) || pa.rot, rb = rawRot.get(pb) || pb.rot;
+        // Values beyond ±180 show the author meant to keep turning; compare them as written.
+        const wrapped = [...ra, ...rb].some((v) => Math.abs(v) > 180);
+        const rawStep = wrapped ? Math.max(...[0, 1, 2].map((ax) => Math.abs(rb[ax] - ra[ax]))) : 0;
+        const d = Math.max(rotationAngle(pa.rot, pb.rot), rawStep);
+        if (d > 170) warnings.push(`${name} หมุน ${Math.round(d)}° ระหว่าง ${keys[i - 1].time}s กับ ${keys[i].time}s เกิน 180° จะหมุนผิดทาง ให้เพิ่มคีย์ตรงกลาง`);
       }
     }
 
@@ -532,6 +552,26 @@
       out[jt.mirror] = mirrorPose(poses[name]);
     }
     return out;
+  }
+
+  /**
+   * Scale all keyframe/marker times (and the length) by `factor`.
+   * factor < 1 makes the animation faster. Times snap to 0.01 s; keyframes
+   * that would land on the same time are pushed 0.01 s apart.
+   */
+  function retime(animIn, factor) {
+    const anim = clone(animIn);
+    const snapT = (t) => Math.round(t * factor * 100) / 100;
+    let prev = -1;
+    for (const k of anim.keyframes) {
+      let t = snapT(k.time);
+      if (t <= prev) t = Math.round((prev + 0.01) * 100) / 100;
+      k.time = t; prev = t;
+    }
+    for (const m of anim.markers) m.time = snapT(m.time);
+    const last = anim.keyframes.length ? anim.keyframes[anim.keyframes.length - 1].time : 0;
+    anim.length = Math.max(last, Math.round(anim.length * factor * 100) / 100, 0.01);
+    return anim;
   }
 
   // ------------------------------------------------------------------
@@ -759,6 +799,14 @@
     return s.replace(/\[\s+(-?[\d.e+-]+),\s+(-?[\d.e+-]+),\s+(-?[\d.e+-]+)\s+\]/g, '[$1, $2, $3]') + '\n';
   }
 
+  /** Angle in degrees between two Euler rotations. */
+  function rotationAngle(ra, rb) {
+    const a = eulerToM3(ra), b = eulerToM3(rb);
+    let tr = 0;
+    for (let i = 0; i < 3; i++) for (let k = 0; k < 3; k++) tr += a[k * 3 + i] * b[k * 3 + i];
+    return Math.acos(clamp((tr - 1) / 2, -1, 1)) / DEG;
+  }
+
   function round4(v) { const r = Math.round(v * 1e4) / 1e4; return Object.is(r, -0) ? 0 : r; }
   function roundAngle(v) {
     let r = Math.round(v * 100) / 100;
@@ -776,9 +824,9 @@
     newAnimation, parseLoose, validate, toJSON, clone,
     // sampling & editing
     ease, sampleJointM, sampleAll, samplePoses, sampleJointPose,
-    findKeyframe, ensureKeyframe, sortKeyframes, mirrorPose, mirrorPoses, convertRig,
+    findKeyframe, ensureKeyframe, sortKeyframes, mirrorPose, mirrorPoses, convertRig, retime,
     // io
     toRbxmx, fromRbxmx,
-    round4, roundAngle,
+    round4, roundAngle, rotationAngle,
   };
 });

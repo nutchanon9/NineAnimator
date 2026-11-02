@@ -1,0 +1,203 @@
+{
+  "format": "nineanimator/1",
+  "name": "SpellCast",
+  "rig": "R15",
+  "loop": false,
+  "priority": "Action",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "UpperTorso": {
+          "rot": [0, 0, 0]
+        },
+        "Head": {
+          "rot": [0, 0, 0]
+        },
+        "RightUpperArm": {
+          "rot": [0, 0, 0]
+        },
+        "RightLowerArm": {
+          "rot": [0, 0, 0]
+        },
+        "RightHand": {
+          "rot": [0, 0, 0]
+        },
+        "LeftUpperArm": {
+          "rot": [0, 0, 0]
+        },
+        "LeftLowerArm": {
+          "rot": [0, 0, 0]
+        },
+        "LeftHand": {
+          "rot": [0, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.4,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "UpperTorso": {
+          "rot": [10, 0, 0]
+        },
+        "Head": {
+          "rot": [18, 0, 0]
+        },
+        "RightUpperArm": {
+          "rot": [165, 0, 22]
+        },
+        "RightLowerArm": {
+          "rot": [15, 0, 0]
+        },
+        "RightHand": {
+          "rot": [10, 0, 0]
+        },
+        "LeftUpperArm": {
+          "rot": [165, 0, -22]
+        },
+        "LeftLowerArm": {
+          "rot": [15, 0, 0]
+        },
+        "LeftHand": {
+          "rot": [10, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.62,
+      "easing": "Cubic",
+      "direction": "In",
+      "poses": {
+        "UpperTorso": {
+          "rot": [12, 0, 0]
+        },
+        "Head": {
+          "rot": [20, 0, 0]
+        },
+        "RightUpperArm": {
+          "rot": [170, 0, 15]
+        },
+        "RightLowerArm": {
+          "rot": [25, 0, 0]
+        },
+        "RightHand": {
+          "rot": [10, 0, 0]
+        },
+        "LeftUpperArm": {
+          "rot": [170, 0, -15]
+        },
+        "LeftLowerArm": {
+          "rot": [25, 0, 0]
+        },
+        "LeftHand": {
+          "rot": [10, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.76,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "UpperTorso": {
+          "rot": [-12, 0, 0]
+        },
+        "Head": {
+          "rot": [5, 0, 0]
+        },
+        "RightUpperArm": {
+          "rot": [88, 0, -12]
+        },
+        "RightLowerArm": {
+          "rot": [0, 0, 0]
+        },
+        "RightHand": {
+          "rot": [-70, 0, 0]
+        },
+        "LeftUpperArm": {
+          "rot": [88, 0, 12]
+        },
+        "LeftLowerArm": {
+          "rot": [0, 0, 0]
+        },
+        "LeftHand": {
+          "rot": [-70, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 1,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "UpperTorso": {
+          "rot": [-10, 0, 0]
+        },
+        "Head": {
+          "rot": [4, 0, 0]
+        },
+        "RightUpperArm": {
+          "rot": [85, 0, -12]
+        },
+        "RightLowerArm": {
+          "rot": [5, 0, 0]
+        },
+        "RightHand": {
+          "rot": [-65, 0, 0]
+        },
+        "LeftUpperArm": {
+          "rot": [85, 0, 12]
+        },
+        "LeftLowerArm": {
+          "rot": [5, 0, 0]
+        },
+        "LeftHand": {
+          "rot": [-65, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 1.4,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "UpperTorso": {
+          "rot": [0, 0, 0]
+        },
+        "Head": {
+          "rot": [0, 0, 0]
+        },
+        "RightUpperArm": {
+          "rot": [0, 0, 0]
+        },
+        "RightLowerArm": {
+          "rot": [0, 0, 0]
+        },
+        "RightHand": {
+          "rot": [0, 0, 0]
+        },
+        "LeftUpperArm": {
+          "rot": [0, 0, 0]
+        },
+        "LeftLowerArm": {
+          "rot": [0, 0, 0]
+        },
+        "LeftHand": {
+          "rot": [0, 0, 0]
+        }
+      }
+    }
+  ],
+  "markers": [
+    {
+      "time": 0.76,
+      "name": "Cast",
+      "value": ""
+    }
+  ],
+  "length": 1.4
+}

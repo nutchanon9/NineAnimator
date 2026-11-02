@@ -40,6 +40,11 @@
     return t;
   }
 
+  /** Write a NineCore CFrame into a THREE.Matrix4. */
+  function setMatrix(m4, w) {
+    m4.set(w.r[0], w.r[1], w.r[2], w.p[0], w.r[3], w.r[4], w.r[5], w.p[1], w.r[6], w.r[7], w.r[8], w.p[2], 0, 0, 0, 1);
+  }
+
   /** Rodrigues rotation matrix (row-major 3x3) about a unit axis. */
   function axisAngle(axis, ang) {
     const [x, y, z] = axis, c = Math.cos(ang), s = Math.sin(ang), t = 1 - c;
@@ -57,7 +62,8 @@
       this.rigId = null;
       this.meshes = {};
       this.selected = null;
-      this.showSword = true;
+      this.prop = 'sword';
+      this.ghostStates = null;
 
       if (THREE.ColorManagement && 'legacyMode' in THREE.ColorManagement) THREE.ColorManagement.legacyMode = false;
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: false });
@@ -103,8 +109,10 @@
 
       this.rigGroup = new THREE.Group();
       scene.add(this.rigGroup);
-      this.sword = this.buildSword();
-      scene.add(this.sword);
+      this.props = { sword: this.buildSword(), bow: this.buildBow(), shield: this.buildShield() };
+      for (const p of Object.values(this.props)) scene.add(p);
+      this.ghostGroups = [new THREE.Group(), new THREE.Group()];
+      this.ghostGroups.forEach((g) => scene.add(g));
 
       this.raycaster = new THREE.Raycaster();
       this.applyTheme();
@@ -125,6 +133,8 @@
       this.scene.add(this.grid);
       this.selectColor = new THREE.Color(cssVar('--select', '#4fb3ea'));
       this.arrow.material.color = new THREE.Color(cssVar('--accent', '#f0ae3c'));
+      this.ghostColors = [new THREE.Color(cssVar('--accent', '#f0ae3c')), new THREE.Color(cssVar('--select', '#4fb3ea'))];
+      if (this.ghostGroups) this.ghostGroups.forEach((g, i) => g.children.forEach((m) => m.material.color.copy(this.ghostColors[i])));
       if (this.selected) this.setSelected(this.selected);
       this.render();
     }
@@ -139,9 +149,43 @@
       add(new THREE.BoxGeometry(0.16, 0.16, 0.7), dark, 0.05);
       add(new THREE.BoxGeometry(0.14, 0.9, 0.16), gold, -0.35);
       add(new THREE.BoxGeometry(0.07, 0.32, 3.0), steel, -1.93);
+      return this.finishProp(g, 'right');
+    }
+
+    finishProp(g, hand) {
       g.matrixAutoUpdate = false;
+      g.userData.hand = hand;
       g.traverse((o) => { o.raycast = () => {}; });
       return g;
+    }
+
+    /** Bow held in the left hand: vertical along the hand's local X, bulging away from the body. */
+    buildBow() {
+      const g = new THREE.Group();
+      const wood = new THREE.MeshStandardMaterial({ color: 0x7a4a24, roughness: 0.7 });
+      const R = 1.9, arc = 1.3;
+      const limb = new THREE.Mesh(new THREE.TorusGeometry(R, 0.07, 6, 28, arc), wood);
+      limb.rotation.z = -Math.PI / 2 - arc / 2;
+      limb.position.set(0, R, 0);
+      limb.castShadow = true;
+      g.add(limb);
+      const endY = R - R * Math.cos(arc / 2), endX = R * Math.sin(arc / 2);
+      const string = new THREE.Mesh(new THREE.BoxGeometry(endX * 2, 0.02, 0.02), new THREE.MeshBasicMaterial({ color: 0xe8e2d0 }));
+      string.position.set(0, endY, 0);
+      g.add(string);
+      return this.finishProp(g, 'left');
+    }
+
+    /** Round shield strapped to the back of the left forearm (faces forward when the forearm is raised to block). */
+    buildShield() {
+      const g = new THREE.Group();
+      const face = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.14, 24), new THREE.MeshStandardMaterial({ color: 0x8c2f2f, roughness: 0.6 }));
+      face.rotation.x = Math.PI / 2;
+      face.castShadow = true;
+      const boss = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 8), new THREE.MeshStandardMaterial({ color: 0xc89b3c, metalness: 0.5, roughness: 0.4 }));
+      boss.position.z = 0.1;
+      g.add(face, boss);
+      return this.finishProp(g, 'shield');
     }
 
     setRig(rigId) {
@@ -167,6 +211,55 @@
         this.meshes[jt.name] = mesh;
       }
       this.selected = null;
+      // Onion-skin ghosts: one translucent copy per neighbouring keyframe.
+      this.ghostGroups.forEach((grp, i) => {
+        grp.children.slice().forEach((m) => { grp.remove(m); m.geometry.dispose(); });
+        for (const jt of this.rig.joints) {
+          const m = new THREE.Mesh(new THREE.BoxGeometry(...jt.size), new THREE.MeshBasicMaterial({
+            color: this.ghostColors[i], transparent: true, opacity: 0.16, depthWrite: false,
+          }));
+          m.matrixAutoUpdate = false;
+          m.userData.joint = jt.name;
+          m.raycast = () => {};
+          grp.add(m);
+        }
+        grp.visible = false;
+      });
+    }
+
+    /** Show translucent copies of the previous/next keyframe pose. states = [msPrev|null, msNext|null] or null. */
+    setGhosts(states) {
+      this.ghostGroups.forEach((grp, i) => {
+        const ms = states && states[i];
+        grp.visible = !!ms;
+        if (!ms) return;
+        const world = C.computeWorld(this.rig, ms);
+        grp.children.forEach((m) => { setMatrix(m.matrix, world[m.userData.joint]); m.matrixWorldNeedsUpdate = true; });
+      });
+      this.render();
+    }
+
+    setProp(name) {
+      this.prop = name;
+      if (this.world) this.placeProps();
+      this.render();
+    }
+
+    placeProps() {
+      for (const [name, g] of Object.entries(this.props)) {
+        g.visible = name === this.prop;
+        if (!g.visible) continue;
+        let attach;
+        if (g.userData.hand === 'right') attach = C.cfMul(this.world[this.rig.handPart], C.cf(this.rig.gripOffset));
+        else if (g.userData.hand === 'left') attach = this.world[this.rig.leftHandPart];
+        else {
+          // shield: back (+Z) of the left forearm
+          const part = this.rig.id === 'R15' ? 'LeftLowerArm' : 'Left Arm';
+          attach = C.cfMul(this.world[part], C.cf(this.rig.id === 'R15' ? [0, -0.1, 0.6] : [0, -0.45, 0.6]));
+        }
+        setMatrix(g.matrix, attach);
+        g.matrixWorldNeedsUpdate = true;
+      }
     }
 
     /** ms = { jointName: M } from NineCore.sampleAll */
@@ -179,11 +272,7 @@
         this.meshes[jt.name].matrix.copy(m4);
         this.meshes[jt.name].matrixWorldNeedsUpdate = true;
       }
-      const hand = this.world[this.rig.handPart];
-      const grip = C.cfMul(hand, C.cf(this.rig.gripOffset));
-      this.sword.matrix.set(grip.r[0], grip.r[1], grip.r[2], grip.p[0], grip.r[3], grip.r[4], grip.r[5], grip.p[1], grip.r[6], grip.r[7], grip.r[8], grip.p[2], 0, 0, 0, 1);
-      this.sword.matrixWorldNeedsUpdate = true;
-      this.sword.visible = this.showSword;
+      this.placeProps();
       this.render();
     }
 
@@ -254,7 +343,7 @@
 
       el.addEventListener('contextmenu', (e) => e.preventDefault());
       el.addEventListener('pointerdown', (e) => {
-        el.setPointerCapture(e.pointerId);
+        try { el.setPointerCapture(e.pointerId); } catch (err) { /* synthetic or finished pointer */ }
         pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
         moved = false;
         start = last = { x: e.clientX, y: e.clientY };

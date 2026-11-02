@@ -1,0 +1,61 @@
+{
+  "format": "nineanimator/1",
+  "name": "Sit",
+  "rig": "R6",
+  "loop": true,
+  "priority": "Movement",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [0, 0, 0]
+        },
+        "Head": {
+          "rot": [0, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [35, 0, -5]
+        },
+        "Left Arm": {
+          "rot": [35, 0, 5]
+        },
+        "Right Leg": {
+          "rot": [90, 0, 4]
+        },
+        "Left Leg": {
+          "rot": [90, 0, -4]
+        }
+      }
+    },
+    {
+      "time": 1,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [0, 0, 0]
+        },
+        "Head": {
+          "rot": [0, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [35, 0, -5]
+        },
+        "Left Arm": {
+          "rot": [35, 0, 5]
+        },
+        "Right Leg": {
+          "rot": [90, 0, 4]
+        },
+        "Left Leg": {
+          "rot": [90, 0, -4]
+        }
+      }
+    }
+  ],
+  "markers": [],
+  "length": 1
+}

@@ -1,0 +1,131 @@
+{
+  "format": "nineanimator/1",
+  "name": "SpellCast",
+  "rig": "R6",
+  "loop": false,
+  "priority": "Action",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [0, 0, 0]
+        },
+        "Head": {
+          "rot": [0, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [0, 0, 0]
+        },
+        "Left Arm": {
+          "rot": [0, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.4,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [10, 0, 0]
+        },
+        "Head": {
+          "rot": [18, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [165, 0, 22]
+        },
+        "Left Arm": {
+          "rot": [165, 0, -22]
+        }
+      }
+    },
+    {
+      "time": 0.62,
+      "easing": "Cubic",
+      "direction": "In",
+      "poses": {
+        "Torso": {
+          "rot": [12, 0, 0]
+        },
+        "Head": {
+          "rot": [20, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [170, 0, 15]
+        },
+        "Left Arm": {
+          "rot": [170, 0, -15]
+        }
+      }
+    },
+    {
+      "time": 0.76,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "Torso": {
+          "rot": [-12, 0, 0]
+        },
+        "Head": {
+          "rot": [5, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [88, 0, -12]
+        },
+        "Left Arm": {
+          "rot": [88, 0, 12]
+        }
+      }
+    },
+    {
+      "time": 1,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-10, 0, 0]
+        },
+        "Head": {
+          "rot": [4, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [85, 0, -12]
+        },
+        "Left Arm": {
+          "rot": [85, 0, 12]
+        }
+      }
+    },
+    {
+      "time": 1.4,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [0, 0, 0]
+        },
+        "Head": {
+          "rot": [0, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [0, 0, 0]
+        },
+        "Left Arm": {
+          "rot": [0, 0, 0]
+        }
+      }
+    }
+  ],
+  "markers": [
+    {
+      "time": 0.76,
+      "name": "Cast",
+      "value": ""
+    }
+  ],
+  "length": 1.4
+}

@@ -1,0 +1,122 @@
+{
+  "format": "nineanimator/1",
+  "name": "Fall",
+  "rig": "R15",
+  "loop": true,
+  "priority": "Movement",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "UpperTorso": {
+          "rot": [6, 0, 0]
+        },
+        "Head": {
+          "rot": [-6, 0, 0]
+        },
+        "RightUpperArm": {
+          "rot": [125, 0, 45]
+        },
+        "LeftUpperArm": {
+          "rot": [125, 0, -45]
+        },
+        "RightLowerArm": {
+          "rot": [20, 0, 0]
+        },
+        "LeftLowerArm": {
+          "rot": [20, 0, 0]
+        },
+        "RightUpperLeg": {
+          "rot": [25, 0, 0]
+        },
+        "RightLowerLeg": {
+          "rot": [-40, 0, 0]
+        },
+        "LeftUpperLeg": {
+          "rot": [-5, 0, 0]
+        },
+        "LeftLowerLeg": {
+          "rot": [-15, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.4,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "UpperTorso": {
+          "rot": [8, 0, 0]
+        },
+        "Head": {
+          "rot": [-8, 0, 0]
+        },
+        "RightUpperArm": {
+          "rot": [135, 0, 55]
+        },
+        "LeftUpperArm": {
+          "rot": [135, 0, -55]
+        },
+        "RightLowerArm": {
+          "rot": [10, 0, 0]
+        },
+        "LeftLowerArm": {
+          "rot": [10, 0, 0]
+        },
+        "RightUpperLeg": {
+          "rot": [10, 0, 0]
+        },
+        "RightLowerLeg": {
+          "rot": [-20, 0, 0]
+        },
+        "LeftUpperLeg": {
+          "rot": [15, 0, 0]
+        },
+        "LeftLowerLeg": {
+          "rot": [-35, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.8,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "UpperTorso": {
+          "rot": [6, 0, 0]
+        },
+        "Head": {
+          "rot": [-6, 0, 0]
+        },
+        "RightUpperArm": {
+          "rot": [125, 0, 45]
+        },
+        "LeftUpperArm": {
+          "rot": [125, 0, -45]
+        },
+        "RightLowerArm": {
+          "rot": [20, 0, 0]
+        },
+        "LeftLowerArm": {
+          "rot": [20, 0, 0]
+        },
+        "RightUpperLeg": {
+          "rot": [25, 0, 0]
+        },
+        "RightLowerLeg": {
+          "rot": [-40, 0, 0]
+        },
+        "LeftUpperLeg": {
+          "rot": [-5, 0, 0]
+        },
+        "LeftLowerLeg": {
+          "rot": [-15, 0, 0]
+        }
+      }
+    }
+  ],
+  "markers": [],
+  "length": 0.8
+}

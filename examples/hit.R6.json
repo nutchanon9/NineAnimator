@@ -1,0 +1,89 @@
+{
+  "format": "nineanimator/1",
+  "name": "HitReact",
+  "rig": "R6",
+  "loop": false,
+  "priority": "Action2",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "Torso": {
+          "rot": [0, 0, 0]
+        },
+        "Head": {
+          "rot": [0, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [0, 0, 0]
+        },
+        "Left Arm": {
+          "rot": [0, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.08,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [26, 0, 4],
+          "pos": [0, -0.05, 0.25]
+        },
+        "Head": {
+          "rot": [22, 0, -6]
+        },
+        "Right Arm": {
+          "rot": [30, 0, 25]
+        },
+        "Left Arm": {
+          "rot": [30, 0, -25]
+        }
+      }
+    },
+    {
+      "time": 0.2,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [20, 0, 3],
+          "pos": [0, -0.04, 0.2]
+        },
+        "Head": {
+          "rot": [16, 0, -4]
+        },
+        "Right Arm": {
+          "rot": [22, 0, 18]
+        },
+        "Left Arm": {
+          "rot": [22, 0, -18]
+        }
+      }
+    },
+    {
+      "time": 0.55,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [0, 0, 0]
+        },
+        "Head": {
+          "rot": [0, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [0, 0, 0]
+        },
+        "Left Arm": {
+          "rot": [0, 0, 0]
+        }
+      }
+    }
+  ],
+  "markers": [],
+  "length": 0.55
+}

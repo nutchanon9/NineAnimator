@@ -1,0 +1,145 @@
+{
+  "format": "nineanimator/1",
+  "name": "HeavySlam",
+  "rig": "R6",
+  "loop": false,
+  "priority": "Action",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "Torso": {
+          "rot": [0, 0, 0]
+        },
+        "Head": {
+          "rot": [0, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [20, 0, 5]
+        },
+        "Left Arm": {
+          "rot": [10, 0, -8]
+        },
+        "Right Leg": {
+          "rot": [0, 0, 0]
+        },
+        "Left Leg": {
+          "rot": [0, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.38,
+      "easing": "Cubic",
+      "direction": "In",
+      "poses": {
+        "Torso": {
+          "rot": [14, 0, 0],
+          "pos": [0, -0.01, 0.08]
+        },
+        "Head": {
+          "rot": [-8, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [170, 0, 10]
+        },
+        "Left Arm": {
+          "rot": [165, 0, -10]
+        },
+        "Right Leg": {
+          "rot": [8, 0, 10]
+        },
+        "Left Leg": {
+          "rot": [8, 0, -10]
+        }
+      }
+    },
+    {
+      "time": 0.52,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "Torso": {
+          "rot": [-36, 0, 0],
+          "pos": [0, -0.39, 0.01]
+        },
+        "Head": {
+          "rot": [22, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [45, 0, -12]
+        },
+        "Left Arm": {
+          "rot": [45, 0, 15]
+        },
+        "Right Leg": {
+          "rot": [50, 0, 12]
+        },
+        "Left Leg": {
+          "rot": [50, 0, -12]
+        }
+      }
+    },
+    {
+      "time": 0.78,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-33, 0, 0],
+          "pos": [0, -0.36, 0]
+        },
+        "Head": {
+          "rot": [20, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [45, 0, -12]
+        },
+        "Left Arm": {
+          "rot": [45, 0, 15]
+        },
+        "Right Leg": {
+          "rot": [48, 0, 12]
+        },
+        "Left Leg": {
+          "rot": [48, 0, -12]
+        }
+      }
+    },
+    {
+      "time": 1.15,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [0, 0, 0]
+        },
+        "Head": {
+          "rot": [0, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [20, 0, 5]
+        },
+        "Left Arm": {
+          "rot": [10, 0, -8]
+        },
+        "Right Leg": {
+          "rot": [0, 0, 0]
+        },
+        "Left Leg": {
+          "rot": [0, 0, 0]
+        }
+      }
+    }
+  ],
+  "markers": [
+    {
+      "time": 0.5,
+      "name": "Hit",
+      "value": "Slam"
+    }
+  ],
+  "length": 1.15
+}

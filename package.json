@@ -1,6 +1,6 @@
 {
   "name": "nineanimator",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Free Roblox (R6/R15) animation editor for people and AI: web editor, Studio plugin and a JSON animation format",
   "private": true,
   "scripts": {

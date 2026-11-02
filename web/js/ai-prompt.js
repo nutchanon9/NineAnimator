@@ -77,6 +77,7 @@
       '- Start and end attacks/item uses in a neutral pose so they blend; anticipation (wind-up) -> fast action (Cubic In into the hit) -> follow-through -> recover (Cubic InOut).',
       '- Attacks that should work while walking: animate only the upper body (UpperTorso, Head, arms) and leave the legs out.',
       '- Keep values physically possible; when the torso leans or crouches, counter-rotate the legs/feet so the feet stay on the ground.',
+      '- Rotations interpolate the short way round: keep every joint\'s change between two consecutive keys under 180°. For spins, flips or rolls add a key every 90°.',
       '- 4 to 12 keyframes is usually enough. Typical lengths: punch 0.4-0.6s, sword slash 0.6-0.9s, walk cycle 1.0s, run cycle 0.6-0.7s.',
       '',
       '## Example',

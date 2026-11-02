@@ -53,7 +53,15 @@
           <button type="button" data-view="three">เฉียง</button>
           <button type="button" data-view="back">หลัง</button>
         </div>
-        <label class="check"><input type="checkbox" id="show-sword" checked> ถือดาบ</label>
+        <label class="select-wrap small"><span class="sr-only">ของในมือ</span>
+          <select id="prop">
+            <option value="none">มือเปล่า</option>
+            <option value="sword">ถือดาบ (มือขวา)</option>
+            <option value="bow">ถือธนู (มือซ้าย)</option>
+            <option value="shield">ถือโล่ (แขนซ้าย)</option>
+          </select>
+        </label>
+        <label class="check"><input type="checkbox" id="onion"> เงาคีย์ก่อน/หลัง</label>
       </div>
       <div id="marker-flash" class="marker-flash" hidden></div>
     </section>
@@ -178,6 +186,12 @@
             </select>
           </label>
           <label class="check"><input type="checkbox" id="anim-loop"> วนซ้ำในเกม (Loop)</label>
+          <div class="field"><span>ความเร็ว</span>
+            <div class="btn-row">
+              <button type="button" class="btn small ghost" id="btn-faster" title="ย่อเวลาทุกคีย์เหลือ 80%">เร็วขึ้น 20%</button>
+              <button type="button" class="btn small ghost" id="btn-slower" title="ยืดเวลาทุกคีย์เป็น 125%">ช้าลง 20%</button>
+            </div>
+          </div>
         </div>
       </section>
     </aside>

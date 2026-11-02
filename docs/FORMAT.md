@@ -75,6 +75,8 @@ Directions (Roblox axes: Y up, character faces −Z, character's right is +X):
 | hand / foot | tilt to the front (toes up) | tilt back | twist | sideways |
 | torso / head | lean back / look up | lean forward / look down | turn **left** | tilt left |
 
+**Keep each turn under 180°.** Rotations interpolate the short way round (like `CFrame:Lerp`), so if a joint turns 180° or more between two of its keys it will spin the wrong way. For a spin, flip or roll, add a key every 90° (for example `0, -90, 180, 90, 0` for one full forward roll of `LowerTorso`). The validator warns when it sees a step this large.
+
 Handy reference poses: arm straight forward `[90,0,0]`, arm straight up `[180,0,0]`, T-pose `RightUpperArm [0,0,90]` + `LeftUpperArm [0,0,-90]`, crouch `LowerTorso pos [0,-0.3,0]` with hips `x≈35`, knees `x≈-65`, feet `x≈30`.
 
 ## Joint names

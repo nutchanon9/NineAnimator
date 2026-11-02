@@ -184,6 +184,7 @@ textarea { width: 100%; resize: vertical; font-family: var(--font-mono); font-si
   pointer-events: none;
 }
 .stage-tools > * { pointer-events: auto; }
+.stage-tools select { padding: 4px 7px; font-size: var(--fs-xs); }
 .stage-tools .check { background: var(--panel-2); border: 1px solid var(--line); padding: 4px 9px; border-radius: var(--radius); font-size: var(--fs-xs); }
 .marker-flash {
   position: absolute; top: 40px; left: 50%; transform: translateX(-50%);

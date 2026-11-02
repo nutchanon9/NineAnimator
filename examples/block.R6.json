@@ -1,0 +1,68 @@
+{
+  "format": "nineanimator/1",
+  "name": "ShieldBlock",
+  "rig": "R6",
+  "loop": true,
+  "priority": "Action",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-6, 12, 0]
+        },
+        "Head": {
+          "rot": [4, -10, 0]
+        },
+        "Right Arm": {
+          "rot": [15, 0, 8]
+        },
+        "Left Arm": {
+          "rot": [75, 0, 28]
+        }
+      }
+    },
+    {
+      "time": 0.6,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-8, 12, 0]
+        },
+        "Head": {
+          "rot": [4, -10, 0]
+        },
+        "Right Arm": {
+          "rot": [15, 0, 8]
+        },
+        "Left Arm": {
+          "rot": [78, 0, 28]
+        }
+      }
+    },
+    {
+      "time": 1.2,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-6, 12, 0]
+        },
+        "Head": {
+          "rot": [4, -10, 0]
+        },
+        "Right Arm": {
+          "rot": [15, 0, 8]
+        },
+        "Left Arm": {
+          "rot": [75, 0, 28]
+        }
+      }
+    }
+  ],
+  "markers": [],
+  "length": 1.2
+}

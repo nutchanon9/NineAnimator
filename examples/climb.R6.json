@@ -1,0 +1,86 @@
+{
+  "format": "nineanimator/1",
+  "name": "Climb",
+  "rig": "R6",
+  "loop": true,
+  "priority": "Movement",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-4, 0, 0]
+        },
+        "Head": {
+          "rot": [12, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [160, 0, 8]
+        },
+        "Left Arm": {
+          "rot": [115, 0, -8]
+        },
+        "Right Leg": {
+          "rot": [10, 0, 0]
+        },
+        "Left Leg": {
+          "rot": [55, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.5,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-4, 0, 0]
+        },
+        "Head": {
+          "rot": [12, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [115, 0, 8]
+        },
+        "Left Arm": {
+          "rot": [160, 0, -8]
+        },
+        "Right Leg": {
+          "rot": [55, 0, 0]
+        },
+        "Left Leg": {
+          "rot": [10, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 1,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-4, 0, 0]
+        },
+        "Head": {
+          "rot": [12, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [160, 0, 8]
+        },
+        "Left Arm": {
+          "rot": [115, 0, -8]
+        },
+        "Right Leg": {
+          "rot": [10, 0, 0]
+        },
+        "Left Leg": {
+          "rot": [55, 0, 0]
+        }
+      }
+    }
+  ],
+  "markers": [],
+  "length": 1
+}

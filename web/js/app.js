@@ -16,6 +16,7 @@
     playing: false,
     speed: 1,
     loopPreview: true,
+    onion: false,
     selected: null,
     clipboard: null,
     undo: [], redo: [],
@@ -47,6 +48,11 @@
     state.anim = JSON.parse(state.redo.pop());
     afterLoad(false);
   }
+  // Small per-browser UI preferences (prop, onion skin).
+  const prefs = {
+    get(k, d) { try { const v = localStorage.getItem('nineanimator.pref.' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem('nineanimator.pref.' + k, JSON.stringify(v)); } catch (e) { /* ignore */ } },
+  };
   function save() {
     try { localStorage.setItem(STORE_KEY, snapshot()); } catch (e) { /* storage unavailable */ }
   }
@@ -82,7 +88,19 @@
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', themeChanged);
     new MutationObserver(themeChanged).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   }
-  function drawPose() { viewer.setPose(C.sampleAll(state.anim, state.time)); }
+  function drawPose() {
+    viewer.setPose(C.sampleAll(state.anim, state.time));
+    drawGhosts();
+  }
+  /** Onion skin: neighbouring keyframes as translucent copies (paused only). */
+  function drawGhosts() {
+    if (!state.onion || state.playing) { viewer.setGhosts(null); return; }
+    const t = snap(state.time);
+    const ks = state.anim.keyframes;
+    const prev = [...ks].reverse().find((k) => k.time < t - 1e-4);
+    const next = ks.find((k) => k.time > t + 1e-4);
+    viewer.setGhosts([prev ? C.sampleAll(state.anim, prev.time) : null, next ? C.sampleAll(state.anim, next.time) : null]);
+  }
 
   // ---------------------------------------------------------------
   // Editing
@@ -165,7 +183,7 @@
   function pause() {
     const was = state.playing;
     state.playing = false;
-    if (was) setTimeout(() => { renderInspector(); renderPlayhead(); });
+    if (was) setTimeout(() => { renderInspector(); renderPlayhead(); drawGhosts(); });
     $('#btn-play').dataset.playing = 'false';
     $('#btn-play').setAttribute('aria-label', 'เล่น');
   }
@@ -430,7 +448,7 @@
     el.addEventListener('pointerdown', (e) => {
       e.stopPropagation();
       pause();
-      el.setPointerCapture(e.pointerId);
+      try { el.setPointerCapture(e.pointerId); } catch (err) { /* synthetic or finished pointer */ }
       const x0 = e.clientX;
       let moved = false;
       const move = (ev) => {
@@ -472,7 +490,7 @@
     const area = $('#tl-tracks');
     area.addEventListener('pointerdown', (e) => {
       if (e.target.closest('.key, .flag')) return;
-      area.setPointerCapture(e.pointerId);
+      try { area.setPointerCapture(e.pointerId); } catch (err) { /* synthetic or finished pointer */ }
       scrub(e);
       const move = (ev) => scrub(ev);
       const up = () => { area.removeEventListener('pointermove', move); area.removeEventListener('pointerup', up); };
@@ -657,6 +675,8 @@
       if (!id) return;
       const a = P.get(id);
       if (a) loadAnim(C.convertRig(a, state.anim.rig), `โหลดท่า "${a.name}" แล้ว`);
+      const info = P.info(id);
+      if (info && info.prop) setProp(info.prop);
       e.target.value = '';
       play();
     });
@@ -668,7 +688,10 @@
     $('#btn-rbxmx').addEventListener('click', () => {
       try { download(C.toRbxmx(state.anim), fileName('.rbxmx'), 'application/xml'); } catch (e) { toast(e.message, 'error'); }
     });
-    $('#show-sword').addEventListener('change', (e) => { viewer.showSword = e.target.checked; drawPose(); });
+    $('#prop').addEventListener('change', (e) => setProp(e.target.value));
+    $('#onion').addEventListener('change', (e) => { state.onion = e.target.checked; prefs.set('onion', state.onion); drawGhosts(); });
+    $('#btn-faster').addEventListener('click', () => retime(0.8));
+    $('#btn-slower').addEventListener('click', () => retime(1.25));
     $$('[data-view]').forEach((b) => b.addEventListener('click', () => viewer.setView(b.dataset.view)));
     $('#copy-fallback').addEventListener('blur', (e) => { e.target.hidden = true; });
 
@@ -693,6 +716,15 @@
       else if (e.key === 'Escape') select(null);
     });
   }
+  function setProp(name) {
+    $('#prop').value = name;
+    viewer.setProp(name);
+    prefs.set('prop', name);
+  }
+  function retime(factor) {
+    pause();
+    loadAnim(C.retime(state.anim, factor), factor < 1 ? `เร็วขึ้นแล้ว ยาว ${fmt(state.anim.length * factor)} วิ` : `ช้าลงแล้ว ยาว ${fmt(state.anim.length * factor)} วิ`);
+  }
   function stepKey(dir) {
     const t = snap(state.time);
     const ks = state.anim.keyframes;
@@ -702,10 +734,15 @@
 
   function boot() {
     const sel = $('#preset');
-    for (const p of P.LIST) {
-      const o = document.createElement('option');
-      o.value = p.id; o.textContent = p.label;
-      sel.appendChild(o);
+    for (const [cat, label] of P.CATEGORIES) {
+      const group = document.createElement('optgroup');
+      group.label = label;
+      for (const p of P.LIST.filter((x) => x.cat === cat)) {
+        const o = document.createElement('option');
+        o.value = p.id; o.textContent = p.label;
+        group.appendChild(o);
+      }
+      sel.appendChild(group);
     }
     initViewer();
     window.NineApp = { state, get viewer() { return viewer; } }; // handy for debugging in the console
@@ -718,6 +755,9 @@
     const res = restored ? C.validate(restored) : null;
     state.anim = res && res.ok ? res.anim : P.get('slash');
     viewer.setRig(state.anim.rig);
+    setProp(prefs.get('prop', 'sword'));
+    state.onion = prefs.get('onion', false) === true;
+    $('#onion').checked = state.onion;
     state.selected = state.anim.rig === 'R15' ? 'RightUpperArm' : 'Right Arm';
     viewer.setSelected(state.selected);
     renderAll();

@@ -78,3 +78,51 @@ test('rbxmx: only keyed joints get weight 1, ancestors weight 0', () => {
   assert.match(xml, /KeyframeMarker[\s\S]*<string name="Name">Hit<\/string>/);
   assert.strictEqual((xml.match(/class="Keyframe"/g) || []).length, 3);
 });
+
+test('retime scales keys, markers and length; keeps order', () => {
+  const a = C.validate(P.get('combo')).anim;
+  const fast = C.retime(a, 0.8);
+  assert.ok(Math.abs(fast.length - a.length * 0.8) < 0.011);
+  assert.strictEqual(fast.keyframes.length, a.keyframes.length);
+  for (let i = 1; i < fast.keyframes.length; i++) assert.ok(fast.keyframes[i].time > fast.keyframes[i - 1].time);
+  assert.ok(Math.abs(fast.markers[0].time - a.markers[0].time * 0.8) < 0.011);
+  const crowded = C.retime({ ...a, keyframes: [{ time: 0, poses: {} }, { time: 0.01, poses: {} }, { time: 0.02, poses: {} }] }, 0.1);
+  assert.deepStrictEqual(crowded.keyframes.map((k) => k.time), [0, 0.01, 0.02]);
+});
+
+test('presets never jump 175°+ between keys (slerp would take the other way round)', () => {
+  const angle = (ra, rb) => {
+    const a = C.eulerToM3(ra), b = C.eulerToM3(rb);
+    // trace of a^T b = 1 + 2cos(theta)
+    let tr = 0;
+    for (let i = 0; i < 3; i++) for (let k = 0; k < 3; k++) tr += a[k * 3 + i] * b[k * 3 + i];
+    return Math.acos(Math.max(-1, Math.min(1, (tr - 1) / 2))) * 180 / Math.PI;
+  };
+  for (const p of P.LIST) {
+    const a = C.validate(p.make()).anim;
+    const joints = new Set(a.keyframes.flatMap((k) => Object.keys(k.poses)));
+    for (const j of joints) {
+      const keys = a.keyframes.filter((k) => k.poses[j]);
+      for (let i = 1; i < keys.length; i++) {
+        const d = angle(keys[i - 1].poses[j].rot, keys[i].poses[j].rot);
+        assert.ok(d < 175, `${p.id} ${j} ${keys[i - 1].time}->${keys[i].time}: ${d.toFixed(1)}°`);
+      }
+    }
+  }
+});
+
+test('every preset has a category and a known prop', () => {
+  const cats = new Set(P.CATEGORIES.map((c) => c[0]));
+  for (const p of P.LIST) {
+    assert.ok(cats.has(p.cat), p.id);
+    assert.ok(['none', 'sword', 'bow', 'shield'].includes(p.prop), p.id);
+  }
+});
+
+test('validate warns about turns of 180° or more between keys', () => {
+  const k = (t, x) => ({ time: t, poses: { RightUpperArm: { rot: [x, 0, 0] } } });
+  assert.strictEqual(C.validate({ rig: 'R15', keyframes: [k(0, 0), k(1, 200)] }).warnings.length, 1);
+  assert.strictEqual(C.validate({ rig: 'R15', keyframes: [k(0, 0), k(1, 179)] }).warnings.length, 1);
+  assert.strictEqual(C.validate({ rig: 'R15', keyframes: [k(0, 0), k(1, 120), k(2, 240)] }).warnings.length, 0);
+  assert.strictEqual(C.validate({ rig: 'R15', keyframes: [k(0, -90), k(1, 180)] }).warnings.length, 0);
+});
