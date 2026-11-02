@@ -180,3 +180,15 @@ test('Move markers use "<direction> <speed> <seconds>" (what GAME_CODE.md parses
   }
   assert.ok(count >= 6);
 });
+
+test('long combos: numbered Hits, a Window after every step but the last', () => {
+  for (const p of P.LIST.filter((x) => x.cat === 'combo')) {
+    const a = p.make();
+    const hits = a.markers.filter((m) => m.name === 'Hit');
+    const windows = a.markers.filter((m) => m.name === 'Window');
+    assert.ok(hits.length >= 4, p.id);
+    assert.deepStrictEqual(hits.map((m) => m.value), hits.map((_, i) => String(i + 1)), p.id);
+    assert.strictEqual(windows.length, hits.length - 1, p.id);
+    windows.forEach((w, i) => assert.ok(w.time > hits[i].time && w.time < hits[i + 1].time, `${p.id} window ${i + 1}`));
+  }
+});

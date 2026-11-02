@@ -321,6 +321,70 @@ MoveMarker.attach(track, player.Character)
 track:Play()
 ```
 
+## 6. คอมโบยาว: กดต่อถึงจะไปจังหวะต่อไป (marker `Window`)
+
+ท่าในหมวด **คอมโบยาว** แต่ละท่าเป็นแอนิเมชันยาวไฟล์เดียว เช่น คอมโบดาบยาว 6 จังหวะ ในไฟล์มี marker 2 แบบ:
+- `Hit` ค่า `1`, `2`, `3`, ...: ตรงจังหวะที่ตีโดนแต่ละครั้ง
+- `Window` ค่า `1`, `2`, ...: ตอนท้ายของแต่ละจังหวะ ถ้าผู้เล่นยังไม่ได้กดโจมตีครั้งต่อไปก่อนถึงจุดนี้ คอมโบจะหยุดและกลับไปยืนท่าปกติ
+
+แบบนี้ทำคอมโบได้โดยใช้ AnimationId แค่ตัวเดียว ไม่ต้องตัดเป็นหลายไฟล์
+
+```lua
+-- LocalScript ใน Tool (ใช้ร่วมกับ RemoteEvent "Hit" แบบข้อ 2 และ MoveMarker ข้อ 5)
+local tool = script.Parent
+local player = game:GetService("Players").LocalPlayer
+local hitEvent = tool:WaitForChild("Hit")
+local COMBO_ID = "rbxassetid://0" -- เช่น คอมโบดาบยาว 6 จังหวะ
+
+local track, queued
+
+local function setup()
+	local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+	local animator = humanoid and humanoid:FindFirstChildOfClass("Animator")
+	if not animator then
+		return
+	end
+	local anim = Instance.new("Animation")
+	anim.AnimationId = COMBO_ID
+	track = animator:LoadAnimation(anim)
+
+	track:GetMarkerReachedSignal("Hit"):Connect(function(step)
+		hitEvent:FireServer(step) -- step = "1", "2", ... ใช้ทำดาเมจต่างกันแต่ละจังหวะได้
+	end)
+	track:GetMarkerReachedSignal("Window"):Connect(function()
+		if queued then
+			queued = false -- กดไว้แล้ว: เล่นจังหวะต่อไปเลย
+		else
+			track:Stop(0.25) -- ไม่ได้กด: จบคอมโบ
+		end
+	end)
+end
+
+tool.Equipped:Connect(function()
+	if not track then
+		setup()
+	end
+end)
+
+tool.Activated:Connect(function()
+	if not track then
+		return
+	end
+	if track.IsPlaying then
+		queued = true -- จำไว้ว่ากดแล้ว จะไปต่อเมื่อถึง Window
+	else
+		queued = false
+		track:Play(0.05)
+	end
+end)
+
+tool.Unequipped:Connect(function()
+	if track then
+		track:Stop(0.1)
+	end
+end)
+```
+
 ## Priority ใช้ตัวไหน
 
 | ท่า | Priority | เหตุผล |

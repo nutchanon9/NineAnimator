@@ -158,6 +158,50 @@
     return out;
   }
   const mirror = (poses) => C.mirrorPoses(C.RIGS.R15, poses);
+
+  const ARM_JOINTS = ['RightUpperArm', 'RightLowerArm', 'RightHand', 'LeftUpperArm', 'LeftLowerArm', 'LeftHand'];
+  /**
+   * wield() that remembers its previous result and starts each solve from it,
+   * so the arms move smoothly from one combo key to the next.
+   */
+  function wielder(point, opts) {
+    let prev = null;
+    return (torso, grip, dir, extra) => {
+      const seed = {};
+      if (prev) for (const n of ARM_JOINTS) if (prev[n]) seed[n] = prev[n];
+      prev = wield(merge(seed, torso), grip, dir, point, opts);
+      return merge(prev, extra || {});
+    };
+  }
+
+  /**
+   * Long combo as one animation. Each step: windup `w` -> (optional `mid`
+   * keys) -> strike `s` -> hold. Adds "Hit" at each strike and "Window" at the
+   * end of every step except the last: a game script stops the track there
+   * unless the player pressed attack again (docs/GAME_CODE.md section 6).
+   */
+  function combo(name, start, steps, end) {
+    let t = 0;
+    const keys = [kf(0, start, 'Cubic', 'Out')];
+    const markers = [];
+    steps.forEach((st, i) => {
+      t += st.tw || 0.16;
+      keys.push(kf(r(t), st.w, 'Cubic', st.mid ? 'Out' : 'In'));
+      const strikeStart = t;
+      for (const m of st.mid || []) { t += st.tm || 0.08; keys.push(kf(r(t), m, 'Linear')); }
+      t += st.ts || 0.12;
+      keys.push(kf(r(t), st.s, 'Cubic', 'Out'));
+      markers.push({ time: r(t - 0.02), name: 'Hit', value: String(i + 1) });
+      if (st.move) markers.push({ time: r(strikeStart), name: 'Move', value: st.move });
+      t += st.th || 0.14;
+      keys.push(kf(r(t), st.h || st.s, 'Cubic', 'InOut'));
+      if (i < steps.length - 1) markers.push({ time: r(t), name: 'Window', value: String(i + 1) });
+    });
+    t += 0.45;
+    keys.push(kf(r(t), end || start));
+    markers.sort((a, b) => a.time - b.time);
+    return anim(name, 'Action', false, r(t), keys, markers);
+  }
   const LS_GRIP = [0, -0.6, 0], GS_GRIP = [0, -0.7, 0], HG_GRIP = [0, 0.3, -0.6];
   // Two-handed holds (see wield): b = small breathing offset in degrees.
   const LS = { guard: (b) => wield(turn(-2 - b, 15), [0, -0.35 - b * 0.005, -1.0], [0, 0.57, -0.82], LS_GRIP) };
@@ -1048,6 +1092,137 @@
         return anim('SitGround', 'Idle', true, 2.4, [kf(0, p(0)), kf(1.2, p(2.5)), kf(2.4, p(0))]);
       },
     },
+
+    // ===== Long combos (v0.7): one animation, "Hit" per strike, "Window" between steps =====
+    {
+      id: 'cb_fist', cat: 'combo', label: 'คอมโบมือเปล่า 5 จังหวะ', prop: 'none',
+      make: () => {
+        const L = legs(25, -45);
+        const g = (p) => merge(GUARD, L, p);
+        return combo('ComboFist5', g({}), [
+          { // 1 left jab
+            w: g({ UpperTorso: rot(-5, 8), LeftUpperArm: rot(55, 0, 15), LeftLowerArm: rot(120) }), tw: 0.08,
+            s: g({ UpperTorso: rot(-6, -18), Head: rot(4, 14), LeftUpperArm: rot(90, 0, 8), LeftLowerArm: rot(5) }), ts: 0.08, th: 0.1,
+          },
+          { // 2 right cross
+            w: g({ UpperTorso: rot(-5, -15), RightUpperArm: rot(45, 0, -5), RightLowerArm: rot(120) }), tw: 0.08,
+            s: g({ UpperTorso: rot(-8, 28), Head: rot(3, -22), RightUpperArm: rot(90, 0, -8), RightLowerArm: rot(5), LeftUpperArm: rot(55, 0, 20) }), ts: 0.09, th: 0.12,
+          },
+          { // 3 left hook
+            w: g({ UpperTorso: rot(-4, 25), Head: rot(2, -20), LeftUpperArm: rot(80, 0, -55), LeftLowerArm: rot(90) }), tw: 0.12,
+            s: g({ UpperTorso: rot(-6, -35), Head: rot(4, 28), LeftUpperArm: rot(85, 0, 15), LeftLowerArm: rot(95) }), ts: 0.1, th: 0.14,
+          },
+          { // 4 right uppercut
+            w: merge(GUARD, legs(45, -85, { spread: 8 }), { UpperTorso: rot(-14, -15), Head: rot(10, 12), RightUpperArm: rot(10, 0, -10), RightLowerArm: rot(100) }), tw: 0.14,
+            s: merge(GUARD, legs(5, -10, { spread: 6 }), { UpperTorso: rot(10, 30), Head: rot(-8, -24), RightUpperArm: rot(150, 0, -20), RightLowerArm: rot(55) }), ts: 0.1, th: 0.16,
+          },
+          { // 5 roundhouse kick (right)
+            w: merge(GUARD, { LowerTorso: pos(0, 20, 8, [0, 0, 0]), LeftUpperLeg: rot(-5, 0, -8), LeftLowerLeg: rot(-10), RightUpperLeg: rot(55, 0, 35), RightLowerLeg: rot(-110), RightFoot: rot(0), UpperTorso: rot(0, -15) }), tw: 0.16,
+            s: merge(GUARD, { LowerTorso: pos(0, 45, 18, [0, 0, 0]), LeftUpperLeg: rot(-5, 0, -18), LeftLowerLeg: rot(-10), RightUpperLeg: rot(70, 0, 60), RightLowerLeg: rot(-10), RightFoot: rot(20), UpperTorso: rot(0, -30, -8), Head: rot(0, -15, 8) }), ts: 0.1, th: 0.2,
+          },
+        ]);
+      },
+    },
+    {
+      id: 'cb_sword', cat: 'combo', label: 'คอมโบดาบมือเดียว 5 จังหวะ', prop: 'sword',
+      make: () => {
+        const W = wielder(null);
+        const guardL = { LeftUpperArm: rot(25, 0, -12), LeftLowerArm: rot(60), LeftHand: rot(0) };
+        const w = (torso, grip, dir, extra) => W(torso, grip, dir, merge(guardL, extra || {}));
+        const start = merge(SWORD_READY, STAND);
+        const spinArm = w(turn(-6, 0), [1.1, 0.05, -0.6], [0.8, 0, -0.6], STAND);
+        const spin = (y) => merge(spinArm, { LowerTorso: pos(0, y, 0, [0, -0.1, 0]) });
+        return combo('ComboSword5', start, [
+          { w: w(turn(5, -25), [0.9, 1.0, -0.4], [0.3, 0.6, 0.75], STAND), s: w(turn(-12, 25), [-0.2, -0.5, -1.0], [-0.5, -0.5, -0.7], STAND) },
+          { w: w(turn(-5, 35), [-0.3, 0, -0.8], [-0.9, 0.1, 0.4], STAND), s: w(turn(-6, -35), [0.9, 0, -0.9], [0.9, 0, -0.4], STAND) },
+          {
+            w: w(turn(-5, 30), [0.7, -0.2, -0.2], [0, 0, -1], legs(25, -45)),
+            s: w(turn(-10, -15), [0.3, 0.1, -1.55], [0, 0, -1], merge(legs(30, -50, { spread: 8 }), { LowerTorso: pos(-6, 0, 0, [0, -0.25, -0.3]) })), move: 'forward 30 0.15',
+          },
+          { w: w(turn(-15, 20), [-0.3, -0.8, -0.8], [-0.4, -0.6, -0.7], legs(30, -55)), s: w(turn(8, -25), [0.8, 0.9, -0.8], [0.4, 0.8, -0.3], STAND) },
+          { w: spin(0), mid: [spin(-90), spin(180), spin(90)], tm: 0.09, s: spin(0), ts: 0.09, th: 0.2 },
+        ], start);
+      },
+    },
+    {
+      id: 'cb_longsword', cat: 'combo', label: 'คอมโบดาบยาว 6 จังหวะ', prop: 'longsword',
+      make: () => {
+        const w = wielder(LS_GRIP);
+        const start = merge(LS.guard(0), STAND);
+        return combo('ComboLongSword6', start, [
+          { w: merge(w(turn(8, 5), [0.1, 1.1, -0.5], [0, -0.3, 0.95]), STAND), s: merge(w(turn(-15, 0), [0, -0.4, -1.05], [0, -0.35, -0.94]), legs(25, -45)) },
+          { w: merge(w(turn(-15, 20), [-0.1, -0.6, -0.8], [-0.5, -0.5, -0.7]), legs(30, -55)), s: merge(w(turn(10, -20), [0.5, 1.0, -0.8], [0.3, 0.9, 0.3]), STAND) },
+          { w: merge(w(turn(0, -40), [0.7, -0.1, -0.6], [0.8, 0.1, 0.6]), legs(20, -35)), s: merge(w(turn(-5, 40), [-0.2, -0.1, -0.95], [-0.8, 0, -0.6]), legs(25, -45)) },
+          { w: merge(w(turn(-5, 45), [-0.2, -0.1, -0.75], [-0.85, 0.05, 0.5]), legs(25, -45)), s: merge(w(turn(-5, -40), [0.7, -0.1, -0.7], [0.8, 0, -0.6]), legs(25, -45)) },
+          {
+            w: merge(w(turn(-5, 25), [0.3, -0.4, -0.5], [0, 0.05, -1]), legs(30, -55)),
+            s: merge(w(turn(-12, -10), [0.1, 0, -1.45], [0, 0, -1]), legs(30, -50, { spread: 8 }), { LowerTorso: pos(-6, 0, 0, [0, -0.25, -0.3]) }), move: 'forward 30 0.15',
+          },
+          {
+            w: merge(w(turn(14, -5), [0.1, 1.2, -0.4], [0, -0.4, 0.9]), STAND), tw: 0.3,
+            s: merge(w(turn(-25, 0), [0, -0.5, -1.0], [0, -0.55, -0.83]), legs(45, -80, { spread: 12, lean: -8 })), ts: 0.12, th: 0.3,
+          },
+        ], start);
+      },
+    },
+    {
+      id: 'cb_dual', cat: 'combo', label: 'คอมโบดาบคู่ 6 จังหวะ', prop: 'dual',
+      make: () => {
+        const L = legs(30, -55, { spread: 10 });
+        const g = (p) => merge(DB_GUARD, L, p);
+        const both = (x, z, e, h, hy) => ({ RightUpperArm: rot(x, 0, z), LeftUpperArm: rot(x, 0, -z), RightLowerArm: rot(e), LeftLowerArm: rot(e), RightHand: rot(h, hy || 0), LeftHand: rot(h, -(hy || 0)) });
+        const spinArms = merge(both(10, 85, 10, -10), { UpperTorso: rot(-8), Head: rot(4) }, STAND);
+        const spin = (y) => merge(spinArms, { LowerTorso: pos(0, y, 0, [0, -0.15, 0]) });
+        return combo('ComboDual6', g({}), [
+          { w: g({ RightUpperArm: rot(120, 0, 40), RightLowerArm: rot(40), RightHand: rot(0), UpperTorso: rot(0, -20) }), tw: 0.1, s: g({ RightUpperArm: rot(30, 0, -35), RightLowerArm: rot(10), RightHand: rot(-40), UpperTorso: rot(-10, 20) }), ts: 0.08, th: 0.08 },
+          { w: g({ LeftUpperArm: rot(120, 0, -40), LeftLowerArm: rot(40), LeftHand: rot(0), UpperTorso: rot(0, 20) }), tw: 0.1, s: g({ LeftUpperArm: rot(30, 0, 35), LeftLowerArm: rot(10), LeftHand: rot(-40), UpperTorso: rot(-10, -20) }), ts: 0.08, th: 0.08 },
+          { w: g(merge(both(70, -40, 30, 0, 90), { UpperTorso: rot(-8) })), tw: 0.12, s: g(merge(both(80, 70, 10, 0, 90), { UpperTorso: rot(-4) })), ts: 0.09, th: 0.12 },
+          { w: g(merge(both(150, 30, 30, 0), { UpperTorso: rot(10) })), tw: 0.14, s: g(merge(both(40, -40, 10, -40), { UpperTorso: rot(-15) })), ts: 0.09, th: 0.14 },
+          { w: spin(0), mid: [spin(90), spin(180), spin(-90), spin(0), spin(90), spin(180), spin(-90)], tm: 0.06, s: spin(0), ts: 0.06, th: 0.12 },
+          {
+            w: merge(both(-30, 20, 60, -40), legs(40, -75, { spread: 10 }), { UpperTorso: rot(-10) }), tw: 0.16,
+            s: merge(both(90, -8, 5, -90), { LowerTorso: pos(-15, 0, 0, [0, -0.4, -0.35]), RightUpperLeg: rot(75, 0, 4), RightLowerLeg: rot(-75), RightFoot: rot(15), LeftUpperLeg: rot(-5, 0, -4), LeftLowerLeg: rot(-35), LeftFoot: rot(30), UpperTorso: rot(-10), Head: rot(20) }),
+            ts: 0.1, th: 0.25, move: 'forward 40 0.18',
+          },
+        ], g({}));
+      },
+    },
+    {
+      id: 'cb_greatsword', cat: 'combo', label: 'คอมโบดาบใหญ่ 4 จังหวะ', prop: 'greatsword',
+      make: () => {
+        const w = wielder(GS_GRIP);
+        const start = merge(GS.low(0), legs(25, -45, { spread: 10 }));
+        const up = (t) => merge(w(turn(12, -10), [0.1, 1.2, -0.4], [0, -0.5, 0.87]), t);
+        return combo('ComboGreatSword4', start, [
+          { w: merge(w(turn(4, 0), [0.1, 0.4, -1.1], [0, 0.9, -0.43]), legs(20, -35, { spread: 11 })), tw: 0.2, mid: [up(legs(15, -25, { spread: 12 }))], tm: 0.2, s: merge(w(turn(-30, 5), [0, -0.5, -1.0], [0, -0.55, -0.83]), legs(45, -80, { spread: 14, lean: -8 })), ts: 0.14, th: 0.28 },
+          { w: merge(w(turn(-25, 10), [0, -0.6, -0.95], [0, -0.5, -0.86]), legs(40, -72, { spread: 12 })), tw: 0.12, s: merge(w(turn(10, -15), [0.3, 1.0, -0.7], [0.1, 0.9, 0.4]), legs(10, -15, { spread: 10 })), ts: 0.16, th: 0.22 },
+          { w: merge(w(turn(0, -50), [0.7, -0.3, -0.6], [0.8, 0.1, 0.6]), legs(25, -45, { spread: 12, twist: -20 })), tw: 0.3, s: merge(w(turn(-5, 45), [-0.2, -0.3, -0.9], [-0.8, 0, -0.6]), legs(30, -55, { spread: 12, twist: 20 })), ts: 0.2, th: 0.26 },
+          {
+            w: merge(w(turn(4, 0), [0.1, 0.4, -1.1], [0, 0.9, -0.43]), legs(40, -75, { spread: 12 })), tw: 0.25,
+            mid: [up({ LowerTorso: pos(0, 0, 0, [0, 0.7, 0]), RightUpperLeg: rot(50, 0, 8), LeftUpperLeg: rot(50, 0, -8), RightLowerLeg: rot(-80), LeftLowerLeg: rot(-80), RightFoot: rot(20), LeftFoot: rot(20) })], tm: 0.22,
+            s: merge(w(turn(-32, 5), [0, -0.55, -1.0], [0, -0.6, -0.8]), legs(55, -100, { spread: 14, lean: -10 })), ts: 0.14, th: 0.4, move: 'up 22 0.15',
+          },
+        ], start);
+      },
+    },
+    {
+      id: 'cb_sns', cat: 'combo', label: 'คอมโบดาบโล่ 5 จังหวะ', prop: 'swordshield',
+      make: () => {
+        const shield = { LeftUpperArm: rot(50, 0, 25), LeftLowerArm: rot(105), LeftHand: rot(0), LeftHandle: rot(0, 90) };
+        const g = (p) => merge(shield, STAND, p);
+        const start = g({ RightUpperArm: rot(20, 0, 5), RightLowerArm: rot(70), RightHand: rot(-40), UpperTorso: rot(0, 10), Head: rot(0, -8) });
+        return combo('ComboSwordShield5', start, [
+          { w: g(merge(turn(5, -20), { RightUpperArm: rot(150, 0, 30), RightLowerArm: rot(30), RightHand: rot(10) })), s: g(merge(turn(-12, 25), { RightUpperArm: rot(35, 0, -30), RightLowerArm: rot(5), RightHand: rot(-50) })) },
+          { w: g(merge(turn(-5, 35), { RightUpperArm: rot(70, 0, -55), RightLowerArm: rot(30), RightHand: rot(-45, 60) })), s: g(merge(turn(-5, -30), { RightUpperArm: rot(80, 0, 70), RightLowerArm: rot(10), RightHand: rot(-45, -60) })) },
+          {
+            w: merge(STAND, turn(0, -25), { RightUpperArm: rot(20, 0, 10), RightLowerArm: rot(70), RightHand: rot(-40), LeftUpperArm: rot(10, 0, 10), LeftLowerArm: rot(90), LeftHand: rot(0), LeftHandle: rot(0, 90) }), tw: 0.18,
+            s: merge(legs(25, -45, { spread: 8 }), turn(-10, 30), { RightUpperArm: rot(10, 0, 10), RightLowerArm: rot(60), RightHand: rot(-40), LeftUpperArm: rot(85, 0, 15), LeftLowerArm: rot(15), LeftHand: rot(0), LeftHandle: rot(0, 0, 90) }), move: 'forward 20 0.12',
+          },
+          { w: g(merge(turn(-5, 25), { RightUpperArm: rot(20, 0, 10), RightLowerArm: rot(110), RightHand: rot(-110) })), tw: 0.14, s: merge(shield, legs(30, -50, { spread: 8 }), { LowerTorso: pos(-6, 0, 0, [0, -0.25, -0.3]) }, turn(-10, -15), { RightUpperArm: rot(90, 0, -5), RightLowerArm: rot(5), RightHand: rot(-90) }) },
+          { w: g(merge(turn(-15, 20), legs(30, -55), { RightUpperArm: rot(10, 0, -30), RightLowerArm: rot(40), RightHand: rot(-90) })), tw: 0.16, s: g(merge(turn(8, -25), { RightUpperArm: rot(150, 0, 15), RightLowerArm: rot(20), RightHand: rot(0) })), ts: 0.12, th: 0.25 },
+        ], start);
+      },
+    },
   ];
 
   const CATEGORIES = [
@@ -1061,6 +1236,7 @@
     ['heavygun', 'อาวุธ: ปืนใหญ่'],
     ['bow', 'อาวุธ: ธนู'],
     ['sns', 'อาวุธ: ดาบโล่'],
+    ['combo', 'คอมโบยาว'],
   ];
 
   return {
