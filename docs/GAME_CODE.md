@@ -393,6 +393,47 @@ tool.Unequipped:Connect(function()
 end)
 ```
 
+## 7. สกิลพิเศษ (อัลติเมต): ใช้ marker คุมเอฟเฟกต์
+
+ท่าในหมวด **สกิลพิเศษ** มี marker สำหรับเอฟเฟกต์และดาเมจ:
+
+| Marker | ค่า | ใช้ทำอะไร |
+|---|---|---|
+| `Charge` | `start` / `full` | เริ่มออร่า, เสียงชาร์จเต็ม |
+| `Hit` | `1`, `2`, ... หรือ `Finish` / `Quake` / `Barrier` / `Rush` | ดาเมจแต่ละจังหวะ (`Finish` = ท่าปิด แรงสุด) |
+| `Land` | - | ลงพื้น: กล้องสั่น, ฝุ่น |
+| `Move` | `<ทิศ> <ความเร็ว> <วินาที>` | พุ่ง/กระโดด (ใช้สคริปต์ข้อ 5) |
+| `Fire` | `beam-start` / `beam-end` / `blast` | ปืนใหญ่: ทำดาเมจต่อเนื่องระหว่าง start ถึง end แล้วระเบิดนัดสุดท้าย |
+| `Shoot` | `Up` / `Finish` | ธนู: ยิงขึ้นฟ้า และนัดสุดท้าย |
+| `Rain` | - | ธนู: จังหวะที่ฝนธนูตกลงมา |
+| `Sheathe` | - | ดาบยาว: เก็บดาบ (เล่นเสียง/เอฟเฟกต์ตอนดาบเข้าฝัก) |
+
+```lua
+-- ตัวอย่าง: ใส่กล้องสั่นตอนลงพื้น และดาเมจต่อเนื่องของลำแสงปืนใหญ่
+local camera = workspace.CurrentCamera
+skillTrack:GetMarkerReachedSignal("Land"):Connect(function()
+	for i = 1, 6 do
+		camera.CFrame = camera.CFrame * CFrame.new(math.random(-10, 10) / 50, math.random(-10, 10) / 50, 0)
+		task.wait(0.02)
+	end
+end)
+
+local beaming = false
+skillTrack:GetMarkerReachedSignal("Fire"):Connect(function(value)
+	if value == "beam-start" then
+		beaming = true
+		while beaming do
+			beamEvent:FireServer() -- server ทำดาเมจทุก 0.1 วิ ระหว่างยิงลำแสง
+			task.wait(0.1)
+		end
+	elseif value == "beam-end" then
+		beaming = false
+	elseif value == "blast" then
+		blastEvent:FireServer()
+	end
+end)
+```
+
 ## Priority ใช้ตัวไหน
 
 | ท่า | Priority | เหตุผล |

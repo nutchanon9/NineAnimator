@@ -1285,6 +1285,174 @@
         ], rest);
       },
     },
+
+    // ===== Special skills / ultimates (v0.9) =====
+    {
+      id: 'sk_fist', cat: 'skill', label: 'สกิล มือเปล่า: หมัดรัวพลังรวม', prop: 'none',
+      make: () => {
+        const L = legs(25, -45);
+        const gather = (b) => merge(legs(45 + b, -85 - b * 2, { spread: 14 }), { UpperTorso: rot(-5 - b, 0), Head: rot(5 + b), RightUpperArm: rot(-20, 0, 20), RightLowerArm: rot(100), LeftUpperArm: rot(-20, 0, -20), LeftLowerArm: rot(100), RightHand: rot(0), LeftHand: rot(0) });
+        const lunge = legs(30, -50, { spread: 8 });
+        const punchR = merge(GUARD, lunge, { UpperTorso: rot(-8, 22), Head: rot(4, -18), RightUpperArm: rot(90, 0, -8), RightLowerArm: rot(5) });
+        const punchL = merge(GUARD, lunge, { UpperTorso: rot(-8, -22), Head: rot(4, 18), LeftUpperArm: rot(90, 0, 8), LeftLowerArm: rot(5) });
+        const keys = [kf(0, merge(GUARD, L), 'Cubic', 'Out'), kf(0.35, gather(0), 'Linear'), kf(0.9, gather(3), 'Cubic', 'In')];
+        const markers = [{ time: 0.35, name: 'Charge', value: 'start' }, { time: 0.9, name: 'Charge', value: 'full' }, { time: 1.0, name: 'Move', value: 'forward 22 0.55' }];
+        for (let i = 0; i < 8; i++) {
+          const t = r(1.0 + i * 0.07);
+          keys.push(kf(t, i % 2 ? punchL : punchR, 'Linear'));
+          markers.push({ time: t, name: 'Hit', value: String(i + 1) });
+        }
+        keys.push(kf(1.75, merge(GUARD, legs(40, -75, { spread: 10 }), { UpperTorso: rot(-5, -30), Head: rot(0, 24), RightUpperArm: rot(30, 0, 10), RightLowerArm: rot(120) }), 'Cubic', 'In'));
+        keys.push(kf(1.85, merge(GUARD, legs(30, -50, { spread: 8 }), { LowerTorso: pos(-8, 0, 0, [0, -0.25, -0.4]), UpperTorso: rot(-12, 35), Head: rot(6, -28), RightUpperArm: rot(92, 0, -5), RightLowerArm: rot(0) }), 'Cubic', 'Out'));
+        keys.push(kf(2.2, merge(GUARD, legs(30, -50, { spread: 8 }), { LowerTorso: pos(-8, 0, 0, [0, -0.25, -0.4]), UpperTorso: rot(-12, 33), Head: rot(6, -26), RightUpperArm: rot(90, 0, -5), RightLowerArm: rot(3) }), 'Cubic', 'InOut'));
+        keys.push(kf(2.6, merge(GUARD, L)));
+        markers.push({ time: 1.83, name: 'Hit', value: 'Finish' });
+        return anim('SkillFistRush', 'Action', false, 2.6, keys, markers);
+      },
+    },
+    {
+      id: 'sk_sword', cat: 'skill', label: 'สกิล ดาบ: เสยฟ้าหมุนฟาด', prop: 'sword',
+      make: () => {
+        const tuck = { RightUpperLeg: rot(60, 0, 6), LeftUpperLeg: rot(40, 0, -6), RightLowerLeg: rot(-90), LeftLowerLeg: rot(-70), RightFoot: rot(20), LeftFoot: rot(20) };
+        const guardL = { LeftUpperArm: rot(25, 0, -12), LeftLowerArm: rot(60), LeftHand: rot(0) };
+        const air = (y, h) => merge(tuck, { LowerTorso: pos(0, y, 0, [0, h, 0]), UpperTorso: rot(-6), Head: rot(4), RightUpperArm: rot(10, 0, 85), RightLowerArm: rot(10), RightHand: rot(-10), LeftUpperArm: rot(10, 0, -60), LeftLowerArm: rot(20) });
+        return anim('SkillSwordSkyfall', 'Action', false, 2.4, [
+          kf(0, merge(SWORD_READY, STAND), 'Cubic', 'Out'),
+          kf(0.3, merge(guardL, legs(50, -95, { spread: 10 }), { UpperTorso: rot(-15), Head: rot(12), RightUpperArm: rot(-30, 0, 20), RightLowerArm: rot(20), RightHand: rot(-40) }), 'Cubic', 'In'),
+          kf(0.4, merge(guardL, legs(20, -30, { spread: 8 }), { UpperTorso: rot(-5), Head: rot(4), RightUpperArm: rot(70, 0, 15), RightLowerArm: rot(10), RightHand: rot(-60) }), 'Linear'),
+          kf(0.5, merge(guardL, tuck, { LowerTorso: pos(0, 0, 0, [0, 1.2, 0]), UpperTorso: rot(8), Head: rot(-8), RightUpperArm: rot(170, 0, 10), RightLowerArm: rot(10), RightHand: rot(-80) }), 'Cubic', 'Out'),
+          kf(0.6, air(0, 1.3), 'Linear'), kf(0.7, air(90, 1.35), 'Linear'), kf(0.8, air(180, 1.35), 'Linear'), kf(0.9, air(-90, 1.3), 'Linear'), kf(1.0, air(0, 1.2), 'Cubic', 'Out'),
+          kf(1.1, merge(guardL, tuck, { LowerTorso: pos(0, 0, 0, [0, 1.0, 0]), UpperTorso: rot(8), Head: rot(-6), RightUpperArm: rot(170, 0, 15), RightLowerArm: rot(30), RightHand: rot(10) }), 'Cubic', 'In'),
+          kf(1.22, merge(guardL, legs(55, -100, { spread: 12, lean: -10 }), { UpperTorso: rot(-30), Head: rot(25), RightUpperArm: rot(35, 0, -15), RightLowerArm: rot(5), RightHand: rot(-60) }), 'Cubic', 'Out'),
+          kf(1.6, merge(guardL, legs(52, -96, { spread: 12, lean: -10 }), { UpperTorso: rot(-28), Head: rot(24), RightUpperArm: rot(32, 0, -15), RightLowerArm: rot(5), RightHand: rot(-60) }), 'Cubic', 'InOut'),
+          kf(2.4, merge(SWORD_READY, STAND)),
+        ], [
+          { time: 0.4, name: 'Move', value: 'up 35 0.18' }, { time: 0.48, name: 'Hit', value: '1' }, { time: 0.8, name: 'Hit', value: '2' },
+          { time: 1.2, name: 'Hit', value: 'Finish' }, { time: 1.22, name: 'Land', value: '' },
+        ]);
+      },
+    },
+    {
+      id: 'sk_longsword', cat: 'skill', label: 'สกิล ดาบยาว: ชักดาบพันคม', prop: 'longsword',
+      make: () => {
+        const leftHip = { LeftUpperArm: rot(-10, 0, -15), LeftLowerArm: rot(30), LeftHand: rot(0) };
+        const sheath = (b) => merge(wield(turn(-10, 25), [-0.55, -0.9 - b * 0.01, -0.45], [-0.2, -0.25, 0.95], [0, 0.45, 0]), legs(45 + b, -80 - b * 2, { spread: 12 }));
+        const dash = (b) => merge(wield(turn(-5, -35), [0.9, -0.3 - b * 0.01, -0.9], [0.95, 0.05, -0.3], null), leftHip, legs(45, -80, { spread: 14 }), { LowerTorso: pos(-10, 0, 0, [0, -0.55, -0.5]) });
+        const markers = [{ time: 0.4, name: 'Charge', value: 'start' }, { time: 1.0, name: 'Charge', value: 'full' }, { time: 1.0, name: 'Move', value: 'forward 60 0.12' }, { time: 1.1, name: 'Hit', value: '1' }];
+        [1.65, 1.72, 1.79, 1.86, 1.93].forEach((t, i) => markers.push({ time: t, name: 'Hit', value: String(i + 2) }));
+        markers.push({ time: 2.25, name: 'Sheathe', value: '' });
+        return anim('SkillLongSwordThousandCuts', 'Action', false, 2.9, [
+          kf(0, merge(LS.guard(0), STAND), 'Cubic', 'InOut'),
+          kf(0.4, sheath(0), 'Linear'), kf(1.0, sheath(3), 'Cubic', 'In'),
+          kf(1.06, merge(wield(turn(-8, 10), [0, -0.6, -1.0], [-0.3, 0, -0.95], null), leftHip, legs(45, -80, { spread: 13 })), 'Linear'),
+          kf(1.12, dash(0), 'Cubic', 'Out'), kf(1.6, dash(1), 'Linear'), kf(2.0, dash(1), 'Cubic', 'InOut'),
+          kf(2.25, merge(wield(turn(-5, 20), [-0.55, -0.9, -0.45], [-0.2, -0.25, 0.95], [0, 0.45, 0]), legs(10, -15)), 'Cubic', 'InOut'),
+          kf(2.9, merge(LS.guard(0), STAND)),
+        ], markers);
+      },
+    },
+    {
+      id: 'sk_dual', cat: 'skill', label: 'สกิล ดาบคู่: พายุใบมีด', prop: 'dual',
+      make: () => {
+        const arms = { RightUpperArm: rot(10, 0, 85), LeftUpperArm: rot(10, 0, -85), RightLowerArm: rot(10), LeftLowerArm: rot(10), RightHand: rot(-10), LeftHand: rot(-10), UpperTorso: rot(-8), Head: rot(4) };
+        const tuck = { RightUpperLeg: rot(45, 0, 6), LeftUpperLeg: rot(45, 0, -6), RightLowerLeg: rot(-70), LeftLowerLeg: rot(-70), RightFoot: rot(20), LeftFoot: rot(20) };
+        const keys = [kf(0, merge(DB_GUARD, legs(30, -55, { spread: 10 })), 'Cubic', 'In'), kf(0.25, merge(arms, legs(55, -100, { spread: 12 })), 'Linear')];
+        const markers = [{ time: 0.3, name: 'Move', value: 'up 16 0.6' }];
+        const ys = [90, 180, -90, 0];
+        for (let i = 0; i < 12; i++) {
+          const t = r(0.32 + i * 0.07), h = r(Math.min(1.0, (i + 1) * 0.1));
+          keys.push(kf(t, merge(arms, tuck, { LowerTorso: pos(0, ys[i % 4], 0, [0, h, 0]) }), 'Linear'));
+          if (i % 4 === 3) markers.push({ time: t, name: 'Hit', value: String((i + 1) / 4) });
+        }
+        keys.push(kf(1.25, merge(tuck, { LowerTorso: pos(0, 0, 0, [0, 0.6, 0]), UpperTorso: rot(10), Head: rot(-6), RightUpperArm: rot(150, 0, 30), LeftUpperArm: rot(150, 0, -30), RightLowerArm: rot(30), LeftLowerArm: rot(30), RightHand: rot(0), LeftHand: rot(0) }), 'Cubic', 'In'));
+        keys.push(kf(1.4, merge(legs(50, -90, { spread: 12, lean: -8 }), { UpperTorso: rot(-18), Head: rot(16), RightUpperArm: rot(40, 0, -40), LeftUpperArm: rot(40, 0, 40), RightLowerArm: rot(10), LeftLowerArm: rot(10), RightHand: rot(-40), LeftHand: rot(-40) }), 'Cubic', 'Out'));
+        keys.push(kf(1.8, merge(legs(48, -86, { spread: 12, lean: -8 }), { UpperTorso: rot(-16), Head: rot(15), RightUpperArm: rot(38, 0, -40), LeftUpperArm: rot(38, 0, 40), RightLowerArm: rot(12), LeftLowerArm: rot(12), RightHand: rot(-40), LeftHand: rot(-40) }), 'Cubic', 'InOut'));
+        keys.push(kf(2.4, merge(DB_GUARD, legs(30, -55, { spread: 10 }))));
+        markers.push({ time: 1.38, name: 'Hit', value: 'Finish' }, { time: 1.4, name: 'Land', value: '' });
+        return anim('SkillDualTempest', 'Action', false, 2.4, keys, markers);
+      },
+    },
+    {
+      id: 'sk_greatsword', cat: 'skill', label: 'สกิล ดาบใหญ่: ทุบพสุธา', prop: 'greatsword',
+      make: () => {
+        const w = wielder(GS_GRIP);
+        const up = (s, l) => merge(w(turn(12 + s, -10), [0.1, 1.2, -0.4 - s * 0.01], [0, -0.5, 0.87]), l);
+        const down = (l) => merge(w(turn(-32, 5), [0, -0.55, -1.0], [0, -0.6, -0.8]), l);
+        return anim('SkillGreatSwordQuake', 'Action', false, 3.2, [
+          kf(0, merge(GS.low(0), legs(25, -45, { spread: 10 })), 'Cubic', 'InOut'),
+          kf(0.4, merge(w(turn(4, 0), [0.1, 0.4, -1.1], [0, 0.9, -0.43]), legs(20, -35, { spread: 11 })), 'Cubic', 'Out'),
+          kf(0.7, up(0, legs(30, -55, { spread: 14 })), 'Linear'),
+          kf(1.0, up(2, legs(34, -62, { spread: 14 })), 'Linear'), kf(1.3, up(4, legs(36, -66, { spread: 14 })), 'Linear'), kf(1.6, up(5, legs(40, -72, { spread: 14 })), 'Cubic', 'Out'),
+          kf(1.8, up(3, { LowerTorso: pos(0, 0, 0, [0, 1.0, 0]), RightUpperLeg: rot(50, 0, 8), LeftUpperLeg: rot(50, 0, -8), RightLowerLeg: rot(-80), LeftLowerLeg: rot(-80), RightFoot: rot(20), LeftFoot: rot(20) }), 'Cubic', 'In'),
+          kf(2.0, down(legs(60, -110, { spread: 16, lean: -12 })), 'Cubic', 'Out'),
+          kf(2.5, down(legs(58, -106, { spread: 16, lean: -12 })), 'Cubic', 'InOut'),
+          kf(3.2, merge(GS.low(0), legs(25, -45, { spread: 10 }))),
+        ], [
+          { time: 0.7, name: 'Charge', value: 'start' }, { time: 1.6, name: 'Charge', value: 'full' },
+          { time: 1.65, name: 'Move', value: 'up 30 0.15' }, { time: 1.98, name: 'Hit', value: 'Quake' }, { time: 2.0, name: 'Land', value: '' },
+        ]);
+      },
+    },
+    {
+      id: 'sk_heavygun', cat: 'skill', label: 'สกิล ปืนใหญ่: ลำแสงเต็มกำลัง', prop: 'heavygun',
+      make: () => {
+        const w = wielder(HG_GRIP, { gun: true });
+        const brace = legs(45, -80, { spread: 18 });
+        const aim = merge(w(turn(-12, 10), [-0.1, -0.6, -0.55], [0, 0.02, -1]), brace);
+        const shake = merge(w(turn(-8, 10), [-0.1, -0.57, -0.49], [0, 0.1, -0.99]), brace);
+        const keys = [kf(0, merge(HG.hold(0), legs(25, -45, { spread: 12 })), 'Cubic', 'Out'), kf(0.4, aim, 'Linear'), kf(1.0, aim, 'Linear')];
+        for (let i = 0; i < 12; i++) keys.push(kf(r(1.05 + i * 0.1), i % 2 ? aim : shake, 'Linear'));
+        const blast = merge(w(turn(16, 5), [0, -0.4, -0.3], [0, 0.5, -0.85]), legs(30, -55, { spread: 14 }), { LowerTorso: pos(6, 0, 0, [0, -0.3, 0.35]) });
+        keys.push(kf(2.3, aim, 'Cubic', 'In'), kf(2.36, blast, 'Cubic', 'Out'), kf(2.7, blast, 'Cubic', 'InOut'), kf(3.2, merge(HG.hold(0), legs(25, -45, { spread: 12 }))));
+        return anim('SkillHeavyGunBeam', 'Action', false, 3.2, keys, [
+          { time: 0.4, name: 'Charge', value: 'start' }, { time: 1.0, name: 'Charge', value: 'full' },
+          { time: 1.05, name: 'Fire', value: 'beam-start' }, { time: 1.05, name: 'Move', value: 'back 4 1.2' }, { time: 2.25, name: 'Fire', value: 'beam-end' },
+          { time: 2.34, name: 'Fire', value: 'blast' }, { time: 2.34, name: 'Move', value: 'back 20 0.2' },
+        ]);
+      },
+    },
+    {
+      id: 'sk_bow', cat: 'skill', label: 'สกิล ธนู: ฝนธนู', prop: 'bow',
+      make: () => {
+        const aim = (up) => ({ UpperTorso: rot(up * 0.5, -50), Head: rot(up * 0.6, 45), LeftUpperArm: rot(up, -40, -88), LeftLowerArm: rot(0), LeftHand: rot(0) });
+        const draw = (up) => merge(aim(up), { RightUpperArm: rot(up, -40, 88), RightLowerArm: rot(150) });
+        const loose = (up) => merge(aim(up), { RightUpperArm: rot(up, -60, 95), RightLowerArm: rot(95) });
+        const rest = { UpperTorso: rot(0), Head: rot(0), LeftUpperArm: rot(20, 0, -8), LeftLowerArm: rot(20), LeftHand: rot(0), RightUpperArm: rot(0), RightLowerArm: rot(0) };
+        return anim('SkillBowArrowRain', 'Action', false, 3.0, [
+          kf(0, rest),
+          kf(0.4, draw(45), 'Linear'), kf(0.9, draw(46), 'Cubic', 'Out'),
+          kf(0.96, loose(45)), kf(1.15, draw(45), 'Cubic', 'Out'), kf(1.21, loose(45)), kf(1.4, draw(45), 'Cubic', 'Out'), kf(1.46, loose(45)),
+          kf(1.8, draw(0), 'Linear'), kf(1.95, draw(0), 'Cubic', 'Out'), kf(2.01, loose(0), 'Cubic', 'InOut'),
+          kf(3.0, rest),
+        ], [
+          { time: 0.4, name: 'Charge', value: 'start' }, { time: 0.9, name: 'Charge', value: 'full' },
+          { time: 0.94, name: 'Shoot', value: 'Up' }, { time: 1.19, name: 'Shoot', value: 'Up' }, { time: 1.44, name: 'Shoot', value: 'Up' },
+          { time: 1.9, name: 'Rain', value: '' }, { time: 1.99, name: 'Shoot', value: 'Finish' },
+        ]);
+      },
+    },
+    {
+      id: 'sk_sns', cat: 'skill', label: 'สกิล ดาบโล่: กำแพงโล่พุ่งชน', prop: 'swordshield',
+      make: () => {
+        const ready = merge(STAND, { LeftUpperArm: rot(50, 0, 25), LeftLowerArm: rot(105), LeftHand: rot(0), LeftHandle: rot(0, 90), RightUpperArm: rot(20, 0, 5), RightLowerArm: rot(70), RightHand: rot(-40), UpperTorso: rot(0, 10), Head: rot(0, -8) });
+        const swordLow = { RightUpperArm: rot(10, 0, 15), RightLowerArm: rot(40), RightHand: rot(-50) };
+        const rush = merge(swordLow, legs(35, -60, { spread: 10, lean: -14 }), turn(-10, 15), { LowerTorso: pos(-14, 0, 0, [0, -0.35, -0.5]), LeftUpperArm: rot(75, 0, 28), LeftLowerArm: rot(95), LeftHand: rot(0), LeftHandle: rot(0, 90) });
+        return anim('SkillShieldRampart', 'Action', false, 2.8, [
+          kf(0, ready, 'Cubic', 'InOut'),
+          kf(0.4, merge(swordLow, STAND, { UpperTorso: rot(8), Head: rot(-10), LeftUpperArm: rot(160, 0, -10), LeftLowerArm: rot(20), LeftHand: rot(0), LeftHandle: rot(0, 90) }), 'Cubic', 'In'),
+          kf(0.6, merge(swordLow, legs(55, -100, { spread: 14 }), { UpperTorso: rot(-30), Head: rot(25), LeftUpperArm: rot(70, 0, 10), LeftLowerArm: rot(10), LeftHand: rot(0), LeftHandle: rot(0, 90) }), 'Cubic', 'Out'),
+          kf(1.1, merge(swordLow, legs(52, -96, { spread: 14 }), { UpperTorso: rot(-28), Head: rot(24), LeftUpperArm: rot(70, 0, 10), LeftLowerArm: rot(12), LeftHand: rot(0), LeftHandle: rot(0, 90) }), 'Cubic', 'InOut'),
+          kf(1.3, rush, 'Linear'), kf(1.6, rush, 'Cubic', 'InOut'),
+          kf(1.75, merge(ready, turn(-15, 20), legs(30, -55), { RightUpperArm: rot(10, 0, -30), RightLowerArm: rot(40), RightHand: rot(-90) }), 'Cubic', 'In'),
+          kf(1.88, merge(ready, turn(8, -25), { RightUpperArm: rot(150, 0, 15), RightLowerArm: rot(20), RightHand: rot(0) }), 'Cubic', 'Out'),
+          kf(2.3, merge(ready, turn(8, -26), { RightUpperArm: rot(148, 0, 15), RightLowerArm: rot(20), RightHand: rot(0) }), 'Cubic', 'InOut'),
+          kf(2.8, ready),
+        ], [
+          { time: 0.4, name: 'Charge', value: 'start' }, { time: 0.58, name: 'Hit', value: 'Barrier' }, { time: 0.6, name: 'Land', value: '' },
+          { time: 1.2, name: 'Move', value: 'forward 38 0.4' }, { time: 1.5, name: 'Hit', value: 'Rush' }, { time: 1.86, name: 'Hit', value: 'Finish' },
+        ]);
+      },
+    },
   ];
 
   const CATEGORIES = [
@@ -1299,6 +1467,7 @@
     ['bow', 'อาวุธ: ธนู'],
     ['sns', 'อาวุธ: ดาบโล่'],
     ['combo', 'คอมโบยาว'],
+    ['skill', 'สกิลพิเศษ (อัลติเมต)'],
   ];
 
   return {
