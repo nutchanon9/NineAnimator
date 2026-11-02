@@ -1,0 +1,172 @@
+{
+  "format": "nineanimator/1",
+  "name": "Victory",
+  "rig": "R15",
+  "loop": false,
+  "priority": "Action",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "In",
+      "poses": {
+        "UpperTorso": {
+          "rot": [0, 0, 0]
+        },
+        "Head": {
+          "rot": [0, 0, 0]
+        },
+        "RightUpperArm": {
+          "rot": [0, 0, 0]
+        },
+        "RightLowerArm": {
+          "rot": [0, 0, 0]
+        },
+        "RightHand": {
+          "rot": [0, 0, 0]
+        },
+        "LeftUpperArm": {
+          "rot": [0, 0, 0]
+        },
+        "LeftLowerArm": {
+          "rot": [0, 0, 0]
+        },
+        "LeftHand": {
+          "rot": [0, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.18,
+      "easing": "Linear",
+      "direction": "InOut",
+      "poses": {
+        "UpperTorso": {
+          "rot": [2, 0, 0]
+        },
+        "Head": {
+          "rot": [6, 0, 0]
+        },
+        "RightUpperArm": {
+          "rot": [90, 0, 8]
+        },
+        "RightLowerArm": {
+          "rot": [30, 0, 0]
+        },
+        "RightHand": {
+          "rot": [-50, 0, 0]
+        },
+        "LeftUpperArm": {
+          "rot": [-5, 0, -25]
+        },
+        "LeftLowerArm": {
+          "rot": [60, 0, 0]
+        },
+        "LeftHand": {
+          "rot": [0, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.35,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "UpperTorso": {
+          "rot": [10, 0, 0]
+        },
+        "Head": {
+          "rot": [19, 0, 0]
+        },
+        "RightUpperArm": {
+          "rot": [174, 0, 10]
+        },
+        "RightLowerArm": {
+          "rot": [5, 0, 0]
+        },
+        "RightHand": {
+          "rot": [-80, 0, 0]
+        },
+        "LeftUpperArm": {
+          "rot": [-10, 0, -40]
+        },
+        "LeftLowerArm": {
+          "rot": [95, 0, 0]
+        },
+        "LeftHand": {
+          "rot": [0, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.55,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "UpperTorso": {
+          "rot": [6, 0, 0]
+        },
+        "Head": {
+          "rot": [15, 0, 0]
+        },
+        "RightUpperArm": {
+          "rot": [170, 0, 10]
+        },
+        "RightLowerArm": {
+          "rot": [5, 0, 0]
+        },
+        "RightHand": {
+          "rot": [-80, 0, 0]
+        },
+        "LeftUpperArm": {
+          "rot": [-10, 0, -40]
+        },
+        "LeftLowerArm": {
+          "rot": [95, 0, 0]
+        },
+        "LeftHand": {
+          "rot": [0, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 2,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "UpperTorso": {
+          "rot": [7, 0, 0]
+        },
+        "Head": {
+          "rot": [16, 0, 0]
+        },
+        "RightUpperArm": {
+          "rot": [171, 0, 10]
+        },
+        "RightLowerArm": {
+          "rot": [5, 0, 0]
+        },
+        "RightHand": {
+          "rot": [-80, 0, 0]
+        },
+        "LeftUpperArm": {
+          "rot": [-10, 0, -40]
+        },
+        "LeftLowerArm": {
+          "rot": [95, 0, 0]
+        },
+        "LeftHand": {
+          "rot": [0, 0, 0]
+        }
+      }
+    }
+  ],
+  "markers": [
+    {
+      "time": 0.35,
+      "name": "Cheer",
+      "value": ""
+    }
+  ],
+  "length": 2
+}

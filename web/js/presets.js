@@ -140,6 +140,7 @@
       ? C.solveWeaponIK(rig, ms, 'Right', gripW, toWorldDir(dir), { axis: [0, 0, -1], upAxis: [0, 1, 0], upWorld: toWorldDir([0, 1, 0]) })
       : C.solveWeaponIK(rig, ms, 'Right', gripW, toWorldDir(dir));
     for (const [n, p] of Object.entries(right.poses)) ms[n] = C.poseToM(p);
+    if (!point) return Object.assign({}, base, right.poses); // one-handed
     const target = C.pointOn(rig, ms, 'Handle', point);
     const left = C.solveArmIK(rig, ms, 'Left', target);
     return Object.assign({}, base, right.poses, left.poses, { LeftHand: rot(0) });
@@ -628,6 +629,233 @@
           kf(0.88, merge(turn(-10, 30), { RightUpperArm: rot(10, 0, 10), RightLowerArm: rot(60), RightHand: rot(-40), LeftUpperArm: rot(85, 0, 15), LeftLowerArm: rot(15), LeftHand: rot(0), LeftHandle: rot(0, 0, 90) }), 'Cubic', 'Out'),
           kf(1.3, merge(ready)),
         ], [{ time: 0.21, name: 'Hit', value: '1' }, { time: 0.52, name: 'Hit', value: '2' }, { time: 0.86, name: 'Hit', value: 'Bash' }]);
+      },
+    },
+
+    // ===== More moves (v0.5) =====
+    {
+      id: 'draw', cat: 'combat', label: 'ชักอาวุธจากหลัง (Draw weapon)', prop: 'sword',
+      make: () => anim('DrawWeapon', 'Action', false, 0.85, [
+        kf(0, { UpperTorso: rot(0), Head: rot(0), RightUpperArm: rot(0), RightLowerArm: rot(0), RightHand: rot(0) }, 'Cubic', 'InOut'),
+        kf(0.22, { UpperTorso: rot(4, -12), Head: rot(0, 10), RightUpperArm: rot(150, 0, 25), RightLowerArm: rot(120), RightHand: rot(0) }, 'Cubic', 'Out'),
+        kf(0.38, { UpperTorso: rot(6, -6), Head: rot(-4, 6), RightUpperArm: rot(175, 0, 15), RightLowerArm: rot(30), RightHand: rot(0) }, 'Linear'),
+        kf(0.52, { UpperTorso: rot(2, 0), Head: rot(0), RightUpperArm: rot(150, 0, 10), RightLowerArm: rot(10), RightHand: rot(-50) }, 'Cubic', 'Out'),
+        kf(0.85, { UpperTorso: rot(0), Head: rot(0), RightUpperArm: rot(20, 0, 5), RightLowerArm: rot(70), RightHand: rot(-40) }),
+      ], [{ time: 0.22, name: 'Grab', value: '' }]),
+    },
+    {
+      id: 'stagger', cat: 'react', label: 'เซถอยหลัง (Stagger)', prop: 'none',
+      make: () => anim('Stagger', 'Action2', false, 0.9, [
+        kf(0, merge(BODY_REST), 'Cubic', 'Out'),
+        kf(0.1, merge(STAND, { LowerTorso: pos(8, 0, 0, [0, -0.05, 0.2]), UpperTorso: rot(15, 10, 5), Head: rot(20, -6), RightUpperArm: rot(40, 0, 40), LeftUpperArm: rot(20, 0, -35), RightLowerArm: rot(30), LeftLowerArm: rot(40) }), 'Cubic', 'InOut'),
+        kf(0.35, { LowerTorso: pos(6, 0, 0, [0, -0.15, 0.45]), UpperTorso: rot(10, 6, 3), Head: rot(12, -4), RightUpperLeg: rot(-25, 0, 4), RightLowerLeg: rot(-25), RightFoot: rot(20), LeftUpperLeg: rot(15, 0, -4), LeftLowerLeg: rot(-20), LeftFoot: rot(5), RightUpperArm: rot(30, 0, 35), LeftUpperArm: rot(15, 0, -30), RightLowerArm: rot(25), LeftLowerArm: rot(30) }, 'Cubic', 'InOut'),
+        kf(0.55, merge(legs(15, -25), { UpperTorso: rot(-8), Head: rot(4), RightUpperArm: rot(10, 0, 15), LeftUpperArm: rot(10, 0, -15), RightLowerArm: rot(20), LeftLowerArm: rot(20) }), 'Cubic', 'InOut'),
+        kf(0.9, merge(BODY_REST)),
+      ]),
+    },
+    {
+      id: 'knockdown', cat: 'react', label: 'ล้มแล้วลุก (Knockdown & get up)', prop: 'none',
+      make: () => {
+        const lying = { LowerTorso: pos(85, 0, 0, [0, -1.55, 0.9]), UpperTorso: rot(5), Head: rot(-10, 15, 0), RightUpperLeg: rot(5, 0, 10), LeftUpperLeg: rot(15, 0, -8), RightLowerLeg: rot(-10), LeftLowerLeg: rot(-35), RightFoot: rot(20), LeftFoot: rot(20), RightUpperArm: rot(0, 0, 60), LeftUpperArm: rot(10, 0, -55), RightLowerArm: rot(15), LeftLowerArm: rot(25) };
+        const sitting = { LowerTorso: pos(0, 0, 0, [0, -1.45, 0.3]), UpperTorso: rot(-15), Head: rot(5), RightUpperLeg: rot(85, 0, 8), LeftUpperLeg: rot(70, 0, -8), RightLowerLeg: rot(-15), LeftLowerLeg: rot(-60), RightFoot: rot(0), LeftFoot: rot(20), RightUpperArm: rot(-35, 0, 25), LeftUpperArm: rot(-35, 0, -25), RightLowerArm: rot(10), LeftLowerArm: rot(10) };
+        return anim('Knockdown', 'Action3', false, 2.6, [
+          kf(0, merge(BODY_REST), 'Cubic', 'Out'),
+          kf(0.12, merge(STAND, { LowerTorso: pos(10, 0, 0, [0, -0.05, 0.3]), UpperTorso: rot(20, 0, 4), Head: rot(25), RightUpperArm: rot(35, 0, 30), LeftUpperArm: rot(35, 0, -30), RightLowerArm: rot(30), LeftLowerArm: rot(30) }), 'Cubic', 'In'),
+          kf(0.45, merge(legs(50, -90, { spread: 10 }), { LowerTorso: pos(40, 0, 0, [0, -0.9, 0.6]), UpperTorso: rot(10), Head: rot(-15), RightUpperArm: rot(60, 0, 40), LeftUpperArm: rot(60, 0, -40), RightLowerArm: rot(20), LeftLowerArm: rot(20) }), 'Cubic', 'In'),
+          kf(0.7, lying, 'Bounce', 'Out'),
+          kf(1.3, lying, 'Cubic', 'InOut'),
+          kf(1.7, sitting, 'Cubic', 'InOut'),
+          kf(2.05, merge(legs(80, -120, { spread: 10, lean: -15 }), { UpperTorso: rot(-20), Head: rot(25), RightUpperArm: rot(40, 0, 10), LeftUpperArm: rot(40, 0, -10), RightLowerArm: rot(40), LeftLowerArm: rot(40) }), 'Cubic', 'Out'),
+          kf(2.6, merge(BODY_REST)),
+        ], [{ time: 0.7, name: 'Land', value: '' }]);
+      },
+    },
+    {
+      id: 'victory', cat: 'item', label: 'ท่าชนะ (Victory)', prop: 'sword',
+      make: () => {
+        const up = (b) => ({ UpperTorso: rot(6 + b, 0), Head: rot(15 + b, 0), RightUpperArm: rot(170 + b, 0, 10), RightLowerArm: rot(5), RightHand: rot(-80), LeftUpperArm: rot(-10, 0, -40), LeftLowerArm: rot(95), LeftHand: rot(0) });
+        return anim('Victory', 'Action', false, 2.0, [
+          kf(0, merge(UPPER_REST), 'Cubic', 'In'),
+          kf(0.18, { UpperTorso: rot(2), Head: rot(6), RightUpperArm: rot(90, 0, 8), RightLowerArm: rot(30), RightHand: rot(-50), LeftUpperArm: rot(-5, 0, -25), LeftLowerArm: rot(60), LeftHand: rot(0) }, 'Linear'),
+          kf(0.35, up(4), 'Cubic', 'Out'),
+          kf(0.55, up(0), 'Cubic', 'InOut'),
+          kf(2.0, up(1)),
+        ], [{ time: 0.35, name: 'Cheer', value: '' }]);
+      },
+    },
+
+    // ---- Long sword ----
+    {
+      id: 'ls_spin', cat: 'longsword', label: 'ดาบยาว: หมุนตัวฟัน (Spin slash)', prop: 'longsword',
+      make: () => {
+        // Arms hold the sword out to the right; the whole body turns once (90° steps).
+        const arms = wield(turn(-6, 0), [0.75, -0.25, -0.85], [0.75, 0, -0.65], LS_GRIP);
+        const k = (t, y, e) => kf(t, merge(arms, STAND, { LowerTorso: pos(0, y, 0, [0, -0.1, 0]) }), e || 'Linear');
+        return anim('LongSwordSpin', 'Action', false, 1.2, [
+          kf(0, merge(LS.guard(0), STAND), 'Cubic', 'In'),
+          k(0.15, 0), k(0.3, -90), k(0.45, 180), k(0.6, 90), k(0.75, 0, 'Cubic'),
+          kf(1.2, merge(LS.guard(0), STAND)),
+        ], [{ time: 0.35, name: 'Hit', value: '1' }, { time: 0.6, name: 'Hit', value: '2' }]);
+      },
+    },
+    {
+      id: 'ls_quickdraw', cat: 'longsword', label: 'ดาบยาว: ชักดาบฟันเร็ว (Quick draw)', prop: 'longsword',
+      make: () => {
+        const sheath = (b) => merge(wield(turn(-10, 25), [-0.55, -0.9 - b * 0.01, -0.45], [-0.2, -0.25, 0.95], [0, 0.45, 0]), legs(45 + b, -80 - b * 2, { spread: 12 }));
+        const leftHip = { LeftUpperArm: rot(-10, 0, -15), LeftLowerArm: rot(30), LeftHand: rot(0) };
+        return anim('LongSwordQuickDraw', 'Action', false, 1.9, [
+          kf(0, merge(LS.guard(0), STAND), 'Cubic', 'InOut'),
+          kf(0.3, sheath(0), 'Linear'),
+          kf(0.75, sheath(2), 'Cubic', 'In'),
+          kf(0.8, merge(wield(turn(-8, 10), [0, -0.6, -1.0], [-0.3, 0, -0.95], null), leftHip, legs(42, -75, { spread: 12 })), 'Linear'),
+          kf(0.86, merge(wield(turn(-5, -30), [0.9, -0.3, -0.9], [0.95, 0.05, -0.3], null), leftHip, legs(40, -70, { spread: 12 })), 'Cubic', 'Out'),
+          kf(1.3, merge(wield(turn(-5, -32), [0.9, -0.28, -0.88], [0.95, 0.05, -0.3], null), leftHip, legs(38, -68, { spread: 12 })), 'Cubic', 'InOut'),
+          kf(1.9, merge(LS.guard(0), STAND)),
+        ], [{ time: 0.83, name: 'Hit', value: 'Draw' }]);
+      },
+    },
+
+    // ---- Dual blades ----
+    {
+      id: 'db_dash', cat: 'dual', label: 'ดาบคู่: พุ่งฟัน (Dash slash)', prop: 'dual',
+      make: () => {
+        const lunge = { LowerTorso: pos(-20, 0, 0, [0, -0.45, -0.3]), RightUpperLeg: rot(80, 0, 4), RightLowerLeg: rot(-75), RightFoot: rot(15), LeftUpperLeg: rot(-10, 0, -4), LeftLowerLeg: rot(-35), LeftFoot: rot(30) };
+        return anim('DualDash', 'Action', false, 1.0, [
+          kf(0, merge(DB_GUARD, legs(30, -55, { spread: 10 })), 'Cubic', 'In'),
+          kf(0.2, merge(lunge, { UpperTorso: rot(-15), Head: rot(25), RightUpperArm: rot(-50, 0, 30), LeftUpperArm: rot(-50, 0, -30), RightLowerArm: rot(20), LeftLowerArm: rot(20), RightHand: rot(-20), LeftHand: rot(-20) }), 'Cubic', 'In'),
+          kf(0.35, merge(lunge, { UpperTorso: rot(-10), Head: rot(20), RightUpperArm: rot(60, 0, -45), LeftUpperArm: rot(60, 0, 45), RightLowerArm: rot(10), LeftLowerArm: rot(10), RightHand: rot(-30), LeftHand: rot(-30) }), 'Cubic', 'Out'),
+          kf(0.6, merge(lunge, { UpperTorso: rot(-10), Head: rot(20), RightUpperArm: rot(55, 0, -45), LeftUpperArm: rot(55, 0, 45), RightLowerArm: rot(15), LeftLowerArm: rot(15), RightHand: rot(-30), LeftHand: rot(-30) }), 'Cubic', 'InOut'),
+          kf(1.0, merge(DB_GUARD, legs(30, -55, { spread: 10 }))),
+        ], [{ time: 0.33, name: 'Hit', value: 'X' }]);
+      },
+    },
+    {
+      id: 'db_upper', cat: 'dual', label: 'ดาบคู่: ฟันเสยขึ้น (Rising slash)', prop: 'dual',
+      make: () => {
+        const arms = (x, z, e, h) => ({ RightUpperArm: rot(x, 0, z), LeftUpperArm: rot(x, 0, -z), RightLowerArm: rot(e), LeftLowerArm: rot(e), RightHand: rot(h), LeftHand: rot(h) });
+        return anim('DualRising', 'Action', false, 1.1, [
+          kf(0, merge(DB_GUARD, legs(30, -55, { spread: 10 })), 'Cubic', 'InOut'),
+          kf(0.25, merge(arms(-30, 20, 30, -60), legs(55, -100, { spread: 12 }), { UpperTorso: rot(-20), Head: rot(15) }), 'Cubic', 'In'),
+          kf(0.33, merge(arms(70, 25, 15, -20), legs(20, -30, { spread: 10 }), { UpperTorso: rot(-5), Head: rot(5) }), 'Linear'),
+          kf(0.42, merge(arms(170, 25, 10, 0), { LowerTorso: pos(0, 0, 0, [0, 0.4, 0]), RightUpperLeg: rot(10, 0, 4), LeftUpperLeg: rot(25, 0, -4), RightLowerLeg: rot(-15), LeftLowerLeg: rot(-40), RightFoot: rot(20), LeftFoot: rot(20), UpperTorso: rot(10), Head: rot(-10) }), 'Cubic', 'In'),
+          kf(0.65, merge(arms(150, 25, 20, 0), legs(30, -55, { spread: 10 }), { UpperTorso: rot(5), Head: rot(-5) }), 'Cubic', 'InOut'),
+          kf(1.1, merge(DB_GUARD, legs(30, -55, { spread: 10 }))),
+        ], [{ time: 0.36, name: 'Hit', value: 'Up' }]);
+      },
+    },
+
+    // ---- Great sword ----
+    {
+      id: 'gs_tackle', cat: 'greatsword', label: 'ดาบใหญ่: กระแทกไหล่ (Shoulder tackle)', prop: 'greatsword',
+      make: () => {
+        const guard = (torso) => wield(torso, [-0.15, -0.4, -0.9], [0.1, 1, -0.15], GS_GRIP);
+        return anim('GreatSwordTackle', 'Action', false, 1.3, [
+          kf(0, merge(GS.low(0), legs(25, -45, { spread: 10 })), 'Cubic', 'InOut'),
+          kf(0.3, merge(guard(turn(-5, 0)), legs(35, -65, { spread: 12 })), 'Cubic', 'In'),
+          kf(0.45, merge(guard(turn(-10, -50)), legs(30, -55, { spread: 12, lean: -12, twist: -15 }), { LowerTorso: pos(-12, -15, 0, [0, -0.3, -0.5]) }), 'Cubic', 'Out'),
+          kf(0.8, merge(guard(turn(-8, -45)), legs(30, -55, { spread: 12, lean: -10, twist: -12 }), { LowerTorso: pos(-10, -12, 0, [0, -0.3, -0.4]) }), 'Cubic', 'InOut'),
+          kf(1.3, merge(GS.low(0), legs(25, -45, { spread: 10 }))),
+        ], [{ time: 0.45, name: 'Hit', value: 'Tackle' }]);
+      },
+    },
+
+    // ---- Heavy gun ----
+    {
+      id: 'hg_crouchfire', cat: 'heavygun', label: 'ปืนใหญ่: หมอบยิงต่อเนื่อง (Crouch fire)', prop: 'heavygun',
+      make: () => {
+        const crouch = legs(70, -120, { spread: 14 });
+        const aim = merge(wield(turn(-12, 10), [-0.1, -0.6, -0.6], [0, 0.05, -1], HG_GRIP, { gun: true }), crouch);
+        const armsOf = (p) => { const o = {}; for (const n of ['RightUpperArm', 'RightLowerArm', 'RightHand', 'LeftUpperArm', 'LeftLowerArm']) o[n] = p[n]; return o; };
+        const kick = merge(wield(merge(armsOf(aim), turn(-8, 10)), [-0.1, -0.55, -0.5], [0, 0.15, -0.99], HG_GRIP, { gun: true }), crouch);
+        return anim('HeavyGunCrouchFire', 'Action', true, 0.6, [
+          kf(0, kick, 'Cubic', 'Out'), kf(0.15, aim, 'Linear'), kf(0.16, kick, 'Cubic', 'Out'), kf(0.3, aim, 'Linear'),
+          kf(0.31, kick, 'Cubic', 'Out'), kf(0.45, aim, 'Linear'), kf(0.46, kick, 'Cubic', 'Out'), kf(0.6, kick),
+        ], [0, 0.15, 0.3, 0.45].map((t) => ({ time: t, name: 'Fire', value: '' })));
+      },
+    },
+    {
+      id: 'hg_bash', cat: 'heavygun', label: 'ปืนใหญ่: ฟาดพานท้าย (Stock bash)', prop: 'heavygun',
+      make: () => {
+        // Solve keys in order, seeding each left arm with the previous one so it moves smoothly.
+        let prev = HG.hold(0);
+        const w = (torso, grip, dir) => {
+          const seed = { LeftUpperArm: prev.LeftUpperArm, LeftLowerArm: prev.LeftLowerArm };
+          prev = wield(merge(seed, torso), grip, dir, HG_GRIP, { gun: true });
+          return prev;
+        };
+        return anim('HeavyGunBash', 'Action', false, 1.2, [
+          kf(0, HG.hold(0), 'Cubic', 'InOut'),
+          kf(0.25, w(turn(5, 25), [0.4, 0.0, -0.4], [0, 0.75, 0.65]), 'Cubic', 'In'),
+          kf(0.33, w(turn(-4, 0), [0.25, -0.15, -0.7], [0, 0.6, 0.8]), 'Linear'),
+          kf(0.4, w(turn(-12, -25), [0.05, -0.3, -1.0], [0, 0.35, 0.94]), 'Cubic', 'Out'),
+          kf(0.7, w(turn(-12, -27), [0.05, -0.32, -0.98], [0, 0.35, 0.94]), 'Cubic', 'InOut'),
+          kf(1.2, HG.hold(0)),
+        ], [{ time: 0.38, name: 'Hit', value: 'Bash' }]);
+      },
+    },
+
+    // ---- Bow ----
+    {
+      id: 'bow_charge', cat: 'bow', label: 'ธนู: ง้างนานยิงแรง (Charged shot)', prop: 'bow',
+      make: () => {
+        const aim = (lean) => ({ UpperTorso: rot(lean, -50), Head: rot(-lean, 45), LeftUpperArm: rot(0, -40, -88), LeftLowerArm: rot(0), LeftHand: rot(0) });
+        const draw = (lean, y) => merge(aim(lean), { RightUpperArm: rot(0, y, 88), RightLowerArm: rot(150) });
+        const rest = { UpperTorso: rot(0), Head: rot(0), LeftUpperArm: rot(20, 0, -8), LeftLowerArm: rot(20), LeftHand: rot(0), RightUpperArm: rot(0), RightLowerArm: rot(0) };
+        return anim('BowCharged', 'Action', false, 2.1, [
+          kf(0, rest), kf(0.3, merge(aim(0), { RightUpperArm: rot(60, 0, -40), RightLowerArm: rot(95) })),
+          kf(0.7, draw(3, -40), 'Linear'), kf(0.9, draw(4, -43), 'Linear'), kf(1.1, draw(4, -41), 'Linear'),
+          kf(1.3, draw(5, -44), 'Linear'), kf(1.45, draw(5, -44), 'Cubic', 'Out'),
+          kf(1.55, merge(aim(2), { UpperTorso: rot(8, -55), RightUpperArm: rot(0, -70, 100), RightLowerArm: rot(80) }), 'Cubic', 'InOut'),
+          kf(2.1, rest),
+        ], [{ time: 0.7, name: 'Charge', value: 'start' }, { time: 1.3, name: 'Charge', value: 'full' }, { time: 1.46, name: 'Shoot', value: 'Power' }]);
+      },
+    },
+    {
+      id: 'bow_arc', cat: 'bow', label: 'ธนู: ยิงโค้งขึ้นฟ้า (Arc shot)', prop: 'bow',
+      make: () => {
+        const aim = { UpperTorso: rot(15, -50), Head: rot(20, 45), LeftUpperArm: rot(25, -40, -88), LeftLowerArm: rot(0), LeftHand: rot(0) };
+        const rest = { UpperTorso: rot(0), Head: rot(0), LeftUpperArm: rot(20, 0, -8), LeftLowerArm: rot(20), LeftHand: rot(0), RightUpperArm: rot(0), RightLowerArm: rot(0) };
+        return anim('BowArc', 'Action', false, 1.5, [
+          kf(0, rest),
+          kf(0.35, merge(aim, { RightUpperArm: rot(70, 0, -30), RightLowerArm: rot(80) })),
+          kf(0.75, merge(aim, { RightUpperArm: rot(25, -40, 88), RightLowerArm: rot(150) }), 'Linear'),
+          kf(0.9, merge(aim, { RightUpperArm: rot(25, -42, 88), RightLowerArm: rot(152) }), 'Cubic', 'Out'),
+          kf(0.98, merge(aim, { RightUpperArm: rot(25, -60, 95), RightLowerArm: rot(95) }), 'Cubic', 'InOut'),
+          kf(1.5, rest),
+        ], [{ time: 0.9, name: 'Shoot', value: 'Arc' }]);
+      },
+    },
+
+    // ---- Sword & shield ----
+    {
+      id: 'sns_jump', cat: 'sns', label: 'ดาบโล่: กระโดดฟัน (Jump slash)', prop: 'swordshield',
+      make: () => {
+        const shield = { LeftUpperArm: rot(50, 0, 25), LeftLowerArm: rot(105), LeftHand: rot(0), LeftHandle: rot(0, 90) };
+        const ready = merge(shield, STAND, { RightUpperArm: rot(20, 0, 5), RightLowerArm: rot(70), RightHand: rot(-40), UpperTorso: rot(0, 10), Head: rot(0, -8) });
+        return anim('SwordShieldJump', 'Action', false, 1.3, [
+          kf(0, ready, 'Cubic', 'In'),
+          kf(0.2, merge(shield, legs(40, -75, { spread: 8 }), { UpperTorso: rot(-10), Head: rot(10), RightUpperArm: rot(110, 0, 20), RightLowerArm: rot(40), RightHand: rot(0) }), 'Cubic', 'Out'),
+          kf(0.42, merge(shield, { LowerTorso: pos(0, 0, 0, [0, 1.0, -0.3]), RightUpperLeg: rot(60, 0, 6), RightLowerLeg: rot(-90), RightFoot: rot(20), LeftUpperLeg: rot(40, 0, -6), LeftLowerLeg: rot(-70), LeftFoot: rot(20), UpperTorso: rot(8), Head: rot(-6), RightUpperArm: rot(170, 0, 15), RightLowerArm: rot(30), RightHand: rot(10) }), 'Cubic', 'In'),
+          kf(0.56, merge(shield, legs(45, -80, { spread: 10, lean: -6 }), { UpperTorso: rot(-25), Head: rot(22), RightUpperArm: rot(35, 0, -25), RightLowerArm: rot(5), RightHand: rot(-55) }), 'Cubic', 'Out'),
+          kf(0.85, merge(shield, legs(42, -76, { spread: 10, lean: -6 }), { UpperTorso: rot(-22), Head: rot(20), RightUpperArm: rot(30, 0, -25), RightLowerArm: rot(5), RightHand: rot(-55) }), 'Cubic', 'InOut'),
+          kf(1.3, ready),
+        ], [{ time: 0.53, name: 'Hit', value: 'Jump' }, { time: 0.56, name: 'Land', value: '' }]);
+      },
+    },
+    {
+      id: 'sns_backstep', cat: 'sns', label: 'ดาบโล่: ถอยหลังฟัน (Backstep slash)', prop: 'swordshield',
+      make: () => {
+        const shield = { LeftUpperArm: rot(50, 0, 25), LeftLowerArm: rot(105), LeftHand: rot(0), LeftHandle: rot(0, 90) };
+        const ready = merge(shield, STAND, { RightUpperArm: rot(20, 0, 5), RightLowerArm: rot(70), RightHand: rot(-40), UpperTorso: rot(0, 10), Head: rot(0, -8) });
+        const hop = (z, y) => ({ LowerTorso: pos(6, 0, 0, [0, y, z]), RightUpperLeg: rot(20, 0, 5), LeftUpperLeg: rot(-5, 0, -5), RightLowerLeg: rot(-45), LeftLowerLeg: rot(-30), RightFoot: rot(15), LeftFoot: rot(25) });
+        return anim('SwordShieldBackstep', 'Action', false, 1.1, [
+          kf(0, ready, 'Cubic', 'In'),
+          kf(0.15, merge(shield, legs(30, -55, { spread: 8 }), turn(0, -35), { RightUpperArm: rot(75, 0, 70), RightLowerArm: rot(25), RightHand: rot(0, 90) }), 'Cubic', 'In'),
+          kf(0.3, merge(shield, hop(0.45, 0.25), turn(-6, 5), { RightUpperArm: rot(80, 0, 10), RightLowerArm: rot(10), RightHand: rot(0, 90) }), 'Linear'),
+          kf(0.42, merge(shield, legs(35, -60, { spread: 10 }), { LowerTorso: pos(0, 0, 0, [0, -0.3, 0.7]) }, turn(-8, 40), { RightUpperArm: rot(80, 0, -50), RightLowerArm: rot(8), RightHand: rot(0, 90) }), 'Cubic', 'Out'),
+          kf(0.7, merge(shield, legs(32, -58, { spread: 10 }), { LowerTorso: pos(0, 0, 0, [0, -0.28, 0.65]) }, turn(-8, 38), { RightUpperArm: rot(75, 0, -45), RightLowerArm: rot(12), RightHand: rot(0, 90) }), 'Cubic', 'InOut'),
+          kf(1.1, ready),
+        ], [{ time: 0.33, name: 'Hit', value: 'Back' }]);
       },
     },
   ];

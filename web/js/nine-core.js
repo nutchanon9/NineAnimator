@@ -258,6 +258,21 @@
     }
     return world;
   }
+  /**
+   * Recompute only `names` (in parent-before-child order) on top of an
+   * already computed `base` world. Much faster than computeWorld inside IK.
+   */
+  function computeChain(rig, ms, base, names) {
+    const world = Object.create(base);
+    for (const n of names) {
+      const jt = rig.byName[n];
+      if (!jt) continue;
+      const m = ms[n];
+      const t = m ? mToTransform(rig, n, m) : cf();
+      world[n] = cfMul(cfMul(cfMul(world[jt.parent], jt.c0), t), cfInv(jt.c1));
+    }
+    return world;
+  }
   function restHeight(rig) {
     if (rig._restHeight !== undefined) return rig._restHeight;
     rig._restHeight = 0;
@@ -596,6 +611,12 @@
       ? { upper: side + 'UpperArm', lower: side + 'LowerArm', end: side + 'Hand' }
       : { upper: side + ' Arm', lower: null, end: side + ' Arm' };
   }
+  /** Joints that move when an arm is solved (plus its weapon joint). */
+  function chainNames(rig, side) {
+    const ch = armChain(rig, side);
+    const w = side === 'Left' ? 'LeftHandle' : 'Handle';
+    return rig.id === 'R15' ? [ch.upper, ch.lower, ch.end, w] : [ch.upper, w];
+  }
   /** World position of a hand's grip point for the given joint transforms. */
   function gripWorld(rig, ms, side) {
     const w = computeWorld(rig, ms);
@@ -644,9 +665,11 @@
     const work = Object.assign({}, ms);
     const norm = (v) => { const l = Math.hypot(...v) || 1; return v.map((x) => x / l); };
     const d = norm(dirWorld), up = o.upWorld ? norm(o.upWorld) : null;
+    const base = computeWorld(rig, ms);
+    const names = rig.id === 'R15' ? [hand, joint] : [joint];
     const cost = (p) => {
       work[hand] = { r: eulerToM3(p), p: [0, 0, 0] };
-      const w = computeWorld(rig, work)[joint];
+      const w = computeChain(rig, work, base, names)[joint];
       const a = m3v(w.r, axis);
       let c = 1 - (a[0] * d[0] + a[1] * d[1] + a[2] * d[2]);
       if (up) { const u = m3v(w.r, o.upAxis || [0, 0, 1]); c += 0.3 * (1 - (u[0] * up[0] + u[1] * up[1] + u[2] * up[2])); }
@@ -680,9 +703,11 @@
       work[ch.lower] = { r: eulerToM3([p[3], 0, 0]), p: [0, 0, 0] };
       work[ch.end] = { r: eulerToM3([p[4], p[5], p[6]]), p: [0, 0, 0] };
     };
+    const base = computeWorld(rig, ms);
+    const names = chainNames(rig, side);
     const evalPose = (p) => {
       apply(p);
-      const w = computeWorld(rig, work);
+      const w = computeChain(rig, work, base, names);
       const end = w[ch.end], g = m3v(end.r, GRIP_POINT[rig.id]);
       const gp = [end.p[0] + g[0], end.p[1] + g[1], end.p[2] + g[2]];
       const a = m3v(w[joint].r, axis);
@@ -691,14 +716,19 @@
       if (up) { const u = m3v(w[joint].r, o.upAxis || [0, 0, 1]); upDot = u[0] * up[0] + u[1] * up[1] + u[2] * up[2]; }
       return { gp, dot, upDot };
     };
+    const cur = (n, i) => (ms[n] ? m3ToEuler(ms[n].r)[i] : 0);
+    // When the arm already has a pose (e.g. the previous key), prefer the
+    // nearest solution so neighbouring keys don't jump between solutions.
+    const prefer = ms[ch.upper] ? [0, 1, 2].map((i) => cur(ch.upper, i)).concat([cur(ch.lower, 0)], [0, 1, 2].map((i) => cur(ch.end, i))) : null;
     const cost = (p) => {
       const e = evalPose(p);
       const d2 = (e.gp[0] - target[0]) ** 2 + (e.gp[1] - target[1]) ** 2 + (e.gp[2] - target[2]) ** 2;
       const wrist = (p[4] * p[4] + p[5] * p[5] + p[6] * p[6]) / 8100;
-      return d2 + 0.8 * (1 - e.dot) + 0.3 * (1 - e.upDot) + 0.02 * wrist + 1e-6 * p[1] * p[1];
+      let reg = 1e-6 * p[1] * p[1];
+      if (prefer) for (let i = 0; i < p.length; i++) reg += 2e-7 * (p[i] - prefer[i]) ** 2;
+      return d2 + 0.8 * (1 - e.dot) + 0.3 * (1 - e.upDot) + 0.02 * wrist + reg;
     };
     const lo = [-180, -90, -180, 0, -100, -80, -90], hi = [180, 90, 180, 150, 100, 80, 90];
-    const cur = (n, i) => (ms[n] ? m3ToEuler(ms[n].r)[i] : 0);
     const seeds = [
       [cur(ch.upper, 0), cur(ch.upper, 1), cur(ch.upper, 2), ms[ch.lower] ? cur(ch.lower, 0) : 30, 0, 0, 0],
       [60, 0, 0, 60, 0, 0, 0], [150, 0, 0, 30, 0, 0, 0], [30, 0, side === 'Left' ? 40 : -40, 90, -40, 0, 0], [90, 30, -60, 20, 0, 0, 0],
@@ -739,12 +769,23 @@
       work[ch.upper] = { r: eulerToM3([p[0], p[1], p[2]]), p: ms[ch.upper] ? ms[ch.upper].p : [0, 0, 0] };
       if (ch.lower) work[ch.lower] = { r: eulerToM3([p[3], 0, 0]), p: [0, 0, 0] };
     };
+    const base = computeWorld(rig, ms);
+    const names = chainNames(rig, side);
+    const gripOf = () => {
+      const end = computeChain(rig, work, base, names)[ch.end];
+      const g = m3v(end.r, GRIP_POINT[rig.id]);
+      return [end.p[0] + g[0], end.p[1] + g[1], end.p[2] + g[2]];
+    };
+    // If the arm already has a pose, prefer the solution closest to it, so
+    // consecutive keys solved one after another don't flip elbow side.
+    const prefer = ms[ch.upper] ? [...cur, curElbow] : null;
     const cost = (p) => {
       apply(p);
-      const g = gripWorld(rig, work, side);
+      const g = gripOf();
       const d2 = (g[0] - target[0]) ** 2 + (g[1] - target[1]) ** 2 + (g[2] - target[2]) ** 2;
-      // Tiny pull toward small twist keeps solutions natural.
-      return d2 + 1e-6 * (p[1] * p[1]);
+      let reg = 1e-6 * (p[1] * p[1]); // tiny pull toward small twist keeps solutions natural
+      if (prefer) for (let i = 0; i < p.length; i++) reg += 2e-7 * (p[i] - prefer[i]) ** 2;
+      return d2 + reg;
     };
     const n = ch.lower ? 4 : 3;
     const lo = [-180, -90, -180, 0], hi = [180, 90, 180, 150];
