@@ -19,6 +19,10 @@
     onion: false,
     selected: null,
     clipboard: null,
+    keySel: new Set(), // dope-sheet selection: "time|joint" ("*" = whole keyframe)
+    keyClip: null,
+    lastCopy: null, // 'pose' | 'keys'
+    layer: null, // { id, anim, time } played underneath for preview
     undo: [], redo: [],
     editing: false,
   };
@@ -83,13 +87,25 @@
         setJointPose(name, fn(cur), true);
       },
       onPoseDragEnd: () => { endEdit(); renderAll(); },
+      onIKDragStart: () => { pause(); beginEdit(); },
+      onIKDrag: (limb, target) => {
+        const t = snap(state.time);
+        state.time = t;
+        const res = C.solveLimbIK(C.RIGS[state.anim.rig], C.sampleAll(state.anim, t), limb, target, { fast: true });
+        const k = C.ensureKeyframe(state.anim, t);
+        Object.assign(k.poses, res.poses);
+        drawPose(); renderInspectorValues(); renderTimeline();
+      },
+      onIKDragEnd: () => { endEdit(); renderAll(); },
     });
     const themeChanged = () => viewer.applyTheme();
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', themeChanged);
     new MutationObserver(themeChanged).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   }
   function drawPose() {
-    viewer.setPose(C.sampleAll(state.anim, state.time));
+    const ms = C.sampleAll(state.anim, state.time);
+    // Layer preview: joints this animation doesn't touch come from the layer (like Roblox priorities).
+    viewer.setPose(state.layer ? Object.assign(C.sampleAll(state.layer.anim, state.layer.time), ms) : ms);
     drawGhosts();
   }
   /** Onion skin: neighbouring keyframes as translucent copies (paused only). */
@@ -149,6 +165,7 @@
   function posesAtTime() { return C.samplePoses(state.anim, snap(state.time)); }
   function copyPose() {
     state.clipboard = posesAtTime();
+    state.lastCopy = 'pose';
     toast('คัดลอกท่าทั้งตัวแล้ว เลื่อนเวลาไปที่อื่นแล้วกด "วางท่า"');
     renderInspector();
   }
@@ -193,6 +210,7 @@
     lastTs = ts;
     const prev = state.time;
     state.time += dt;
+    if (state.layer) state.layer.time = (state.layer.time + dt) % Math.max(0.01, state.layer.anim.length);
     const L = state.anim.length;
     for (const m of state.anim.markers) if (m.time > prev && m.time <= state.time) flashMarker(m);
     if (state.time >= L) {
@@ -388,26 +406,41 @@
   }
 
   // ---------------------------------------------------------------
-  // Timeline
+  // Timeline / dope sheet: a summary row (whole keyframes), one row per
+  // animated joint, and markers. Keys can be multi-selected (Shift/Ctrl),
+  // dragged together, copied, pasted and deleted.
   // ---------------------------------------------------------------
-  const tl = { pxPerSec: 400, left: 14 };
-  function timelineWidth() { return $('#tl-scroll').clientWidth; }
+  const tl = { pxPerSec: 400, left: 14, zoom: 1, labelW: 120 };
+  const itemKey = (time, joint) => `${C.round4(time)}|${joint || '*'}`;
+  const parseItem = (key) => { const [t, j] = key.split('|'); return { time: Number(t), joint: j === '*' ? null : j }; };
+  function selectedItems() { return [...state.keySel].map(parseItem); }
   function layoutTimeline() {
+    tl.labelW = parseFloat(getComputedStyle($('#tl-scroll')).getPropertyValue('--tl-label-w')) || 120;
     const L = Math.max(0.1, state.anim.length);
-    const avail = Math.max(200, timelineWidth() - tl.left * 2);
-    tl.pxPerSec = avail / L;
-    $('#tl-tracks').style.width = (avail + tl.left * 2) + 'px';
+    const fitW = Math.max(200, $('#tl-scroll').clientWidth - tl.labelW - tl.left * 2 - 16);
+    tl.pxPerSec = (fitW / L) * tl.zoom;
+    const trackW = L * tl.pxPerSec + tl.left * 2;
+    $('#tl-tracks').style.width = (tl.labelW + trackW) + 'px';
+    tl.trackW = trackW;
   }
-  const tx = (t) => tl.left + t * tl.pxPerSec;
+  const tx = (t) => tl.left + t * tl.pxPerSec; // inside a row
+  const ax = (t) => tl.labelW + tx(t); // inside #tl-tracks
+  function rowLabelText(jt) { return jt.label.replace(/\s*\(.*\)/, ''); }
+  function timelineJoints() {
+    const rig = C.RIGS[state.anim.rig];
+    const used = new Set(state.anim.keyframes.flatMap((k) => Object.keys(k.poses)));
+    return rig.joints.filter((jt) => used.has(jt.name) || jt.name === state.selected);
+  }
   function renderTimeline() {
     layoutTimeline();
     const a = state.anim;
     // Ruler
     const ruler = $('#tl-ruler');
     ruler.innerHTML = '';
-    const stepOpts = [0.05, 0.1, 0.25, 0.5, 1, 2, 5];
-    const step = stepOpts.find((s) => s * tl.pxPerSec >= 56) || 5;
-    for (let t = 0; t <= a.length + 1e-6; t += step) {
+    ruler.style.width = tl.trackW + 'px';
+    const stepOpts = [0.01, 0.02, 0.05, 0.1, 0.25, 0.5, 1, 2, 5];
+    const step = stepOpts.find((v) => v * tl.pxPerSec >= 56) || 5;
+    for (let i = 0, t = 0; t <= a.length + 1e-6; i++, t = i * step) {
       const tick = document.createElement('span');
       tick.className = 'tick';
       tick.style.left = tx(t) + 'px';
@@ -415,69 +448,126 @@
       ruler.appendChild(tick);
     }
     // Rows
-    const rowAll = $('#tl-row-all'), rowJoint = $('#tl-row-joint'), rowMarkers = $('#tl-row-markers');
-    [rowAll, rowJoint, rowMarkers].forEach((r) => $$('.key, .flag', r).forEach((e) => e.remove()));
+    const rows = $('#tl-rows');
+    rows.innerHTML = '';
     const cur = currentKeyframe();
-    a.keyframes.forEach((k) => {
-      rowAll.appendChild(makeKey(k, cur === k, false));
-      if (state.selected && k.poses[state.selected]) rowJoint.appendChild(makeKey(k, cur === k, true));
-    });
-    $('#tl-joint-label').textContent = state.selected ? shortLabel() : 'ข้อต่อที่เลือก';
+    const line = (label, cls, joint) => {
+      const l = document.createElement('div');
+      l.className = 'tl-line' + (cls ? ' ' + cls : '');
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'tl-label'; b.textContent = label; b.title = label;
+      if (joint) b.addEventListener('click', () => select(joint));
+      const r = document.createElement('div');
+      r.className = 'tl-row'; r.style.width = tl.trackW + 'px';
+      l.append(b, r);
+      rows.appendChild(l);
+      return r;
+    };
+    const summary = line('ทั้งตัว', 'summary', null);
+    a.keyframes.forEach((k) => summary.appendChild(makeKey(k, null, cur === k)));
+    for (const jt of timelineJoints()) {
+      const r = line(rowLabelText(jt), jt.name === state.selected ? 'selected' : '', jt.name);
+      a.keyframes.forEach((k) => { if (k.poses[jt.name]) r.appendChild(makeKey(k, jt.name, cur === k)); });
+    }
+    const markers = line('Markers', 'markers', null);
     a.markers.forEach((m) => {
       const f = document.createElement('button');
       f.type = 'button';
       f.className = 'flag';
       f.style.left = tx(m.time) + 'px';
       f.textContent = m.name;
-      f.title = `${m.name} @ ${fmt(m.time)}s — ลากเพื่อย้ายเวลา`;
-      dragTime(f, m.time, (t) => { m.time = t; }, () => { a.markers.sort((x, y) => x.time - y.time); renderMarkers(); });
-      rowMarkers.appendChild(f);
+      f.title = `${m.name}${m.value ? ' = ' + m.value : ''} @ ${fmt(m.time)}s — ลากเพื่อย้ายเวลา`;
+      dragFlag(f, m);
+      markers.appendChild(f);
     });
-    $('#tl-end').style.left = tx(a.length) + 'px';
+    $('#tl-end').style.left = ax(a.length) + 'px';
     renderPlayhead();
   }
   function shortLabel() {
     const jt = C.RIGS[state.anim.rig].byName[state.selected];
     return jt ? jt.label : state.selected;
   }
-  function makeKey(k, active, jointRow) {
+  function makeKey(k, joint, active) {
     const d = document.createElement('button');
     d.type = 'button';
-    d.className = 'key' + (active ? ' active' : '') + (jointRow ? ' joint' : '');
+    const key = itemKey(k.time, joint);
+    d.className = 'key' + (joint ? ' joint' : '') + (active ? ' active' : '') + (state.keySel.has(key) ? ' sel' : '');
     d.style.left = tx(k.time) + 'px';
     d.dataset.easing = k.easing;
-    d.title = `${fmt(k.time)}s · ${k.easing}${k.easing === 'Linear' || k.easing === 'Constant' ? '' : ' ' + k.direction} · ${Object.keys(k.poses).length} ข้อต่อ — ลากเพื่อย้ายเวลา`;
-    d.setAttribute('aria-label', `คีย์เฟรม ${fmt(k.time)} วินาที`);
-    dragTime(d, k.time, (t) => {
-      const clash = state.anim.keyframes.find((o) => o !== k && Math.abs(o.time - t) < 1e-4);
-      if (!clash) k.time = t;
-    }, () => C.sortKeyframes(state.anim));
+    d.dataset.time = k.time;
+    d.dataset.key = key;
+    const what = joint ? rowLabelText(C.RIGS[state.anim.rig].byName[joint]) : `${Object.keys(k.poses).length} ข้อต่อ`;
+    d.title = `${fmt(k.time)}s · ${what} · ${k.easing}${k.easing === 'Linear' || k.easing === 'Constant' ? '' : ' ' + k.direction} — Shift/Ctrl+คลิก เลือกหลายอัน, ลากเพื่อย้าย`;
+    d.setAttribute('aria-label', `คีย์ ${what} ${fmt(k.time)} วินาที`);
+    d.addEventListener('pointerdown', (e) => keyPointerDown(e, d, k.time, joint));
     return d;
   }
-  /** Click = seek; drag = move the item in time. */
-  function dragTime(el, t0, setT, done) {
+  /** Click = select (and seek); Shift/Ctrl+click = add/remove; drag = move every selected key. */
+  function keyPointerDown(e, el, t0, joint) {
+    e.stopPropagation();
+    pause();
+    const key = itemKey(t0, joint);
+    const additive = e.shiftKey || e.ctrlKey || e.metaKey;
+    if (additive) {
+      if (state.keySel.has(key)) state.keySel.delete(key); else state.keySel.add(key);
+    } else if (!state.keySel.has(key)) {
+      state.keySel = new Set([key]);
+    }
+    $$('#tl-rows .key').forEach((k) => k.classList.toggle('sel', state.keySel.has(k.dataset.key)));
+    try { el.setPointerCapture(e.pointerId); } catch (err) { /* synthetic or finished pointer */ }
+    const x0 = e.clientX;
+    let moved = false, base = null, items = null, dt = 0;
+    const move = (ev) => {
+      const dx = ev.clientX - x0;
+      if (!moved && Math.abs(dx) < 4) return;
+      if (!moved) { moved = true; pushUndo(); base = C.clone(state.anim); items = selectedItems(); }
+      dt = Math.round((dx / tl.pxPerSec) / SNAP) * SNAP;
+      const minT = Math.min(...items.map((i) => i.time));
+      if (minT + dt < 0) dt = -minT;
+      state.anim = C.moveKeys(base, items, dt);
+      $$('#tl-rows .key.sel').forEach((k) => { k.style.left = tx(Number(k.dataset.time) + dt) + 'px'; });
+      state.time = snap(t0 + dt);
+      drawPose(); renderPlayhead();
+    };
+    const up = () => {
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerup', up);
+      el.removeEventListener('pointercancel', up);
+      if (moved) {
+        state.keySel = new Set(items.map((i) => itemKey(Math.max(0, Math.round((i.time + dt) * 100) / 100), i.joint)));
+        save(); renderAll();
+      } else {
+        if (joint && state.selected !== joint) select(joint);
+        seek(t0);
+        renderTimeline();
+      }
+    };
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+  }
+  function dragFlag(el, m) {
     el.addEventListener('pointerdown', (e) => {
       e.stopPropagation();
       pause();
       try { el.setPointerCapture(e.pointerId); } catch (err) { /* synthetic or finished pointer */ }
-      const x0 = e.clientX;
+      const x0 = e.clientX, t0 = m.time;
       let moved = false;
       const move = (ev) => {
         const dx = ev.clientX - x0;
         if (!moved && Math.abs(dx) < 4) return;
         if (!moved) { moved = true; pushUndo(); }
-        const t = snap(Math.max(0, t0 + dx / tl.pxPerSec));
-        setT(t);
-        if (t > state.anim.length) state.anim.length = t;
-        el.style.left = tx(t) + 'px';
-        state.time = t;
+        m.time = snap(Math.max(0, t0 + dx / tl.pxPerSec));
+        if (m.time > state.anim.length) state.anim.length = m.time;
+        el.style.left = tx(m.time) + 'px';
+        state.time = m.time;
         drawPose(); renderPlayhead();
       };
       const up = () => {
         el.removeEventListener('pointermove', move);
         el.removeEventListener('pointerup', up);
         el.removeEventListener('pointercancel', up);
-        if (moved) { done && done(); save(); renderAll(); } else seek(t0);
+        if (moved) { state.anim.markers.sort((x, y) => x.time - y.time); save(); renderMarkers(); renderAll(); } else seek(t0);
       };
       el.addEventListener('pointermove', move);
       el.addEventListener('pointerup', up);
@@ -485,22 +575,65 @@
     });
   }
   function renderPlayhead() {
-    $('#tl-playhead').style.left = tx(state.time) + 'px';
+    $('#tl-playhead').style.left = ax(state.time) + 'px';
+    // Keep the playhead in view while playing a zoomed-in timeline.
+    const sc = $('#tl-scroll');
+    if (state.playing && tl.zoom > 1) {
+      const x = ax(state.time), viewL = sc.scrollLeft + tl.labelW, viewR = sc.scrollLeft + sc.clientWidth - 24;
+      if (x < viewL || x > viewR) sc.scrollLeft = Math.max(0, x - tl.labelW - 24);
+    }
     $('#time-now').textContent = fmt(state.time);
     $('#time-len').textContent = fmt(state.anim.length);
     const k = currentKeyframe();
-    $$('#tl-row-all .key').forEach((el, i) => el.classList.toggle('active', state.anim.keyframes[i] === k));
+    $$('#tl-rows .key').forEach((el) => el.classList.toggle('active', !!k && Math.abs(Number(el.dataset.time) - k.time) < 1e-4));
     if (!state.playing) { renderKeyframePanel(); renderInspectorValues(); }
+  }
+  function setZoom(z, anchorClientX) {
+    const sc = $('#tl-scroll');
+    const r = sc.getBoundingClientRect();
+    const ax0 = (anchorClientX === undefined ? r.left + tl.labelW + (r.width - tl.labelW) / 2 : anchorClientX) - r.left;
+    const tAt = (sc.scrollLeft + ax0 - tl.labelW - tl.left) / tl.pxPerSec;
+    tl.zoom = Math.max(1, Math.min(16, z));
+    renderTimeline();
+    sc.scrollLeft = Math.max(0, tl.labelW + tl.left + tAt * tl.pxPerSec - ax0);
+  }
+  function deleteSelectedKeys() {
+    if (!state.keySel.size) return deleteKeyframe();
+    pushUndo();
+    state.anim = C.deleteKeys(state.anim, selectedItems());
+    const n = state.keySel.size;
+    state.keySel.clear();
+    save(); renderAll(); drawPose();
+    toast(`ลบ ${n} คีย์แล้ว`);
+  }
+  function copySelectedKeys() {
+    state.keyClip = C.copyKeys(state.anim, selectedItems());
+    state.lastCopy = 'keys';
+    toast(`คัดลอก ${state.keySel.size} คีย์แล้ว เลื่อนเส้นเวลาไปที่อื่นแล้วกด Ctrl+V`);
+  }
+  function pasteKeysAtPlayhead() {
+    if (!state.keyClip) return;
+    pause(); pushUndo();
+    const t = snap(state.time);
+    state.anim = C.pasteKeys(state.anim, state.keyClip, t);
+    state.keySel = new Set(state.keyClip.map((c) => itemKey(Math.round((c.time + t) * 100) / 100, c.whole ? null : Object.keys(c.poses)[0])));
+    save(); renderAll(); drawPose();
+    toast(`วางคีย์ที่ ${fmt(t)} วิ`);
+  }
+  function selectAllKeys() {
+    state.keySel = new Set(state.anim.keyframes.map((k) => itemKey(k.time, null)));
+    renderTimeline();
   }
   function bindTimeline() {
     const scrub = (e) => {
       const r = $('#tl-tracks').getBoundingClientRect();
-      seek(snap((e.clientX - r.left - tl.left) / tl.pxPerSec));
+      seek(snap((e.clientX - r.left - tl.labelW - tl.left) / tl.pxPerSec));
       renderJointList();
     };
     const area = $('#tl-tracks');
     area.addEventListener('pointerdown', (e) => {
-      if (e.target.closest('.key, .flag')) return;
+      if (e.target.closest('.key, .flag, .tl-label')) return;
+      if (!e.shiftKey && state.keySel.size) { state.keySel.clear(); $$('#tl-rows .key.sel').forEach((k) => k.classList.remove('sel')); }
       try { area.setPointerCapture(e.pointerId); } catch (err) { /* synthetic or finished pointer */ }
       scrub(e);
       const move = (ev) => scrub(ev);
@@ -508,6 +641,13 @@
       area.addEventListener('pointermove', move);
       area.addEventListener('pointerup', up);
     });
+    $('#tl-scroll').addEventListener('wheel', (e) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      e.preventDefault();
+      setZoom(tl.zoom * Math.exp(-e.deltaY * 0.002), e.clientX);
+    }, { passive: false });
+    $('#tl-zoom-in').addEventListener('click', () => setZoom(tl.zoom * 1.5));
+    $('#tl-zoom-out').addEventListener('click', () => setZoom(tl.zoom / 1.5));
     new ResizeObserver(() => renderTimeline()).observe($('#tl-scroll'));
   }
 
@@ -520,6 +660,7 @@
     pushUndo();
     state.anim = res.anim;
     state.time = 0;
+    state.keySel.clear();
     afterLoad(true);
     if (msg) toast(msg + (res.warnings.length ? ` (มีคำเตือน ${res.warnings.length} ข้อ)` : ''));
     return res;
@@ -528,6 +669,7 @@
     if (resetTime) state.time = 0;
     state.time = Math.min(state.time, state.anim.length);
     viewer.setRig(state.anim.rig);
+    if (state.layer && state.layer.anim.rig !== state.anim.rig) setLayer(state.layer.id);
     if (state.selected && !C.RIGS[state.anim.rig].byName[state.selected]) state.selected = null;
     viewer.setSelected(state.selected);
     save();
@@ -653,7 +795,7 @@
     $('#speed').addEventListener('change', (e) => { state.speed = Number(e.target.value); });
     $('#loop-preview').addEventListener('change', (e) => { state.loopPreview = e.target.checked; });
     $('#btn-add-key').addEventListener('click', addKeyframe);
-    $('#btn-del-key').addEventListener('click', deleteKeyframe);
+    $('#btn-del-key').addEventListener('click', deleteSelectedKeys);
     $('#btn-add-marker').addEventListener('click', addMarker);
     $('#btn-reset-joint').addEventListener('click', resetJoint);
     $('#btn-clear-joint').addEventListener('click', clearJointKey);
@@ -682,16 +824,8 @@
       const from = state.anim.rig;
       loadAnim(C.convertRig(state.anim, target), `แปลง ${from} → ${target} แล้ว${target === 'R6' ? ' (R6 ไม่มีศอก/เข่า ส่วนนั้นจะหายไป)' : ''} กด ย้อนกลับ ได้`);
     }));
-    $('#preset').addEventListener('change', (e) => {
-      const id = e.target.value;
-      if (!id) return;
-      const a = P.get(id);
-      if (a) loadAnim(C.convertRig(a, state.anim.rig), `โหลดท่า "${a.name}" แล้ว`);
-      const info = P.info(id);
-      if (info && info.prop) setProp(info.prop);
-      e.target.value = '';
-      play();
-    });
+    $('#ik-mode').addEventListener('change', (e) => { viewer.setIKMode(e.target.checked); prefs.set('ik', e.target.checked); });
+    $('#layer').addEventListener('change', (e) => setLayer(e.target.value));
     $('#btn-new').addEventListener('click', () => { loadAnim(C.newAnimation(state.anim.rig), 'เริ่มแอนิเมชันใหม่ (กด ย้อนกลับ ถ้าเผลอกด)'); });
     $('#btn-open').addEventListener('click', () => $('#file-input').click());
     $('#file-input').addEventListener('change', (e) => { const f = e.target.files[0]; if (f) openFile(f); e.target.value = ''; });
@@ -713,19 +847,20 @@
 
     window.addEventListener('keydown', (e) => {
       const tag = (e.target.tagName || '').toLowerCase();
-      if (tag === 'input' || tag === 'textarea' || tag === 'select' || $('#ai-dialog').open) return;
+      if (tag === 'input' || tag === 'textarea' || tag === 'select' || $('#ai-dialog').open || $('#preset-dialog').open) return;
       const mod = e.ctrlKey || e.metaKey;
       if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
       else if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
-      else if (mod && e.key.toLowerCase() === 'c') { copyPose(); }
-      else if (mod && e.key.toLowerCase() === 'v') { pastePose(false); }
+      else if (mod && e.key.toLowerCase() === 'c') { if (state.keySel.size) copySelectedKeys(); else { copyPose(); state.lastCopy = 'pose'; } }
+      else if (mod && e.key.toLowerCase() === 'v') { if (state.lastCopy === 'keys') pasteKeysAtPlayhead(); else pastePose(false); }
+      else if (mod && e.key.toLowerCase() === 'a') { e.preventDefault(); selectAllKeys(); }
       else if (e.key === ' ') { e.preventDefault(); state.playing ? pause() : play(); }
       else if (e.key === 'ArrowLeft') { e.preventDefault(); seek(snap(state.time - STEP)); }
       else if (e.key === 'ArrowRight') { e.preventDefault(); seek(snap(state.time + STEP)); }
       else if (e.key.toLowerCase() === 'k') addKeyframe();
       else if (e.key.toLowerCase() === 'm') pastePose(true);
-      else if (e.key === 'Delete' || e.key === 'Backspace') deleteKeyframe();
-      else if (e.key === 'Escape') select(null);
+      else if (e.key === 'Delete' || e.key === 'Backspace') deleteSelectedKeys();
+      else if (e.key === 'Escape') { if (state.keySel.size) { state.keySel.clear(); renderTimeline(); } else select(null); }
     });
   }
   function setProp(name) {
@@ -765,20 +900,128 @@
     seek(k ? k.time : dir > 0 ? state.anim.length : 0);
   }
 
-  function boot() {
-    const sel = $('#preset');
-    for (const [cat, label] of P.CATEGORIES) {
-      const group = document.createElement('optgroup');
-      group.label = label;
-      for (const p of P.LIST.filter((x) => x.cat === cat)) {
-        const o = document.createElement('option');
-        o.value = p.id; o.textContent = p.label;
-        group.appendChild(o);
+  // ---------------------------------------------------------------
+  // Presets: cached builds, layer preview and the browser with thumbnails
+  // ---------------------------------------------------------------
+  const presetCache = new Map();
+  function presetAnim(id) {
+    if (!presetCache.has(id)) presetCache.set(id, P.get(id));
+    return presetCache.get(id);
+  }
+  function loadPreset(id) {
+    const a = presetAnim(id);
+    if (!a) return;
+    loadAnim(C.convertRig(a, state.anim.rig), `โหลดท่า "${a.name}" แล้ว`);
+    const info = P.info(id);
+    if (info && info.prop) setProp(info.prop);
+    play();
+  }
+  function setLayer(id) {
+    $('#layer').value = id || '';
+    if (!id) { state.layer = null; drawPose(); return; }
+    const a = presetAnim(id);
+    state.layer = { id, anim: C.validate(C.convertRig(a, state.anim.rig)).anim, time: state.layer ? state.layer.time : 0 };
+    drawPose();
+    toast('ซ้อนท่า: ข้อต่อที่ท่านี้ไม่ได้ขยับ จะเล่นตามท่าที่ซ้อนไว้ (ดูอย่างเดียว ไม่ถูกบันทึก)');
+  }
+
+  let thumbViewer = null;
+  const thumbCache = new Map();
+  const thumbQueue = [];
+  let thumbBusy = false;
+  /** Representative time for a thumbnail: the first hit/shot, else the middle. */
+  function thumbTime(a) {
+    const m = a.markers.find((x) => ['Hit', 'Fire', 'Shoot', 'Throw', 'Cast'].includes(x.name));
+    return m ? m.time : a.length * 0.4;
+  }
+  function pumpThumbs() {
+    if (thumbBusy || !thumbQueue.length) return;
+    thumbBusy = true;
+    setTimeout(() => {
+      const { id, img } = thumbQueue.shift();
+      const rigId = state.anim.rig;
+      const cacheKey = id + '|' + rigId;
+      try {
+        if (!thumbCache.has(cacheKey)) {
+          if (!thumbViewer) {
+            thumbViewer = new window.NineViewer($('#thumb-host'), {});
+            thumbViewer.orbit.dist = 11.5;
+          }
+          const a = C.validate(C.convertRig(presetAnim(id), rigId)).anim;
+          thumbViewer.setRig(rigId);
+          thumbViewer.setProp((P.info(id) || {}).prop || 'none');
+          thumbViewer.setPose(C.sampleAll(a, thumbTime(a)));
+          thumbCache.set(cacheKey, thumbViewer.snapshot());
+        }
+        img.src = thumbCache.get(cacheKey);
+      } catch (e) { /* leave the placeholder */ }
+      thumbBusy = false;
+      pumpThumbs();
+    }, 0);
+  }
+  function bindPresetBrowser() {
+    const dlg = $('#preset-dialog');
+    const grid = $('#preset-grid');
+    const cats = $('#preset-cats');
+    let cat = 'all';
+    const catLabel = Object.fromEntries(P.CATEGORIES);
+    const observer = new IntersectionObserver((entries) => {
+      for (const en of entries) {
+        if (!en.isIntersecting) continue;
+        observer.unobserve(en.target);
+        thumbQueue.push({ id: en.target.dataset.id, img: en.target.querySelector('img') });
       }
-      sel.appendChild(group);
+      pumpThumbs();
+    }, { root: grid, rootMargin: '120px' });
+    const render = () => {
+      const q = $('#preset-search').value.trim().toLowerCase();
+      grid.innerHTML = '';
+      thumbQueue.length = 0;
+      const list = P.LIST.filter((p) => (cat === 'all' || p.cat === cat)
+        && (!q || (p.label + ' ' + p.id + ' ' + catLabel[p.cat]).toLowerCase().includes(q)));
+      if (!list.length) { grid.innerHTML = '<p class="preset-empty">ไม่พบท่าที่ค้นหา ลองคำอื่น เช่น ดาบ, กระโดด, boss</p>'; return; }
+      for (const p of list) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'preset-card';
+        b.dataset.id = p.id;
+        b.innerHTML = '<img class="preset-thumb" alt="" width="180" height="180"><span></span><span class="preset-meta"></span>';
+        b.children[1].textContent = p.label;
+        b.children[2].textContent = catLabel[p.cat];
+        const cached = thumbCache.get(p.id + '|' + state.anim.rig);
+        if (cached) b.querySelector('img').src = cached; else observer.observe(b);
+        b.addEventListener('click', () => { dlg.close(); loadPreset(p.id); });
+        grid.appendChild(b);
+      }
+    };
+    const renderCats = () => {
+      cats.innerHTML = '';
+      for (const [id, label] of [['all', 'ทั้งหมด']].concat(P.CATEGORIES)) {
+        const c = document.createElement('button');
+        c.type = 'button'; c.className = 'chip';
+        c.textContent = label + (id === 'all' ? ` (${P.LIST.length})` : '');
+        c.setAttribute('aria-pressed', String(cat === id));
+        c.addEventListener('click', () => { cat = id; renderCats(); render(); });
+        cats.appendChild(c);
+      }
+    };
+    $('#btn-presets').textContent = `ท่าสำเร็จรูป (${P.LIST.length})`;
+    $('#btn-presets').addEventListener('click', () => { renderCats(); render(); dlg.showModal(); $('#preset-search').focus(); });
+    $('#preset-search').addEventListener('input', render);
+    $('#preset-close').addEventListener('click', () => dlg.close());
+    dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+  }
+
+  function boot() {
+    const layerSel = $('#layer');
+    for (const p of P.LIST.filter((x) => x.cat === 'move' || ['stance', 'mn_walk', 'mn_run', 'boss_idle'].includes(x.id))) {
+      const o = document.createElement('option');
+      o.value = p.id; o.textContent = 'ซ้อน: ' + p.label;
+      layerSel.appendChild(o);
     }
     initViewer();
-    window.NineApp = { state, get viewer() { return viewer; } }; // handy for debugging in the console
+    window.NineApp = { state, get viewer() { return viewer; }, loadPreset }; // handy for debugging and scripts
+    bindPresetBrowser();
     bindAxisRows();
     bindTimeline();
     bindControls();
@@ -791,6 +1034,8 @@
     setProp(prefs.get('prop', 'sword'));
     state.onion = prefs.get('onion', false) === true;
     $('#onion').checked = state.onion;
+    $('#ik-mode').checked = prefs.get('ik', true) !== false;
+    viewer.setIKMode($('#ik-mode').checked);
     state.selected = state.anim.rig === 'R15' ? 'RightUpperArm' : 'Right Arm';
     viewer.setSelected(state.selected);
     renderAll();

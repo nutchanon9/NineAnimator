@@ -5,8 +5,12 @@
  *   node tools/nine.js validate anim.json
  *   node tools/nine.js rbxmx anim.json [out.rbxmx]
  *   node tools/nine.js convert anim.json R6 [out.json]
+ *   node tools/nine.js mirror anim.json [out.json]          swap left/right
+ *   node tools/nine.js retime anim.json 0.8 [out.json]      0.8 = faster, 1.25 = slower
+ *   node tools/nine.js concat a.json b.json [gap] [out.json] play b after a
+ *   node tools/nine.js info anim.json                        joints, markers, timing
  *   node tools/nine.js prompt [R15|R6] [description...]
- *   node tools/nine.js presets
+ *   node tools/nine.js presets [--json]
  *   node tools/nine.js preset <id> [R15|R6]
  *   node tools/nine.js export-presets <dir>
  */
@@ -49,6 +53,35 @@ switch (cmd) {
     out(C.toJSON(C.convertRig(load(args[0]), target)), args[2]);
     break;
   }
+  case 'mirror': {
+    const a = load(args[0]);
+    const rig = C.RIGS[a.rig];
+    a.keyframes.forEach((k) => { k.poses = C.mirrorPoses(rig, k.poses); });
+    a.name += 'Mirror';
+    out(C.toJSON(a), args[1]);
+    break;
+  }
+  case 'retime': {
+    const f = Number(args[1]);
+    if (!(f > 0)) { console.error('factor must be a positive number, e.g. 0.8 (faster) or 1.25 (slower)'); process.exit(1); }
+    out(C.toJSON(C.retime(load(args[0]), f)), args[2]);
+    break;
+  }
+  case 'concat': {
+    const gapArg = args[2] !== undefined && !isNaN(Number(args[2]));
+    const gap = gapArg ? Number(args[2]) : 0;
+    out(C.toJSON(C.concat(load(args[0]), load(args[1]), gap)), gapArg ? args[3] : args[2]);
+    break;
+  }
+  case 'info': {
+    const a = load(args[0]);
+    const joints = [...new Set(a.keyframes.flatMap((k) => Object.keys(k.poses)))];
+    console.log(`${a.name}  rig ${a.rig}  ${a.length}s  ${a.loop ? 'loop' : 'once'}  priority ${a.priority}`);
+    console.log(`keyframes (${a.keyframes.length}): ${a.keyframes.map((k) => k.time).join(', ')}`);
+    console.log(`joints (${joints.length}): ${joints.join(', ')}`);
+    console.log(`markers (${a.markers.length}): ${a.markers.map((m) => `${m.time}s ${m.name}${m.value ? '=' + m.value : ''}`).join(', ') || '-'}`);
+    break;
+  }
   case 'prompt': {
     let rig = 'R15', rest = args;
     if (args[0] && /^r(6|15)$/i.test(args[0])) { rig = args[0].toUpperCase(); rest = args.slice(1); }
@@ -56,7 +89,18 @@ switch (cmd) {
     break;
   }
   case 'presets':
-    P.LIST.forEach((p) => console.log(`${p.id.padEnd(8)} ${p.label}`));
+    if (args[0] === '--json') {
+      const cats = Object.fromEntries(P.CATEGORIES);
+      out(JSON.stringify(P.LIST.map((p) => {
+        const a = p.make();
+        return { id: p.id, category: p.cat, categoryLabel: cats[p.cat], label: p.label, prop: p.prop, name: a.name, length: a.length, loop: a.loop, priority: a.priority, markers: [...new Set(a.markers.map((m) => m.name))] };
+      }), null, 2) + '\n');
+    } else {
+      for (const [cat, label] of P.CATEGORIES) {
+        console.log(`\n# ${label}`);
+        P.LIST.filter((p) => p.cat === cat).forEach((p) => console.log(`${p.id.padEnd(14)} ${p.label}`));
+      }
+    }
     break;
   case 'preset': {
     const a = P.get(args[0]);
@@ -77,6 +121,6 @@ switch (cmd) {
     break;
   }
   default:
-    console.log(fs.readFileSync(__filename, 'utf8').split('\n').slice(2, 12).map((l) => l.replace(/^ \*\s?/, '')).join('\n'));
+    console.log(fs.readFileSync(__filename, 'utf8').split('\n').slice(2, 15).map((l) => l.replace(/^ \*\s?/, '')).join('\n'));
     process.exit(cmd ? 1 : 0);
 }

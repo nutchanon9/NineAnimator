@@ -213,3 +213,52 @@ test('minion attacks warn before they hit', () => {
     assert.ok(warn && hits[0].time - warn.time >= 0.2, `${p.id}: needs a Warn at least 0.2 s before its first Hit`);
   }
 });
+
+test('dope sheet: move, delete, copy and paste keys', () => {
+  const a = C.validate({ rig: 'R15', keyframes: [
+    { time: 0, poses: { Head: { rot: [0, 0, 0] }, RightUpperArm: { rot: [0, 0, 0] } } },
+    { time: 0.5, easing: 'Cubic', direction: 'Out', poses: { Head: { rot: [20, 0, 0] }, RightUpperArm: { rot: [90, 0, 0] } } },
+    { time: 1, poses: { Head: { rot: [0, 0, 0] } } },
+  ] }).anim;
+  // one pose moved to a new time
+  let b = C.moveKeys(a, [{ time: 0.5, joint: 'Head' }], 0.2);
+  assert.deepStrictEqual(b.keyframes.map((k) => k.time), [0, 0.5, 0.7, 1]);
+  assert.deepStrictEqual(b.keyframes[1].poses.Head, undefined);
+  assert.deepStrictEqual(b.keyframes[2].poses.Head.rot, [20, 0, 0]);
+  // whole keyframe moved keeps its easing
+  b = C.moveKeys(a, [{ time: 0.5, joint: null }], -0.2);
+  assert.deepStrictEqual(b.keyframes.map((k) => k.time), [0, 0.3, 1]);
+  assert.strictEqual(b.keyframes[1].easing, 'Cubic');
+  // deleting the last pose of a keyframe removes the keyframe
+  b = C.deleteKeys(a, [{ time: 1, joint: 'Head' }]);
+  assert.deepStrictEqual(b.keyframes.map((k) => k.time), [0, 0.5]);
+  // copy two keys, paste later
+  const clip = C.copyKeys(a, [{ time: 0.5, joint: 'RightUpperArm' }, { time: 1, joint: 'Head' }]);
+  assert.deepStrictEqual(clip.map((c) => c.time), [0, 0.5]);
+  b = C.pasteKeys(a, clip, 1.5);
+  assert.deepStrictEqual(b.keyframes.map((k) => k.time), [0, 0.5, 1, 1.5, 2]);
+  assert.strictEqual(b.length, 2);
+  assert.deepStrictEqual(b.keyframes[3].poses.RightUpperArm.rot, [90, 0, 0]);
+});
+
+test('concat plays one animation after another, markers included', () => {
+  const a = P.get('punch'), b = P.get('kick');
+  const c = C.concat(a, b, 0.1);
+  const v = C.validate(c);
+  assert.ok(v.ok, v.errors.join());
+  assert.ok(Math.abs(c.length - (a.length + 0.1 + b.length)) < 1e-6);
+  assert.strictEqual(c.markers.filter((m) => m.name === 'Hit').length, 2);
+  assert.ok(c.markers[1].time > a.length);
+});
+
+test('leg IK puts the foot on a target', () => {
+  for (const id of ['R15', 'R6']) {
+    const rig = C.RIGS[id];
+    const goal = { [id === 'R15' ? 'RightUpperLeg' : 'Right Leg']: C.poseToM({ rot: [40, 0, 10] }) };
+    if (id === 'R15') goal.RightLowerLeg = C.poseToM({ rot: [-50, 0, 0] });
+    const target = C.limbEndWorld(rig, C.computeWorld(rig, goal), 'RightLeg');
+    const res = C.solveLimbIK(rig, {}, 'RightLeg', target);
+    assert.ok(res.error < 0.03, `${id} ${res.error}`);
+    assert.strictEqual(C.limbOfPart(rig, id === 'R15' ? 'LeftFoot' : 'Left Leg'), 'LeftLeg');
+  }
+});

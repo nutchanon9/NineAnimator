@@ -198,6 +198,19 @@
       this.ghostGroups.forEach((g) => scene.add(g));
 
       this.raycaster = new THREE.Raycaster();
+      // IK handles (hands/feet) and the drag target marker.
+      this.ikMode = false;
+      const handleMat = new THREE.MeshBasicMaterial({ color: 0xffffff, depthTest: false, transparent: true, opacity: 0.9 });
+      this.ikHandles = [0, 1, 2, 3].map(() => {
+        const m = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 8), handleMat);
+        m.renderOrder = 5; m.visible = false; m.raycast = () => {};
+        scene.add(m);
+        return m;
+      });
+      this.ikHandleMat = handleMat;
+      this.ikTarget = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, depthTest: false, transparent: true, opacity: 0.6 }));
+      this.ikTarget.renderOrder = 6; this.ikTarget.visible = false; this.ikTarget.raycast = () => {};
+      scene.add(this.ikTarget);
       this.applyTheme();
       this.bindInput();
       this.resizeObserver = new ResizeObserver(() => this.resize());
@@ -216,6 +229,7 @@
       this.scene.add(this.grid);
       this.selectColor = new THREE.Color(cssVar('--select', '#4fb3ea'));
       this.arrow.material.color = new THREE.Color(cssVar('--accent', '#f0ae3c'));
+      if (this.ikHandleMat) { this.ikHandleMat.color = new THREE.Color(cssVar('--accent', '#f0ae3c')); this.ikTarget.material.color = new THREE.Color(cssVar('--select', '#4fb3ea')); }
       this.ghostColors = [new THREE.Color(cssVar('--accent', '#f0ae3c')), new THREE.Color(cssVar('--select', '#4fb3ea'))];
       if (this.ghostGroups) this.ghostGroups.forEach((g, i) => g.children.forEach((m) => m.material.color.copy(this.ghostColors[i])));
       if (this.selected) this.setSelected(this.selected);
@@ -338,6 +352,7 @@
         this.meshes[jt.name].matrixWorldNeedsUpdate = true;
       }
       this.placeProps();
+      this.placeIKHandles();
       this.render();
     }
 
@@ -385,18 +400,54 @@
       if (this._raf) return;
       this._raf = requestAnimationFrame(() => {
         this._raf = 0;
-        const o = this.orbit;
-        o.pitch = Math.max(-1.2, Math.min(1.45, o.pitch));
-        o.dist = Math.max(3, Math.min(40, o.dist));
-        // yaw 0 looks at the character's face (camera on -Z side).
-        const cp = Math.cos(o.pitch);
-        this.camera.position.set(
-          o.target.x - Math.sin(o.yaw) * cp * o.dist,
-          o.target.y + Math.sin(o.pitch) * o.dist,
-          o.target.z - Math.cos(o.yaw) * cp * o.dist,
-        );
-        this.camera.lookAt(o.target);
-        this.renderer.render(this.scene, this.camera);
+        this.renderNow();
+      });
+    }
+
+    renderNow() {
+      const o = this.orbit;
+      o.pitch = Math.max(-1.2, Math.min(1.45, o.pitch));
+      o.dist = Math.max(3, Math.min(40, o.dist));
+      // yaw 0 looks at the character's face (camera on -Z side).
+      const cp = Math.cos(o.pitch);
+      this.camera.position.set(
+        o.target.x - Math.sin(o.yaw) * cp * o.dist,
+        o.target.y + Math.sin(o.pitch) * o.dist,
+        o.target.z - Math.cos(o.yaw) * cp * o.dist,
+      );
+      this.camera.lookAt(o.target);
+      this.renderer.render(this.scene, this.camera);
+    }
+
+    /** Render right now and return the picture as a data URL (for thumbnails). */
+    snapshot() {
+      this.renderNow();
+      return this.renderer.domElement.toDataURL('image/jpeg', 0.82);
+    }
+
+    /** World point where the mouse ray meets a plane, or null. */
+    planePoint(clientX, clientY, plane) {
+      const r = this.renderer.domElement.getBoundingClientRect();
+      const ndc = new THREE.Vector2(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
+      this.raycaster.setFromCamera(ndc, this.camera);
+      const out = new THREE.Vector3();
+      return this.raycaster.ray.intersectPlane(plane, out) ? [out.x, out.y, out.z] : null;
+    }
+
+    /** Show drag handles on hands and feet when IK dragging is on. */
+    setIKMode(on) {
+      this.ikMode = !!on;
+      this.placeIKHandles();
+      this.render();
+    }
+
+    placeIKHandles() {
+      this.ikHandles.forEach((h, i) => {
+        const limb = ['RightArm', 'LeftArm', 'RightLeg', 'LeftLeg'][i];
+        h.visible = !!(this.ikMode && this.world && this.rig);
+        if (!h.visible) return;
+        const p = C.limbEndWorld(this.rig, this.world, limb);
+        h.position.set(p[0], p[1], p[2]);
       });
     }
 
@@ -434,7 +485,15 @@
         }
         if (e.button === 2 || e.button === 1 || e.shiftKey && e.altKey) { mode = 'pan'; return; }
         const hitJoint = this.pick(e.clientX, e.clientY);
-        if (hitJoint && hitJoint === this.selected && this.opts.onPoseDrag) {
+        const limb = this.ikMode && hitJoint && this.rig ? C.limbOfPart(this.rig, hitJoint) : null;
+        if (limb && this.opts.onIKDrag && this.world) {
+          // IK: drag the hand/foot on a plane facing the camera through its end point.
+          mode = 'ik'; poseJoint = limb;
+          const p = C.limbEndWorld(this.rig, this.world, limb);
+          const n = new THREE.Vector3(); this.camera.getWorldDirection(n);
+          this.ikPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(n, new THREE.Vector3(p[0], p[1], p[2]));
+          if (this.opts.onIKDragStart) this.opts.onIKDragStart(limb);
+        } else if (hitJoint && hitJoint === this.selected && this.opts.onPoseDrag) {
           mode = 'pose'; poseJoint = hitJoint;
           if (this.opts.onPoseDragStart) this.opts.onPoseDragStart(hitJoint);
         } else {
@@ -471,12 +530,25 @@
           this.render();
         } else if (mode === 'pose' && poseJoint) {
           this.dragJoint(poseJoint, dx, dy, e.shiftKey);
+        } else if (mode === 'ik' && poseJoint) {
+          const t = this.planePoint(e.clientX, e.clientY, this.ikPlane);
+          if (t) {
+            this.ikTarget.position.set(t[0], t[1], t[2]);
+            this.ikTarget.visible = true;
+            this.opts.onIKDrag(poseJoint, t);
+          }
         }
       });
       const end = (e) => {
         if (!pointers.has(e.pointerId)) return;
         pointers.delete(e.pointerId);
         if (mode === 'pose' && poseJoint && this.opts.onPoseDragEnd) this.opts.onPoseDragEnd();
+        if (mode === 'ik' && poseJoint) {
+          this.ikTarget.visible = false;
+          if (this.opts.onIKDragEnd) this.opts.onIKDragEnd(poseJoint);
+          if (!moved && this.opts.onPick) this.opts.onPick(this.pick(e.clientX, e.clientY));
+          moved = true; // handled
+        }
         if (!moved && mode !== 'pinch' && mode !== 'pan' && e.type === 'pointerup') {
           const j = this.pick(e.clientX, e.clientY);
           if (this.opts.onPick) this.opts.onPick(j);

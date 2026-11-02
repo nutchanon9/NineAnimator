@@ -23,10 +23,7 @@
         <button type="button" data-rig="R15" aria-pressed="true" title="R15: 15 ชิ้น มีศอก เข่า มือ เท้า">R15</button>
         <button type="button" data-rig="R6" aria-pressed="false" title="R6: 6 ชิ้น แบบคลาสสิก">R6</button>
       </div>
-      <label class="select-wrap">
-        <span class="sr-only">ท่าสำเร็จรูป</span>
-        <select id="preset"><option value="">ท่าสำเร็จรูป…</option></select>
-      </label>
+      <button type="button" class="btn" id="btn-presets">ท่าสำเร็จรูป…</button>
       <button type="button" class="btn accent" id="btn-ai">ให้ AI ช่วยคิดท่า</button>
     </div>
     <div class="topbar-group files">
@@ -45,7 +42,7 @@
   <main class="workspace">
     <section class="stage" aria-label="มุมมองตัวละคร">
       <div id="viewport" class="viewport"></div>
-      <div class="stage-hint">คลิกชิ้นส่วนเพื่อเลือก · ลากชิ้นที่เลือกเพื่อหมุน (Shift = บิด) · ลากที่ว่างเพื่อหมุนกล้อง</div>
+      <div class="stage-hint">คลิกชิ้นส่วนเพื่อเลือก · ลากชิ้นที่เลือกเพื่อหมุน (Shift = บิด) · ลากมือ/เท้า (จุดสีส้ม) เพื่อจัดท่าแบบ IK · ลากที่ว่างเพื่อหมุนกล้อง</div>
       <div class="stage-tools">
         <div class="seg small" role="group" aria-label="มุมกล้อง">
           <button type="button" data-view="front">หน้า</button>
@@ -66,6 +63,10 @@
           </select>
         </label>
         <label class="check"><input type="checkbox" id="onion"> เงาคีย์ก่อน/หลัง</label>
+        <label class="check" title="ลากมือหรือเท้าไปวาง แล้วแขนขาจะงอตามเอง"><input type="checkbox" id="ik-mode" checked> ลากมือ/เท้า (IK)</label>
+        <label class="select-wrap small" title="เล่นท่านี้ซ้อนด้านล่าง ข้อต่อที่ท่าปัจจุบันไม่ได้ขยับจะใช้ท่านี้แทน"><span class="sr-only">ซ้อนท่า</span>
+          <select id="layer"><option value="">ไม่ซ้อนท่า</option></select>
+        </label>
       </div>
       <div id="marker-flash" class="marker-flash" hidden></div>
     </section>
@@ -213,29 +214,23 @@
       </div>
       <div class="tl-actions">
         <button type="button" class="btn small accent" id="btn-add-key" title="K">+ คีย์เฟรม</button>
-        <button type="button" class="btn small ghost" id="btn-del-key" title="Delete">ลบคีย์เฟรม</button>
+        <button type="button" class="btn small ghost" id="btn-del-key" title="Delete: ลบคีย์ที่เลือก หรือคีย์เฟรมตรงเส้นเวลา">ลบ</button>
+        <div class="zoom" role="group" aria-label="ซูมเส้นเวลา">
+          <button type="button" class="icon-btn" id="tl-zoom-out" aria-label="ซูมออก" title="ซูมออก (Ctrl+ลูกล้อ)">−</button>
+          <button type="button" class="icon-btn" id="tl-zoom-in" aria-label="ซูมเข้า" title="ซูมเข้า (Ctrl+ลูกล้อ)">+</button>
+        </div>
         <label class="select-wrap small"><span class="sr-only">ความเร็ว</span>
           <select id="speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select>
         </label>
         <label class="check"><input type="checkbox" id="loop-preview" checked> เล่นวน</label>
       </div>
     </div>
-    <div class="tl-body">
-      <div class="tl-labels" aria-hidden="true">
-        <span class="tl-label ruler-label">เวลา</span>
-        <span class="tl-label">ทั้งตัว</span>
-        <span class="tl-label" id="tl-joint-label">ข้อต่อที่เลือก</span>
-        <span class="tl-label">Markers</span>
-      </div>
-      <div class="tl-scroll" id="tl-scroll">
-        <div class="tl-tracks" id="tl-tracks">
-          <div class="tl-ruler" id="tl-ruler"></div>
-          <div class="tl-row" id="tl-row-all"></div>
-          <div class="tl-row" id="tl-row-joint"></div>
-          <div class="tl-row markers" id="tl-row-markers"></div>
-          <div class="tl-end" id="tl-end"></div>
-          <div class="tl-playhead" id="tl-playhead"></div>
-        </div>
+    <div class="tl-body" id="tl-scroll">
+      <div class="tl-tracks" id="tl-tracks">
+        <div class="tl-line tl-ruler-line"><span class="tl-label">เวลา</span><div class="tl-row tl-ruler" id="tl-ruler"></div></div>
+        <div id="tl-rows"></div>
+        <div class="tl-end" id="tl-end"></div>
+        <div class="tl-playhead" id="tl-playhead"></div>
       </div>
     </div>
   </section>
@@ -282,6 +277,22 @@
     </div>
   </div>
 </dialog>
+
+<dialog id="preset-dialog" class="dialog wide" aria-labelledby="preset-title">
+  <div class="dialog-head">
+    <h2 id="preset-title">ท่าสำเร็จรูป</h2>
+    <button type="button" class="icon-btn" id="preset-close" aria-label="ปิด">×</button>
+  </div>
+  <div class="dialog-body preset-body">
+    <div class="preset-tools">
+      <input type="search" id="preset-search" placeholder="ค้นหา เช่น ดาบ, วิ่ง, boss, combo" aria-label="ค้นหาท่า">
+      <div class="chips" id="preset-cats"></div>
+    </div>
+    <div class="preset-grid" id="preset-grid"></div>
+  </div>
+</dialog>
+
+<div id="thumb-host" class="thumb-host" aria-hidden="true"></div>
 
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 

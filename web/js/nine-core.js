@@ -602,6 +602,85 @@
   }
 
   // ------------------------------------------------------------------
+  // Key editing (dope sheet). An item is { time, joint } where joint is a
+  // joint name (one pose) or null (the whole keyframe).
+  // ------------------------------------------------------------------
+  const sameT = (a, b) => Math.abs(a - b) < EPS_TIME;
+  function takeItems(anim, items) {
+    const taken = [];
+    const ordered = items.slice().sort((a, b) => (a.joint === null ? -1 : 0) - (b.joint === null ? -1 : 0));
+    for (const it of ordered) {
+      const k = anim.keyframes.find((x) => sameT(x.time, it.time));
+      if (!k) continue;
+      if (it.joint === null) {
+        taken.push({ time: k.time, poses: k.poses, easing: k.easing, direction: k.direction, whole: true });
+        k.poses = {};
+        k._gone = true;
+      } else if (k.poses[it.joint]) {
+        taken.push({ time: k.time, poses: { [it.joint]: k.poses[it.joint] }, easing: k.easing, direction: k.direction });
+        delete k.poses[it.joint];
+      }
+    }
+    anim.keyframes = anim.keyframes.filter((k) => !k._gone && Object.keys(k.poses).length > 0);
+    return taken;
+  }
+  function putItems(anim, taken, dt) {
+    for (const it of taken) {
+      const t = Math.max(0, Math.round((it.time + dt) * 100) / 100);
+      const existed = !!findKeyframe(anim, t);
+      const k = ensureKeyframe(anim, t);
+      if (it.whole || !existed) { k.easing = it.easing; k.direction = it.direction; }
+      Object.assign(k.poses, clone(it.poses));
+    }
+    sortKeyframes(anim);
+    const last = anim.keyframes.length ? anim.keyframes[anim.keyframes.length - 1].time : 0;
+    if (last > anim.length) anim.length = last;
+  }
+  /** Move the selected keys by dt seconds (snapped to 0.01 s). Returns a new animation. */
+  function moveKeys(animIn, items, dt) {
+    const anim = clone(animIn);
+    const taken = takeItems(anim, items);
+    putItems(anim, taken, dt);
+    if (!anim.keyframes.length) anim.keyframes.push({ time: 0, easing: 'Linear', direction: 'InOut', poses: {} });
+    return anim;
+  }
+  /** Delete the selected keys. Keeps at least one keyframe. Returns a new animation. */
+  function deleteKeys(animIn, items) {
+    const anim = clone(animIn);
+    takeItems(anim, items);
+    if (!anim.keyframes.length) anim.keyframes.push({ time: 0, easing: 'Linear', direction: 'InOut', poses: {} });
+    return anim;
+  }
+  /** Copy the selected keys into a clip with times relative to the earliest one. */
+  function copyKeys(anim, items) {
+    const taken = takeItems(clone(anim), items);
+    const t0 = Math.min(...taken.map((x) => x.time));
+    return taken.map((x) => Object.assign({}, x, { time: Math.round((x.time - t0) * 100) / 100 }));
+  }
+  /** Paste a clip from copyKeys at time t. Returns a new animation. */
+  function pasteKeys(animIn, clip, t) {
+    const anim = clone(animIn);
+    putItems(anim, clip, t);
+    return anim;
+  }
+
+  /**
+   * Play `b` after `a` (b converted to a's rig), `gap` seconds apart.
+   * Markers move with their animation. Returns a new animation.
+   */
+  function concat(aIn, bIn, gap) {
+    const a = validate(aIn).anim, b = convertRig(validate(bIn).anim, a.rig);
+    const shift = a.length + (gap || 0);
+    const out = clone(a);
+    out.name = a.name + '_' + b.name;
+    out.loop = false;
+    putItems(out, b.keyframes.map((k) => ({ time: k.time, poses: k.poses, easing: k.easing, direction: k.direction, whole: true })), shift);
+    out.markers = out.markers.concat(b.markers.map((m) => Object.assign({}, m, { time: Math.round((m.time + shift) * 10000) / 10000 })));
+    out.length = Math.round((shift + b.length) * 10000) / 10000;
+    return out;
+  }
+
+  // ------------------------------------------------------------------
   // Arm IK: move one arm so its grip point reaches a world-space target.
   // Used for two-handed weapons (left hand on the hilt or barrel).
   // ------------------------------------------------------------------
@@ -631,11 +710,11 @@
     return [w.p[0] + g[0], w.p[1] + g[1], w.p[2] + g[2]];
   }
   /** Coordinate descent with shrinking steps; p0/lo/hi in degrees. Returns { p, cost }. */
-  function minimize(p0, lo, hi, cost) {
+  function minimize(p0, lo, hi, cost, steps) {
     const n = p0.length;
     const p = p0.map((v, i) => clamp(v, lo[i], hi[i]));
     let c = cost(p);
-    for (const step of [30, 12, 5, 2, 0.8, 0.3, 0.1]) {
+    for (const step of steps || [30, 12, 5, 2, 0.8, 0.3, 0.1]) {
       let improved = true, guard = 0;
       while (improved && guard++ < 60) {
         improved = false;
@@ -760,48 +839,95 @@
    * gets x/y/z, the R15 elbow only bends (x 0..150). Pure coordinate
    * descent: small, dependency-free and fast enough for a 4-angle chain.
    */
-  function solveArmIK(rig, ms, side, target) {
-    const ch = armChain(rig, side);
+  // Limbs for IK: arms end at the grip point, legs at the sole of the foot.
+  const LIMB_END = { R15: { Arm: [0, -0.15, 0], Leg: [0, -0.15, 0] }, R6: { Arm: [0, -1, 0], Leg: [0, -1, 0] } };
+  function limbChain(rig, limb) {
+    const side = limb.startsWith('Left') ? 'Left' : 'Right';
+    const kind = limb.endsWith('Leg') ? 'Leg' : 'Arm';
+    const ch = rig.id === 'R15'
+      ? { upper: side + 'Upper' + kind, lower: side + 'Lower' + kind, end: side + (kind === 'Arm' ? 'Hand' : 'Foot') }
+      : { upper: side + ' ' + kind, lower: null, end: side + ' ' + kind };
+    ch.side = side; ch.kind = kind; ch.endPoint = LIMB_END[rig.id][kind];
+    // Elbows bend with x+, knees with x-.
+    ch.bend = kind === 'Arm' ? [0, 150] : [-150, 0];
+    ch.names = [ch.upper, ch.lower, ch.lower ? ch.end : null].filter(Boolean);
+    if (kind === 'Arm') ch.names.push(side === 'Left' ? 'LeftHandle' : 'Handle');
+    return ch;
+  }
+  /** Which limb a part belongs to (for dragging a hand or foot), or null. */
+  function limbOfPart(rig, part) {
+    for (const limb of ['RightArm', 'LeftArm', 'RightLeg', 'LeftLeg']) {
+      const ch = limbChain(rig, limb);
+      if (part === ch.end) return limb;
+    }
+    return null;
+  }
+  /** World position of a limb's end point (grip / sole) in an already computed world. */
+  function limbEndWorld(rig, world, limb) {
+    const ch = limbChain(rig, limb);
+    const end = world[ch.end], g = m3v(end.r, ch.endPoint);
+    return [end.p[0] + g[0], end.p[1] + g[1], end.p[2] + g[2]];
+  }
+
+  /**
+   * Solve a limb ('RightArm' | 'LeftArm' | 'RightLeg' | 'LeftLeg') so its end
+   * reaches `target` (world). ms: { joint: M } for the whole body. The upper
+   * joint gets x/y/z, the R15 elbow/knee only bends. opts.fast: start only
+   * from the current pose (smooth and quick, for dragging in the editor).
+   * Returns { poses, error } (error in studs).
+   */
+  function solveLimbIK(rig, ms, limb, target, opts) {
+    const o = opts || {};
+    const ch = limbChain(rig, limb);
     const cur = ms[ch.upper] ? m3ToEuler(ms[ch.upper].r) : [0, 0, 0];
-    const curElbow = ch.lower && ms[ch.lower] ? m3ToEuler(ms[ch.lower].r)[0] : 20;
+    const curBend = ch.lower && ms[ch.lower] ? m3ToEuler(ms[ch.lower].r)[0] : (ch.kind === 'Arm' ? 20 : -20);
     const work = Object.assign({}, ms);
+    const keepPos = ms[ch.upper] ? ms[ch.upper].p : [0, 0, 0];
     const apply = (p) => {
-      work[ch.upper] = { r: eulerToM3([p[0], p[1], p[2]]), p: ms[ch.upper] ? ms[ch.upper].p : [0, 0, 0] };
-      if (ch.lower) work[ch.lower] = { r: eulerToM3([p[3], 0, 0]), p: [0, 0, 0] };
+      work[ch.upper] = { r: eulerToM3([p[0], p[1], p[2]]), p: keepPos };
+      if (ch.lower) work[ch.lower] = { r: eulerToM3([p[3], 0, 0]), p: ms[ch.lower] ? ms[ch.lower].p : [0, 0, 0] };
     };
     const base = computeWorld(rig, ms);
-    const names = chainNames(rig, side);
-    const gripOf = () => {
-      const end = computeChain(rig, work, base, names)[ch.end];
-      const g = m3v(end.r, GRIP_POINT[rig.id]);
+    const endOf = () => {
+      const end = computeChain(rig, work, base, ch.names)[ch.end];
+      const g = m3v(end.r, ch.endPoint);
       return [end.p[0] + g[0], end.p[1] + g[1], end.p[2] + g[2]];
     };
-    // If the arm already has a pose, prefer the solution closest to it, so
-    // consecutive keys solved one after another don't flip elbow side.
-    const prefer = ms[ch.upper] ? [...cur, curElbow] : null;
+    // If the limb already has a pose, prefer the solution closest to it, so
+    // consecutive keys (or drag steps) don't flip the elbow/knee side.
+    const prefer = ms[ch.upper] ? [...cur, curBend] : null;
     const cost = (p) => {
       apply(p);
-      const g = gripOf();
+      const g = endOf();
       const d2 = (g[0] - target[0]) ** 2 + (g[1] - target[1]) ** 2 + (g[2] - target[2]) ** 2;
       let reg = 1e-6 * (p[1] * p[1]); // tiny pull toward small twist keeps solutions natural
       if (prefer) for (let i = 0; i < p.length; i++) reg += 2e-7 * (p[i] - prefer[i]) ** 2;
       return d2 + reg;
     };
     const n = ch.lower ? 4 : 3;
-    const lo = [-180, -90, -180, 0], hi = [180, 90, 180, 150];
+    const lo = [-180, -90, -180, ch.bend[0]], hi = [180, 90, 180, ch.bend[1]];
+    const out = ch.side === 'Left' ? -1 : 1;
+    const seeds = o.fast ? [[...cur, curBend]]
+      : ch.kind === 'Arm'
+        ? [[...cur, curBend], [60, 0, 0, 60], [90, 0, -30 * out, 30], [30, 0, 0, 100]]
+        : [[...cur, curBend], [30, 0, 5 * out, -30], [70, 0, 10 * out, -90], [-20, 0, 0, -20]];
     let best = null, bestC = Infinity;
-    const seeds = [[...cur, curElbow], [60, 0, 0, 60], [90, 0, side === 'Left' ? 30 : -30, 30], [30, 0, 0, 100]];
     for (const seed of seeds) {
-      const r = minimize(seed.slice(0, n), lo.slice(0, n), hi.slice(0, n), cost);
+      const r = minimize(seed.slice(0, n), lo.slice(0, n), hi.slice(0, n), cost, o.fast ? [8, 3, 1, 0.3] : undefined);
       if (r.cost < bestC) { bestC = r.cost; best = r.p; }
     }
     const poses = { [ch.upper]: { rot: best.slice(0, 3).map(roundAngle) } };
-    if (ms[ch.upper] && ms[ch.upper].p.some((v) => v !== 0)) poses[ch.upper].pos = ms[ch.upper].p.map(round4);
+    if (keepPos.some((v) => v !== 0)) poses[ch.upper].pos = keepPos.map(round4);
     if (ch.lower) poses[ch.lower] = { rot: [roundAngle(best[3]), 0, 0] };
     apply(best);
-    const g = gripWorld(rig, work, side);
+    const g = endOf();
     return { poses, error: Math.hypot(g[0] - target[0], g[1] - target[1], g[2] - target[2]) };
   }
+  /** Arm-only wrapper kept for presets and the editor's two-hand button. */
+  function solveArmIK(rig, ms, side, target, opts) {
+    return solveLimbIK(rig, ms, side + 'Arm', target, opts);
+  }
+
 
   // ------------------------------------------------------------------
   // R15 <-> R6
@@ -1054,10 +1180,11 @@
     // sampling & editing
     ease, sampleJointM, sampleAll, samplePoses, sampleJointPose,
     findKeyframe, ensureKeyframe, sortKeyframes, mirrorPose, mirrorPoses, convertRig, retime,
+    moveKeys, deleteKeys, copyKeys, pasteKeys, concat,
     // io
     toRbxmx, fromRbxmx,
     // ik
-    solveArmIK, solveWeaponIK, aimWeapon, gripWorld, pointOn, GRIP_POINT,
+    solveArmIK, solveLimbIK, limbChain, limbOfPart, limbEndWorld, solveWeaponIK, aimWeapon, gripWorld, pointOn, GRIP_POINT,
     round4, roundAngle, rotationAngle,
   };
 });
