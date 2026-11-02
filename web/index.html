@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NineAnimator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="โปรแกรมทำแอนิเมชันตัวละคร Roblox (R6/R15) ฟรี ใช้ในเบราว์เซอร์ ให้ AI ช่วยคิดท่าได้">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">NineAnimator</span>
+    </div>
+    <div class="topbar-group">
+      <div class="seg" id="rig-switch" role="group" aria-label="ชนิดตัวละคร">
+        <button type="button" data-rig="R15" aria-pressed="true" title="R15: 15 ชิ้น มีศอก เข่า มือ เท้า">R15</button>
+        <button type="button" data-rig="R6" aria-pressed="false" title="R6: 6 ชิ้น แบบคลาสสิก">R6</button>
+      </div>
+      <label class="select-wrap">
+        <span class="sr-only">ท่าสำเร็จรูป</span>
+        <select id="preset"><option value="">ท่าสำเร็จรูป…</option></select>
+      </label>
+      <button type="button" class="btn accent" id="btn-ai">ให้ AI ช่วยคิดท่า</button>
+    </div>
+    <div class="topbar-group files">
+      <button type="button" class="btn ghost" id="btn-new">ใหม่</button>
+      <button type="button" class="btn ghost" id="btn-open" title="เปิด .json หรือ .rbxmx (ลากไฟล์มาวางก็ได้)">เปิดไฟล์</button>
+      <input type="file" id="file-input" accept=".json,.rbxmx,.rbxm,application/json" hidden>
+      <button type="button" class="btn" id="btn-copy-json" title="คัดลอกไปวางใน NineAnimator Plugin ใน Roblox Studio">คัดลอก JSON</button>
+      <button type="button" class="btn ghost" id="btn-save-json">บันทึก .json</button>
+      <button type="button" class="btn ghost" id="btn-rbxmx" title="ไฟล์ KeyframeSequence ลากเข้า Roblox Studio ได้">ส่งออก .rbxmx</button>
+      <button type="button" class="icon-btn" id="btn-undo" aria-label="ย้อนกลับ (Ctrl+Z)" title="ย้อนกลับ (Ctrl+Z)">↶</button>
+      <button type="button" class="icon-btn" id="btn-redo" aria-label="ทำซ้ำ (Ctrl+Y)" title="ทำซ้ำ (Ctrl+Y)">↷</button>
+    </div>
+    <textarea id="copy-fallback" class="copy-fallback" aria-label="ข้อความสำหรับคัดลอก" hidden readonly></textarea>
+  </header>
+
+  <main class="workspace">
+    <section class="stage" aria-label="มุมมองตัวละคร">
+      <div id="viewport" class="viewport"></div>
+      <div class="stage-hint">คลิกชิ้นส่วนเพื่อเลือก · ลากชิ้นที่เลือกเพื่อหมุน (Shift = บิด) · ลากที่ว่างเพื่อหมุนกล้อง</div>
+      <div class="stage-tools">
+        <div class="seg small" role="group" aria-label="มุมกล้อง">
+          <button type="button" data-view="front">หน้า</button>
+          <button type="button" data-view="side">ข้าง</button>
+          <button type="button" data-view="three">เฉียง</button>
+          <button type="button" data-view="back">หลัง</button>
+        </div>
+        <label class="check"><input type="checkbox" id="show-sword" checked> ถือดาบ</label>
+      </div>
+      <div id="marker-flash" class="marker-flash" hidden></div>
+    </section>
+
+    <aside class="inspector" aria-label="แก้ไขท่า">
+      <section class="panel">
+        <h2 class="panel-title">ข้อต่อ</h2>
+        <div id="joint-list" class="joint-list"></div>
+        <p class="legend"><span class="dot" data-state="key"></span>มีคีย์ตรงนี้ <span class="dot" data-state="anim"></span>ขยับในท่านี้</p>
+      </section>
+
+      <section class="panel">
+        <p id="joint-empty" class="empty">เลือกข้อต่อจากรายการ หรือคลิกที่ตัวละคร</p>
+        <div id="joint-editor" hidden>
+          <div class="joint-head">
+            <div>
+              <h2 class="panel-title" id="joint-title">—</h2>
+              <code id="joint-code" class="code-name"></code>
+            </div>
+            <span id="key-state" class="key-state"></span>
+          </div>
+          <div class="axis-rows">
+            <div class="axis-row" data-kind="rot" data-axis="0">
+              <span class="axis-tag x">X</span><span class="axis-name"></span>
+              <input type="range" id="rot-x" min="-180" max="180" step="1" aria-label="หมุนแกน X">
+              <input type="number" id="rot-x-num" min="-180" max="180" step="1" aria-label="องศาแกน X">
+            </div>
+            <div class="axis-row" data-kind="rot" data-axis="1">
+              <span class="axis-tag y">Y</span><span class="axis-name"></span>
+              <input type="range" id="rot-y" min="-180" max="180" step="1" aria-label="หมุนแกน Y">
+              <input type="number" id="rot-y-num" min="-180" max="180" step="1" aria-label="องศาแกน Y">
+            </div>
+            <div class="axis-row" data-kind="rot" data-axis="2">
+              <span class="axis-tag z">Z</span><span class="axis-name"></span>
+              <input type="range" id="rot-z" min="-180" max="180" step="1" aria-label="หมุนแกน Z">
+              <input type="number" id="rot-z-num" min="-180" max="180" step="1" aria-label="องศาแกน Z">
+            </div>
+            <div id="pos-rows" class="pos-rows">
+              <p class="sub-label">ตำแหน่งลำตัว (stud)</p>
+              <div class="axis-row" data-kind="pos" data-axis="0">
+                <span class="axis-tag x">X</span><span class="axis-name">ซ้าย / ขวา</span>
+                <input type="range" id="pos-x" min="-3" max="3" step="0.01" aria-label="เลื่อนแกน X">
+                <input type="number" id="pos-x-num" min="-10" max="10" step="0.01" aria-label="ระยะแกน X">
+              </div>
+              <div class="axis-row" data-kind="pos" data-axis="1">
+                <span class="axis-tag y">Y</span><span class="axis-name">ขึ้น / ย่อ</span>
+                <input type="range" id="pos-y" min="-3" max="3" step="0.01" aria-label="เลื่อนแกน Y">
+                <input type="number" id="pos-y-num" min="-10" max="10" step="0.01" aria-label="ระยะแกน Y">
+              </div>
+              <div class="axis-row" data-kind="pos" data-axis="2">
+                <span class="axis-tag z">Z</span><span class="axis-name">หน้า (−) / หลัง (+)</span>
+                <input type="range" id="pos-z" min="-3" max="3" step="0.01" aria-label="เลื่อนแกน Z">
+                <input type="number" id="pos-z-num" min="-10" max="10" step="0.01" aria-label="ระยะแกน Z">
+              </div>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button type="button" class="btn small ghost" id="btn-reset-joint">ตั้งตรง (0,0,0)</button>
+            <button type="button" class="btn small ghost" id="btn-clear-joint">ลบคีย์ข้อต่อนี้</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel-title">ทั้งตัว ณ เวลานี้</h2>
+        <div class="btn-row">
+          <button type="button" class="btn small" id="btn-mirror" title="M">สลับซ้าย↔ขวา</button>
+          <button type="button" class="btn small ghost" id="btn-copy" title="Ctrl+C">คัดลอกท่า</button>
+          <button type="button" class="btn small ghost" id="btn-paste" title="Ctrl+V">วางท่า</button>
+          <button type="button" class="btn small ghost" id="btn-reset-body">ยืนตรงทั้งตัว</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel-title">คีย์เฟรม</h2>
+        <p id="kf-none" class="empty">เลื่อนเส้นเวลาไปที่คีย์เฟรม (◆) เพื่อตั้งความนุ่มของการเคลื่อนไหว</p>
+        <div id="kf-fields" class="fields" hidden>
+          <p class="sub-label">จากคีย์ที่ <b id="kf-time" class="num"></b> วิ ไปคีย์ถัดไป</p>
+          <label class="field"><span>Easing</span>
+            <select id="kf-easing">
+              <option value="Linear">Linear (เท่ากันตลอด)</option>
+              <option value="Cubic">Cubic (นุ่ม)</option>
+              <option value="Constant">Constant (ค้างแล้วกระโดด)</option>
+              <option value="Elastic">Elastic (ดึ๋ง)</option>
+              <option value="Bounce">Bounce (เด้ง)</option>
+            </select>
+          </label>
+          <label class="field"><span>ทิศทาง</span>
+            <select id="kf-direction">
+              <option value="In">In (เริ่มช้า แล้วเร็ว)</option>
+              <option value="Out">Out (เริ่มเร็ว แล้วช้า)</option>
+              <option value="InOut">InOut (ช้า-เร็ว-ช้า)</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel-title">Markers <span class="muted">(จุดสั่งโค้ด เช่น ตีโดน)</span></h2>
+        <div id="marker-list" class="marker-list"></div>
+        <p id="marker-empty" class="empty">ยังไม่มี marker ใส่ "Hit" ตรงจังหวะที่โดน แล้วในเกมใช้ GetMarkerReachedSignal("Hit")</p>
+        <div class="marker-add">
+          <input type="text" id="marker-new-name" value="Hit" aria-label="ชื่อ marker ใหม่">
+          <button type="button" class="btn small" id="btn-add-marker">+ ใส่ที่เวลานี้</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel-title">ตั้งค่าแอนิเมชัน</h2>
+        <div class="fields">
+          <label class="field"><span>ชื่อ</span><input type="text" id="anim-name"></label>
+          <label class="field"><span>ยาว (วิ)</span><input type="number" id="anim-length" min="0.05" step="0.05"></label>
+          <label class="field"><span>Priority</span>
+            <select id="anim-priority">
+              <option value="Idle">Idle (ยืนเฉย)</option>
+              <option value="Movement">Movement (เดิน/วิ่ง)</option>
+              <option value="Action">Action (ตี/ใช้ของ)</option>
+              <option value="Action2">Action2</option>
+              <option value="Action3">Action3</option>
+              <option value="Action4">Action4</option>
+              <option value="Core">Core</option>
+            </select>
+          </label>
+          <label class="check"><input type="checkbox" id="anim-loop"> วนซ้ำในเกม (Loop)</label>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <section class="timeline" aria-label="เส้นเวลา">
+    <div class="tl-controls">
+      <div class="transport">
+        <button type="button" class="icon-btn" id="btn-start" aria-label="ไปต้นเรื่อง">⏮</button>
+        <button type="button" class="icon-btn" id="btn-prev" aria-label="คีย์ก่อนหน้า">◂</button>
+        <button type="button" class="play-btn" id="btn-play" aria-label="เล่น" data-playing="false"><span class="play-icon" aria-hidden="true"></span></button>
+        <button type="button" class="icon-btn" id="btn-next" aria-label="คีย์ถัดไป">▸</button>
+        <span class="time num"><span id="time-now">0.00</span> / <span id="time-len">0.00</span> วิ</span>
+      </div>
+      <div class="tl-actions">
+        <button type="button" class="btn small accent" id="btn-add-key" title="K">+ คีย์เฟรม</button>
+        <button type="button" class="btn small ghost" id="btn-del-key" title="Delete">ลบคีย์เฟรม</button>
+        <label class="select-wrap small"><span class="sr-only">ความเร็ว</span>
+          <select id="speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select>
+        </label>
+        <label class="check"><input type="checkbox" id="loop-preview" checked> เล่นวน</label>
+      </div>
+    </div>
+    <div class="tl-body">
+      <div class="tl-labels" aria-hidden="true">
+        <span class="tl-label ruler-label">เวลา</span>
+        <span class="tl-label">ทั้งตัว</span>
+        <span class="tl-label" id="tl-joint-label">ข้อต่อที่เลือก</span>
+        <span class="tl-label">Markers</span>
+      </div>
+      <div class="tl-scroll" id="tl-scroll">
+        <div class="tl-tracks" id="tl-tracks">
+          <div class="tl-ruler" id="tl-ruler"></div>
+          <div class="tl-row" id="tl-row-all"></div>
+          <div class="tl-row" id="tl-row-joint"></div>
+          <div class="tl-row markers" id="tl-row-markers"></div>
+          <div class="tl-end" id="tl-end"></div>
+          <div class="tl-playhead" id="tl-playhead"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<dialog id="ai-dialog" class="dialog" aria-labelledby="ai-title">
+  <div class="dialog-head">
+    <h2 id="ai-title">ให้ AI ช่วยคิดท่า</h2>
+    <button type="button" class="icon-btn" id="ai-close" aria-label="ปิด">×</button>
+  </div>
+  <div class="dialog-body">
+    <div class="step">
+      <span class="step-no">1</span>
+      <div class="step-main">
+        <label for="ai-desc" class="step-title">อธิบายท่าที่อยากได้ (ไทยหรืออังกฤษก็ได้) · ตัวละคร <b id="ai-rig">R15</b></label>
+        <textarea id="ai-desc" rows="3" placeholder="เช่น ฟันดาบสองมือจากบนลงล่าง แรงๆ แล้วค้างท่าไว้แป๊บนึง"></textarea>
+        <div class="ideas">
+          <button type="button" class="idea" data-idea="ฟันดาบหมุนตัว 360 องศา แล้วฟาดลงพื้น">ฟันหมุนตัว</button>
+          <button type="button" class="idea" data-idea="ต่อยคอมโบ 3 หมัด ซ้าย ขวา อัปเปอร์คัต ใส่ marker Hit ทุกหมัด">คอมโบ 3 หมัด</button>
+          <button type="button" class="idea" data-idea="ยกโล่ขึ้นกันด้วยแขนซ้าย ค้างไว้ (loop) ให้เดินไปด้วยได้ ขยับแค่ช่วงบน">ยกโล่กัน</button>
+          <button type="button" class="idea" data-idea="ง้างธนูแล้วยิง แขนซ้ายเหยียดถือคันธนู มือขวาดึงสายแล้วปล่อย">ยิงธนู</button>
+          <button type="button" class="idea" data-idea="ร่ายเวท ยกสองมือขึ้นฟ้าแล้วผลักไปข้างหน้า">ร่ายเวท</button>
+          <button type="button" class="idea" data-idea="ท่าวิ่งแบบนินจา ตัวเอนไปข้างหน้ามาก แขนกางไปด้านหลัง">วิ่งนินจา</button>
+        </div>
+        <label class="check"><input type="checkbox" id="ai-include"> แนบท่าปัจจุบันไปด้วย ให้ AI แก้ต่อจากของเดิม</label>
+      </div>
+    </div>
+    <div class="step">
+      <span class="step-no">2</span>
+      <div class="step-main">
+        <div class="step-title">คัดลอก prompt ไปวางในแชท AI (Claude, ChatGPT, Gemini ฯลฯ)</div>
+        <textarea id="ai-prompt" rows="5" readonly aria-label="prompt สำหรับ AI"></textarea>
+        <button type="button" class="btn accent" id="ai-copy">คัดลอก prompt</button>
+      </div>
+    </div>
+    <div class="step">
+      <span class="step-no">3</span>
+      <div class="step-main">
+        <label for="ai-paste" class="step-title">วางคำตอบของ AI ตรงนี้ (มีข้อความอื่นติดมาก็ได้)</label>
+        <textarea id="ai-paste" rows="5" placeholder='{ "format": "nineanimator/1", ... }'></textarea>
+        <button type="button" class="btn" id="ai-import">นำเข้าท่านี้</button>
+        <pre id="ai-result" class="ai-result" hidden></pre>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="js/nine-core.js"></script>
+<script src="js/presets.js"></script>
+<script src="js/ai-prompt.js"></script>
+<script src="js/viewer.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

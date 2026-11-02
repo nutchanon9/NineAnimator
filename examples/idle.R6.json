@@ -1,0 +1,69 @@
+{
+  "format": "nineanimator/1",
+  "name": "Idle",
+  "rig": "R6",
+  "loop": true,
+  "priority": "Idle",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [0, 0, 0]
+        },
+        "Head": {
+          "rot": [0, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [0, 0, 5]
+        },
+        "Left Arm": {
+          "rot": [0, 0, -5]
+        }
+      }
+    },
+    {
+      "time": 1.2,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [2.5, 0, 0],
+          "pos": [0, -0.03, 0]
+        },
+        "Head": {
+          "rot": [-2, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [2, 0, 7]
+        },
+        "Left Arm": {
+          "rot": [2, 0, -7]
+        }
+      }
+    },
+    {
+      "time": 2.4,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [0, 0, 0]
+        },
+        "Head": {
+          "rot": [0, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [0, 0, 5]
+        },
+        "Left Arm": {
+          "rot": [0, 0, -5]
+        }
+      }
+    }
+  ],
+  "markers": [],
+  "length": 2.4
+}

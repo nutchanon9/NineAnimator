@@ -1,0 +1,367 @@
+/*
+ * 3D preview: draws the rig with three.js, an orbit camera, part picking,
+ * and "drag a body part to rotate it".
+ * Depends on globals THREE and NineCore.
+ */
+(function (root) {
+  'use strict';
+  const C = root.NineCore;
+
+  const PART_COLORS = {
+    body: 0x3a78b8, head: 0xf0c66a, arm: 0xf0c66a, leg: 0x4f9a52, hand: 0xe6b857, foot: 0x3f8344,
+  };
+  function partColor(name) {
+    if (name === 'Head') return PART_COLORS.head;
+    if (/Hand/.test(name)) return PART_COLORS.hand;
+    if (/Foot/.test(name)) return PART_COLORS.foot;
+    if (/Arm/.test(name)) return PART_COLORS.arm;
+    if (/Leg/.test(name)) return PART_COLORS.leg;
+    return PART_COLORS.body;
+  }
+
+  function cssVar(name, fallback) {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return v || fallback;
+  }
+
+  function faceTexture(w, h) {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const g = c.getContext('2d');
+    g.fillStyle = '#f0c66a'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#2a2116';
+    const s = Math.min(w, h);
+    g.beginPath(); g.ellipse(w / 2 - s * 0.18, h * 0.42, s * 0.05, s * 0.09, 0, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.ellipse(w / 2 + s * 0.18, h * 0.42, s * 0.05, s * 0.09, 0, 0, Math.PI * 2); g.fill();
+    g.lineWidth = s * 0.05; g.lineCap = 'round'; g.strokeStyle = '#2a2116';
+    g.beginPath(); g.arc(w / 2, h * 0.55, s * 0.2, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();
+    const t = new THREE.CanvasTexture(c);
+    if ('colorSpace' in t) t.colorSpace = THREE.SRGBColorSpace; else t.encoding = THREE.sRGBEncoding;
+    return t;
+  }
+
+  /** Rodrigues rotation matrix (row-major 3x3) about a unit axis. */
+  function axisAngle(axis, ang) {
+    const [x, y, z] = axis, c = Math.cos(ang), s = Math.sin(ang), t = 1 - c;
+    return [
+      t * x * x + c, t * x * y - s * z, t * x * z + s * y,
+      t * x * y + s * z, t * y * y + c, t * y * z - s * x,
+      t * x * z - s * y, t * y * z + s * x, t * z * z + c,
+    ];
+  }
+
+  class Viewer {
+    constructor(container, opts) {
+      this.el = container;
+      this.opts = opts || {};
+      this.rigId = null;
+      this.meshes = {};
+      this.selected = null;
+      this.showSword = true;
+
+      if (THREE.ColorManagement && 'legacyMode' in THREE.ColorManagement) THREE.ColorManagement.legacyMode = false;
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: false });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      if ('outputColorSpace' in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace;
+      else renderer.outputEncoding = THREE.sRGBEncoding;
+      container.appendChild(renderer.domElement);
+      renderer.domElement.setAttribute('aria-label', 'มุมมอง 3 มิติของตัวละคร');
+      this.renderer = renderer;
+
+      const scene = new THREE.Scene();
+      this.scene = scene;
+      this.camera = new THREE.PerspectiveCamera(40, 1, 0.1, 200);
+      this.orbit = { yaw: -0.6, pitch: 0.18, dist: 13, target: new THREE.Vector3(0, 2.7, 0) };
+
+      this.hemi = new THREE.HemisphereLight(0xffffff, 0x445066, 0.9);
+      scene.add(this.hemi);
+      const sun = new THREE.DirectionalLight(0xffffff, 0.9);
+      sun.position.set(-6, 12, -8);
+      sun.castShadow = true;
+      sun.shadow.mapSize.set(1024, 1024);
+      Object.assign(sun.shadow.camera, { left: -6, right: 6, top: 8, bottom: -2, near: 1, far: 40 });
+      scene.add(sun);
+      const fill = new THREE.DirectionalLight(0xffffff, 0.35);
+      fill.position.set(8, 5, 6);
+      scene.add(fill);
+
+      const ground = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.ShadowMaterial({ opacity: 0.22 }));
+      ground.rotation.x = -Math.PI / 2;
+      ground.receiveShadow = true;
+      scene.add(ground);
+      this.ground = ground;
+
+      // Direction arrow on the floor: the character faces -Z.
+      const arrowShape = new THREE.Shape();
+      arrowShape.moveTo(0, -0.45); arrowShape.lineTo(0.3, 0); arrowShape.lineTo(-0.3, 0); arrowShape.closePath();
+      this.arrow = new THREE.Mesh(new THREE.ShapeGeometry(arrowShape), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 }));
+      this.arrow.rotation.x = -Math.PI / 2;
+      this.arrow.position.set(0, 0.01, -1.5);
+      scene.add(this.arrow);
+
+      this.rigGroup = new THREE.Group();
+      scene.add(this.rigGroup);
+      this.sword = this.buildSword();
+      scene.add(this.sword);
+
+      this.raycaster = new THREE.Raycaster();
+      this.applyTheme();
+      this.bindInput();
+      this.resizeObserver = new ResizeObserver(() => this.resize());
+      this.resizeObserver.observe(container);
+      this.resize();
+    }
+
+    applyTheme() {
+      const bg = new THREE.Color(cssVar('--view-bg', '#1a1e26'));
+      this.scene.background = bg;
+      if (this.grid) this.scene.remove(this.grid);
+      const major = new THREE.Color(cssVar('--view-grid-major', '#3a4150'));
+      const minor = new THREE.Color(cssVar('--view-grid', '#2a303b'));
+      this.grid = new THREE.GridHelper(40, 40, major, minor);
+      this.grid.position.y = 0.002;
+      this.scene.add(this.grid);
+      this.selectColor = new THREE.Color(cssVar('--select', '#4fb3ea'));
+      this.arrow.material.color = new THREE.Color(cssVar('--accent', '#f0ae3c'));
+      if (this.selected) this.setSelected(this.selected);
+      this.render();
+    }
+
+    buildSword() {
+      const g = new THREE.Group();
+      const steel = new THREE.MeshStandardMaterial({ color: 0xc9d1dc, metalness: 0.6, roughness: 0.3 });
+      const dark = new THREE.MeshStandardMaterial({ color: 0x3b2b20, roughness: 0.8 });
+      const gold = new THREE.MeshStandardMaterial({ color: 0xc89b3c, metalness: 0.5, roughness: 0.4 });
+      const add = (geo, mat, z) => { const m = new THREE.Mesh(geo, mat); m.position.z = z; m.castShadow = true; g.add(m); };
+      // Grip space: origin at the bottom of the hand, blade along -Z.
+      add(new THREE.BoxGeometry(0.16, 0.16, 0.7), dark, 0.05);
+      add(new THREE.BoxGeometry(0.14, 0.9, 0.16), gold, -0.35);
+      add(new THREE.BoxGeometry(0.07, 0.32, 3.0), steel, -1.93);
+      g.matrixAutoUpdate = false;
+      g.traverse((o) => { o.raycast = () => {}; });
+      return g;
+    }
+
+    setRig(rigId) {
+      if (this.rigId === rigId) return;
+      this.rigId = rigId;
+      this.rig = C.RIGS[rigId];
+      for (const m of Object.values(this.meshes)) { this.rigGroup.remove(m); m.geometry.dispose(); }
+      this.meshes = {};
+      const headTex = rigId === 'R6' ? faceTexture(256, 128) : faceTexture(160, 160);
+      for (const jt of this.rig.joints) {
+        const geo = new THREE.BoxGeometry(...jt.size);
+        const base = new THREE.MeshStandardMaterial({ color: partColor(jt.name), roughness: 0.75, metalness: 0 });
+        let mat = base;
+        if (jt.name === 'Head') {
+          const face = new THREE.MeshStandardMaterial({ map: headTex, roughness: 0.75 });
+          mat = [base, base, base, base, base, face];
+        }
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.castShadow = true;
+        mesh.matrixAutoUpdate = false;
+        mesh.userData.joint = jt.name;
+        this.rigGroup.add(mesh);
+        this.meshes[jt.name] = mesh;
+      }
+      this.selected = null;
+    }
+
+    /** ms = { jointName: M } from NineCore.sampleAll */
+    setPose(ms) {
+      this.world = C.computeWorld(this.rig, ms);
+      const m4 = new THREE.Matrix4();
+      for (const jt of this.rig.joints) {
+        const w = this.world[jt.name];
+        m4.set(w.r[0], w.r[1], w.r[2], w.p[0], w.r[3], w.r[4], w.r[5], w.p[1], w.r[6], w.r[7], w.r[8], w.p[2], 0, 0, 0, 1);
+        this.meshes[jt.name].matrix.copy(m4);
+        this.meshes[jt.name].matrixWorldNeedsUpdate = true;
+      }
+      const hand = this.world[this.rig.handPart];
+      const grip = C.cfMul(hand, C.cf(this.rig.gripOffset));
+      this.sword.matrix.set(grip.r[0], grip.r[1], grip.r[2], grip.p[0], grip.r[3], grip.r[4], grip.r[5], grip.p[1], grip.r[6], grip.r[7], grip.r[8], grip.p[2], 0, 0, 0, 1);
+      this.sword.matrixWorldNeedsUpdate = true;
+      this.sword.visible = this.showSword;
+      this.render();
+    }
+
+    setSelected(name) {
+      this.selected = name;
+      for (const [n, mesh] of Object.entries(this.meshes)) {
+        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        mats.forEach((m) => {
+          m.emissive = n === name ? this.selectColor : new THREE.Color(0x000000);
+          m.emissiveIntensity = n === name ? 0.28 : 0;
+        });
+      }
+      this.render();
+    }
+
+    setView(which) {
+      const views = { front: [0, 0.12], side: [Math.PI / 2, 0.12], three: [-0.6, 0.18], back: [Math.PI, 0.12] };
+      const v = views[which] || views.three;
+      this.orbit.yaw = v[0]; this.orbit.pitch = v[1];
+      this.orbit.target.set(0, 2.7, 0); this.orbit.dist = 13;
+      this.render();
+    }
+
+    resize() {
+      const r = this.el.getBoundingClientRect();
+      const w = Math.max(1, r.width), h = Math.max(1, r.height);
+      this.renderer.setSize(w, h, false);
+      this.renderer.domElement.style.width = w + 'px';
+      this.renderer.domElement.style.height = h + 'px';
+      this.camera.aspect = w / h;
+      this.camera.updateProjectionMatrix();
+      this.render();
+    }
+
+    render() {
+      if (this._raf) return;
+      this._raf = requestAnimationFrame(() => {
+        this._raf = 0;
+        const o = this.orbit;
+        o.pitch = Math.max(-1.2, Math.min(1.45, o.pitch));
+        o.dist = Math.max(3, Math.min(40, o.dist));
+        // yaw 0 looks at the character's face (camera on -Z side).
+        const cp = Math.cos(o.pitch);
+        this.camera.position.set(
+          o.target.x - Math.sin(o.yaw) * cp * o.dist,
+          o.target.y + Math.sin(o.pitch) * o.dist,
+          o.target.z - Math.cos(o.yaw) * cp * o.dist,
+        );
+        this.camera.lookAt(o.target);
+        this.renderer.render(this.scene, this.camera);
+      });
+    }
+
+    pick(clientX, clientY) {
+      const r = this.renderer.domElement.getBoundingClientRect();
+      const ndc = new THREE.Vector2(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
+      this.raycaster.setFromCamera(ndc, this.camera);
+      this.rigGroup.updateMatrixWorld(true);
+      const hit = this.raycaster.intersectObjects(Object.values(this.meshes), false)[0];
+      return hit ? hit.object.userData.joint : null;
+    }
+
+    bindInput() {
+      const el = this.renderer.domElement;
+      el.style.touchAction = 'none';
+      const pointers = new Map();
+      let mode = null, start = null, last = null, pinch0 = 0, moved = false, poseJoint = null;
+
+      el.addEventListener('contextmenu', (e) => e.preventDefault());
+      el.addEventListener('pointerdown', (e) => {
+        el.setPointerCapture(e.pointerId);
+        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        moved = false;
+        start = last = { x: e.clientX, y: e.clientY };
+        if (pointers.size === 2) {
+          mode = 'pinch';
+          const [a, b] = [...pointers.values()];
+          pinch0 = Math.hypot(a.x - b.x, a.y - b.y);
+          if (poseJoint && this.opts.onPoseDragEnd) this.opts.onPoseDragEnd();
+          poseJoint = null;
+          return;
+        }
+        if (e.button === 2 || e.button === 1 || e.shiftKey && e.altKey) { mode = 'pan'; return; }
+        const hitJoint = this.pick(e.clientX, e.clientY);
+        if (hitJoint && hitJoint === this.selected && this.opts.onPoseDrag) {
+          mode = 'pose'; poseJoint = hitJoint;
+          if (this.opts.onPoseDragStart) this.opts.onPoseDragStart(hitJoint);
+        } else {
+          mode = 'orbit';
+        }
+      });
+      el.addEventListener('pointermove', (e) => {
+        if (!pointers.has(e.pointerId)) {
+          if (!e.buttons) el.style.cursor = this.pick(e.clientX, e.clientY) ? 'pointer' : 'grab';
+          return;
+        }
+        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (mode === 'pinch' && pointers.size === 2) {
+          const [a, b] = [...pointers.values()];
+          const d = Math.hypot(a.x - b.x, a.y - b.y);
+          if (pinch0 > 0) this.orbit.dist *= pinch0 / d;
+          pinch0 = d;
+          this.render();
+          return;
+        }
+        const dx = e.clientX - last.x, dy = e.clientY - last.y;
+        last = { x: e.clientX, y: e.clientY };
+        if (Math.hypot(e.clientX - start.x, e.clientY - start.y) > 4) moved = true;
+        if (!moved) return;
+        if (mode === 'orbit') {
+          this.orbit.yaw -= dx * 0.008;
+          this.orbit.pitch += dy * 0.006;
+          this.render();
+        } else if (mode === 'pan') {
+          const s = this.orbit.dist * 0.0016;
+          const right = new THREE.Vector3().setFromMatrixColumn(this.camera.matrixWorld, 0);
+          const up = new THREE.Vector3().setFromMatrixColumn(this.camera.matrixWorld, 1);
+          this.orbit.target.addScaledVector(right, -dx * s).addScaledVector(up, dy * s);
+          this.render();
+        } else if (mode === 'pose' && poseJoint) {
+          this.dragJoint(poseJoint, dx, dy, e.shiftKey);
+        }
+      });
+      const end = (e) => {
+        if (!pointers.has(e.pointerId)) return;
+        pointers.delete(e.pointerId);
+        if (mode === 'pose' && poseJoint && this.opts.onPoseDragEnd) this.opts.onPoseDragEnd();
+        if (!moved && mode !== 'pinch' && mode !== 'pan' && e.type === 'pointerup') {
+          const j = this.pick(e.clientX, e.clientY);
+          if (this.opts.onPick) this.opts.onPick(j);
+        }
+        if (pointers.size === 0) { mode = null; poseJoint = null; }
+      };
+      el.addEventListener('pointerup', end);
+      el.addEventListener('pointercancel', end);
+      el.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        this.orbit.dist *= Math.exp(e.deltaY * 0.0012);
+        this.render();
+      }, { passive: false });
+    }
+
+    /**
+     * Turn a screen drag into a rotation of the joint about the camera's
+     * axes (like a trackball), expressed in the parent part's frame.
+     * Shift = twist around the axis pointing at the camera.
+     */
+    dragJoint(name, dx, dy, twist) {
+      if (!this.world || !this.opts.onPoseDrag) return;
+      const jt = this.rig.byName[name];
+      const parentR = this.world[jt.parent].r;
+      const m = this.camera.matrixWorld.elements; // column-major
+      const right = [m[0], m[1], m[2]], up = [m[4], m[5], m[6]], back = [m[8], m[9], m[10]];
+      let axisW, ang;
+      if (twist) {
+        axisW = back; ang = -dx * 0.012;
+      } else {
+        axisW = [up[0] * dx + right[0] * dy, up[1] * dx + right[1] * dy, up[2] * dx + right[2] * dy];
+        const len = Math.hypot(...axisW);
+        if (len < 1e-6) return;
+        axisW = axisW.map((v) => v / len);
+        ang = len * 0.012;
+      }
+      // axis in parent space = parentR^T * axisW
+      const a = [
+        parentR[0] * axisW[0] + parentR[3] * axisW[1] + parentR[6] * axisW[2],
+        parentR[1] * axisW[0] + parentR[4] * axisW[1] + parentR[7] * axisW[2],
+        parentR[2] * axisW[0] + parentR[5] * axisW[1] + parentR[8] * axisW[2],
+      ];
+      this.opts.onPoseDrag(name, (pose) => {
+        const cur = C.poseToM(pose);
+        const r = C.m3mul(axisAngle(a, ang), cur.r);
+        const out = { rot: C.m3ToEuler(r).map(C.roundAngle) };
+        if (pose.pos) out.pos = pose.pos.slice();
+        return out;
+      });
+    }
+  }
+
+  root.NineViewer = Viewer;
+})(typeof self !== 'undefined' ? self : this);

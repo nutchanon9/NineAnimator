@@ -1,0 +1,127 @@
+{
+  "format": "nineanimator/1",
+  "name": "FrontKick",
+  "rig": "R6",
+  "loop": false,
+  "priority": "Action",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "Torso": {
+          "rot": [0, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [40, 0, -10]
+        },
+        "Left Arm": {
+          "rot": [50, 0, 10]
+        },
+        "Right Leg": {
+          "rot": [0, 0, 0]
+        },
+        "Left Leg": {
+          "rot": [0, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.15,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "Torso": {
+          "rot": [6, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [40, 0, -10]
+        },
+        "Left Arm": {
+          "rot": [50, 0, 10]
+        },
+        "Right Leg": {
+          "rot": [75, 0, 0]
+        },
+        "Left Leg": {
+          "rot": [-6, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.27,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [14, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [-25, 0, 10]
+        },
+        "Left Arm": {
+          "rot": [50, 0, 10]
+        },
+        "Right Leg": {
+          "rot": [85, 0, 0]
+        },
+        "Left Leg": {
+          "rot": [-14, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.42,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [6, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [40, 0, -10]
+        },
+        "Left Arm": {
+          "rot": [50, 0, 10]
+        },
+        "Right Leg": {
+          "rot": [75, 0, 0]
+        },
+        "Left Leg": {
+          "rot": [-6, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.7,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [0, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [40, 0, -10]
+        },
+        "Left Arm": {
+          "rot": [50, 0, 10]
+        },
+        "Right Leg": {
+          "rot": [0, 0, 0]
+        },
+        "Left Leg": {
+          "rot": [0, 0, 0]
+        }
+      }
+    }
+  ],
+  "markers": [
+    {
+      "time": 0.27,
+      "name": "Hit",
+      "value": "RightFoot"
+    }
+  ],
+  "length": 0.7
+}

@@ -1,0 +1,15 @@
+{
+  "name": "nineanimator",
+  "version": "0.1.0",
+  "description": "Free Roblox (R6/R15) animation editor for people and AI: web editor, Studio plugin and a JSON animation format",
+  "private": true,
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "serve": "python3 -m http.server 8080 --directory web",
+    "examples": "node tools/nine.js export-presets examples",
+    "build:single": "node tools/build-single.js"
+  },
+  "bin": {
+    "nine": "tools/nine.js"
+  }
+}
