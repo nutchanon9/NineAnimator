@@ -23,6 +23,10 @@
     keyClip: null,
     lastCopy: null, // 'pose' | 'keys'
     layer: null, // { id, anim, time } played underneath for preview
+    fx: true, // preview effects (trails, sparks, shake) and hit-stop
+    cinematic: false, // camera slowly orbits while playing
+    hitStop: 0,
+    recording: null,
     undo: [], redo: [],
     editing: false,
   };
@@ -105,7 +109,7 @@
   function drawPose() {
     const ms = C.sampleAll(state.anim, state.time);
     // Layer preview: joints this animation doesn't touch come from the layer (like Roblox priorities).
-    viewer.setPose(state.layer ? Object.assign(C.sampleAll(state.layer.anim, state.layer.time), ms) : ms);
+    viewer.setPose(state.layer ? Object.assign(C.sampleAll(state.layer.anim, state.layer.time), ms) : ms, { playing: state.playing });
     drawGhosts();
   }
   /** Onion skin: neighbouring keyframes as translucent copies (paused only). */
@@ -200,19 +204,40 @@
   function pause() {
     const was = state.playing;
     state.playing = false;
+    if (was && viewer && viewer.fx) viewer.fx.clear();
+    if (was && state.recording) finishRecording();
     if (was) setTimeout(() => { renderInspector(); renderPlayhead(); drawGhosts(); });
     $('#btn-play').dataset.playing = 'false';
     $('#btn-play').setAttribute('aria-label', 'เล่น');
   }
   function tick(ts) {
     if (!state.playing) return;
-    const dt = Math.min(0.1, (ts - lastTs) / 1000) * state.speed;
+    const realDt = Math.min(0.1, (ts - lastTs) / 1000);
     lastTs = ts;
+    if (state.cinematic) { viewer.orbit.yaw -= realDt * 0.35; }
+    // Hit-stop: freeze for a few frames on impact, like action games do.
+    if (state.hitStop > 0) {
+      state.hitStop -= realDt;
+      viewer.render();
+      requestAnimationFrame(tick);
+      return;
+    }
+    const dt = realDt * state.speed;
     const prev = state.time;
     state.time += dt;
     if (state.layer) state.layer.time = (state.layer.time + dt) % Math.max(0.01, state.layer.anim.length);
     const L = state.anim.length;
-    for (const m of state.anim.markers) if (m.time > prev && m.time <= state.time) flashMarker(m);
+    for (const m of state.anim.markers) {
+      if (m.time > prev && m.time <= state.time) {
+        flashMarker(m);
+        if (state.fx && viewer.fx) {
+          state.time = Math.min(state.time, L);
+          drawPose();
+          viewer.fx.trigger(m);
+          if (m.name === 'Hit') state.hitStop = /slam|quake|pound|stomp|finish/i.test(m.value) ? 0.12 : 0.06;
+        }
+      }
+    }
     if (state.time >= L) {
       if (state.loopPreview) state.time = L > 0 ? state.time % L : 0;
       else { state.time = L; pause(); }
@@ -666,6 +691,7 @@
     return res;
   }
   function afterLoad(resetTime) {
+    if (viewer.fx) viewer.fx.clear(); // effects of the previous animation (beams, auras) must not linger
     if (resetTime) state.time = 0;
     state.time = Math.min(state.time, state.anim.length);
     viewer.setRig(state.anim.rig);
@@ -693,7 +719,7 @@
   async function download(text, name, type) {
     if (hostDownloads) {
       try {
-        await hostDownloads.save({ filename: name, data: text });
+        await hostDownloads.save({ filename: name, data: text instanceof Blob ? text : String(text) });
         toast(`บันทึก ${name} แล้ว`);
       } catch (e) {
         if (e && e.code !== 'declined') toast('บันทึกไฟล์ไม่ได้ในหน้านี้ ใช้ปุ่ม "คัดลอก JSON" แทน', 'error');
@@ -701,7 +727,7 @@
       return;
     }
     try {
-      const url = URL.createObjectURL(new Blob([text], { type }));
+      const url = URL.createObjectURL(text instanceof Blob ? text : new Blob([text], { type }));
       const a = document.createElement('a');
       a.href = url; a.download = name;
       document.body.appendChild(a); a.click(); a.remove();
@@ -825,6 +851,9 @@
       loadAnim(C.convertRig(state.anim, target), `แปลง ${from} → ${target} แล้ว${target === 'R6' ? ' (R6 ไม่มีศอก/เข่า ส่วนนั้นจะหายไป)' : ''} กด ย้อนกลับ ได้`);
     }));
     $('#ik-mode').addEventListener('change', (e) => { viewer.setIKMode(e.target.checked); prefs.set('ik', e.target.checked); });
+    $('#fx').addEventListener('change', (e) => { state.fx = e.target.checked; if (viewer.fx) viewer.fx.setEnabled(state.fx); prefs.set('fx', state.fx); });
+    $('#cine').addEventListener('change', (e) => { state.cinematic = e.target.checked; prefs.set('cine', state.cinematic); });
+    $('#btn-record').addEventListener('click', recordVideo);
     $('#layer').addEventListener('change', (e) => setLayer(e.target.value));
     $('#btn-new').addEventListener('click', () => { loadAnim(C.newAnimation(state.anim.rig), 'เริ่มแอนิเมชันใหม่ (กด ย้อนกลับ ถ้าเผลอกด)'); });
     $('#btn-open').addEventListener('click', () => $('#file-input').click());
@@ -893,6 +922,49 @@
     pause();
     loadAnim(C.retime(state.anim, factor), factor < 1 ? `เร็วขึ้นแล้ว ยาว ${fmt(state.anim.length * factor)} วิ` : `ช้าลงแล้ว ยาว ${fmt(state.anim.length * factor)} วิ`);
   }
+  // ---------------------------------------------------------------
+  // Record the animation (with effects) to a .webm video
+  // ---------------------------------------------------------------
+  function recordVideo() {
+    const canvas = viewer.renderer.domElement;
+    if (!window.MediaRecorder || !canvas.captureStream) {
+      toast('เบราว์เซอร์นี้อัดวิดีโอไม่ได้ ลองใช้ Chrome หรือ Edge', 'error');
+      return;
+    }
+    if (state.recording) return;
+    pause();
+    const mime = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'].find((m) => MediaRecorder.isTypeSupported(m));
+    let rec;
+    try { rec = new MediaRecorder(canvas.captureStream(30), mime ? { mimeType: mime, videoBitsPerSecond: 6e6 } : undefined); } catch (e) {
+      toast('เริ่มอัดวิดีโอไม่ได้: ' + e.message, 'error');
+      return;
+    }
+    const chunks = [];
+    rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    rec.onstop = () => {
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      $('#btn-record').textContent = 'อัดวิดีโอ';
+      $('#btn-record').disabled = false;
+      if (blob.size) download(blob, fileName('.webm'), 'video/webm');
+      else toast('อัดไม่ได้ ลองใหม่อีกครั้ง', 'error');
+    };
+    state.recording = { rec, loop: state.loopPreview };
+    state.loopPreview = false;
+    $('#btn-record').textContent = '● กำลังอัด…';
+    $('#btn-record').disabled = true;
+    state.time = 0;
+    drawPose();
+    rec.start();
+    setTimeout(play, 250); // a short still at the start
+  }
+  function finishRecording() {
+    const r = state.recording;
+    state.recording = null;
+    state.loopPreview = r.loop;
+    // Let the last effects finish before stopping.
+    setTimeout(() => { try { r.rec.stop(); } catch (e) { /* already stopped */ } }, 600);
+  }
+
   function stepKey(dir) {
     const t = snap(state.time);
     const ks = state.anim.keyframes;
@@ -1035,6 +1107,11 @@
     state.onion = prefs.get('onion', false) === true;
     $('#onion').checked = state.onion;
     $('#ik-mode').checked = prefs.get('ik', true) !== false;
+    state.fx = prefs.get('fx', true) !== false;
+    $('#fx').checked = state.fx;
+    if (viewer.fx) viewer.fx.setEnabled(state.fx);
+    state.cinematic = prefs.get('cine', false) === true;
+    $('#cine').checked = state.cinematic;
     viewer.setIKMode($('#ik-mode').checked);
     state.selected = state.anim.rig === 'R15' ? 'RightUpperArm' : 'Right Arm';
     viewer.setSelected(state.selected);

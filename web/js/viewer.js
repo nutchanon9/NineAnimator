@@ -211,6 +211,14 @@
       this.ikTarget = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, depthTest: false, transparent: true, opacity: 0.6 }));
       this.ikTarget.renderOrder = 6; this.ikTarget.visible = false; this.ikTarget.raycast = () => {};
       scene.add(this.ikTarget);
+      // Floor glow under the character (colour follows the theme accent).
+      this.floorGlow = new THREE.Mesh(new THREE.CircleGeometry(4.5, 48), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.22, depthWrite: false }));
+      this.floorGlow.rotation.x = -Math.PI / 2;
+      this.floorGlow.position.y = 0.01;
+      this.floorGlow.raycast = () => {};
+      scene.add(this.floorGlow);
+      this.fx = root.NineFX ? new root.NineFX(this) : null;
+      this.shakeOffset = null;
       this.applyTheme();
       this.bindInput();
       this.resizeObserver = new ResizeObserver(() => this.resize());
@@ -220,7 +228,32 @@
 
     applyTheme() {
       const bg = new THREE.Color(cssVar('--view-bg', '#1a1e26'));
-      this.scene.background = bg;
+      const sky = new THREE.Color(cssVar('--view-sky', '#2a3242'));
+      // Vertical gradient sky + fog in the same colour, so the floor fades into it.
+      const c = document.createElement('canvas');
+      c.width = 4; c.height = 256;
+      const g = c.getContext('2d');
+      const grad = g.createLinearGradient(0, 0, 0, 256);
+      grad.addColorStop(0, '#' + sky.getHexString());
+      grad.addColorStop(0.65, '#' + bg.getHexString());
+      grad.addColorStop(1, '#' + bg.getHexString());
+      g.fillStyle = grad; g.fillRect(0, 0, 4, 256);
+      const tex = new THREE.CanvasTexture(c);
+      if ('colorSpace' in tex) tex.colorSpace = THREE.SRGBColorSpace; else tex.encoding = THREE.sRGBEncoding;
+      this.scene.background = tex;
+      this.scene.fog = new THREE.Fog(bg, 22, 48);
+      if (this.floorGlow) {
+        const glowC = document.createElement('canvas');
+        glowC.width = glowC.height = 128;
+        const gg = glowC.getContext('2d');
+        const rg = gg.createRadialGradient(64, 64, 0, 64, 64, 64);
+        const acc = new THREE.Color(cssVar('--accent', '#f0ae3c'));
+        rg.addColorStop(0, `rgba(${Math.round(acc.r * 255)},${Math.round(acc.g * 255)},${Math.round(acc.b * 255)},0.9)`);
+        rg.addColorStop(1, 'rgba(0,0,0,0)');
+        gg.fillStyle = rg; gg.fillRect(0, 0, 128, 128);
+        this.floorGlow.material.map = new THREE.CanvasTexture(glowC);
+        this.floorGlow.material.needsUpdate = true;
+      }
       if (this.grid) this.scene.remove(this.grid);
       const major = new THREE.Color(cssVar('--view-grid-major', '#3a4150'));
       const minor = new THREE.Color(cssVar('--view-grid', '#2a303b'));
@@ -252,6 +285,7 @@
         g.matrixAutoUpdate = false;
         g.userData.joint = joint;
         g.userData.blade = BLADES.has(model);
+        g.userData.model = model;
         g.traverse((o) => { o.userData.joint = joint; if (o.isMesh) o.castShadow = true; });
         this.scene.add(g);
         this.kitGroups[hand] = g;
@@ -341,8 +375,8 @@
       }
     }
 
-    /** ms = { jointName: M } from NineCore.sampleAll */
-    setPose(ms) {
+    /** ms = { jointName: M } from NineCore.sampleAll; opts.playing drives the trails. */
+    setPose(ms, opts) {
       this.world = C.computeWorld(this.rig, ms);
       const m4 = new THREE.Matrix4();
       for (const jt of this.rig.joints) {
@@ -353,6 +387,11 @@
       }
       this.placeProps();
       this.placeIKHandles();
+      if (this.floorGlow && this.world[this.rig.rootJoint]) {
+        const p = this.world[this.rig.rootJoint].p;
+        this.floorGlow.position.x = p[0]; this.floorGlow.position.z = p[2];
+      }
+      if (this.fx) this.fx.sample(!!(opts && opts.playing));
       this.render();
     }
 
@@ -416,6 +455,7 @@
         o.target.z - Math.cos(o.yaw) * cp * o.dist,
       );
       this.camera.lookAt(o.target);
+      if (this.shakeOffset) this.camera.position.add(new THREE.Vector3(...this.shakeOffset));
       this.renderer.render(this.scene, this.camera);
     }
 

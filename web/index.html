@@ -64,6 +64,8 @@
         </label>
         <label class="check"><input type="checkbox" id="onion"> เงาคีย์ก่อน/หลัง</label>
         <label class="check" title="ลากมือหรือเท้าไปวาง แล้วแขนขาจะงอตามเอง"><input type="checkbox" id="ik-mode" checked> ลากมือ/เท้า (IK)</label>
+        <label class="check" title="รอยดาบ ประกายตอนตีโดน กล้องสั่น และเอฟเฟกต์ตาม marker (ดูอย่างเดียว)"><input type="checkbox" id="fx" checked> เอฟเฟกต์</label>
+        <label class="check" title="กล้องหมุนรอบตัวช้าๆ ระหว่างเล่น"><input type="checkbox" id="cine"> กล้องหมุน</label>
         <label class="select-wrap small" title="เล่นท่านี้ซ้อนด้านล่าง ข้อต่อที่ท่าปัจจุบันไม่ได้ขยับจะใช้ท่านี้แทน"><span class="sr-only">ซ้อนท่า</span>
           <select id="layer"><option value="">ไม่ซ้อนท่า</option></select>
         </label>
@@ -223,6 +225,7 @@
           <select id="speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select>
         </label>
         <label class="check"><input type="checkbox" id="loop-preview" checked> เล่นวน</label>
+        <button type="button" class="btn small" id="btn-record" title="อัดท่าตั้งแต่ต้นจนจบ (พร้อมเอฟเฟกต์) เป็นไฟล์วิดีโอ .webm">อัดวิดีโอ</button>
       </div>
     </div>
     <div class="tl-body" id="tl-scroll">
@@ -300,6 +303,7 @@
 <script src="js/nine-core.js"></script>
 <script src="js/presets.js"></script>
 <script src="js/ai-prompt.js"></script>
+<script src="js/fx.js"></script>
 <script src="js/viewer.js"></script>
 <script src="js/app.js"></script>
 </body>

@@ -14,6 +14,7 @@
   --danger: #b83434;
   --ok: #2d7d46;
   --view-bg: #d9dde6;
+  --view-sky: #b9c6dc;
   --view-grid: #c5cad5;
   --view-grid-major: #a9b0be;
   --axis-x: #c2413b;
@@ -46,6 +47,7 @@
     --danger: #f06b6b;
     --ok: #5cc27c;
     --view-bg: #1a1e27;
+  --view-sky: #2c3954;
     --view-grid: #252a35;
     --view-grid-major: #353c4a;
     --axis-x: #ef6a62;
@@ -69,6 +71,7 @@
   --danger: #f06b6b;
   --ok: #5cc27c;
   --view-bg: #1a1e27;
+  --view-sky: #2c3954;
   --view-grid: #252a35;
   --view-grid-major: #353c4a;
   --axis-x: #ef6a62;
