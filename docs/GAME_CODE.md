@@ -329,6 +329,14 @@ track:Play()
 
 แบบนี้ทำคอมโบได้โดยใช้ AnimationId แค่ตัวเดียว ไม่ต้องตัดเป็นหลายไฟล์
 
+**คอมโบปืนใหญ่และธนู:** จังหวะที่เป็นการยิงใช้ marker `Fire` (ปืนใหญ่) หรือ `Shoot` (ธนู) แทน `Hit` โดยค่าเป็นเลขจังหวะเหมือนกัน จังหวะที่ตีระยะประชิด เช่น ฟาดพานท้าย หรือฟาดด้วยคันธนู ยังใช้ `Hit` ให้ฟัง `Fire` หรือ `Shoot` เพิ่มเพื่อสร้างกระสุนหรือลูกธนู:
+
+```lua
+track:GetMarkerReachedSignal("Fire"):Connect(function(step)
+	fireEvent:FireServer(step, mouse.Hit.Position) -- server สร้างกระสุน (จังหวะ 5 = นัดใหญ่)
+end)
+```
+
 ```lua
 -- LocalScript ใน Tool (ใช้ร่วมกับ RemoteEvent "Hit" แบบข้อ 2 และ MoveMarker ข้อ 5)
 local tool = script.Parent

@@ -42,7 +42,7 @@ This is the single source of truth for the JSON that the web editor, the Studio 
 | `keyframes` | array | required, ≥ 1 | See below. Sorted by time on load. |
 | `markers` | array | `[]` | `{ "time", "name", "value" }`. Exported as `KeyframeMarker`s. In game code: `track:GetMarkerReachedSignal(name)`. |
 
-Marker conventions used by the presets (any name works; these are what docs/GAME_CODE.md listens for): `Hit` (value = which hit), `Charge` (`start` / `full`), `Fire`, `Shoot`, `Reload`, `Grab`, `Land`, `Window` (end of each step of a long combo: the game stops the track there unless attack was pressed again; value = step number), and `Move` with value `"<forward|back|left|right|up> <speed studs/s> <seconds>"` for moves that should actually displace the character (animations never move the HumanoidRootPart).
+Marker conventions used by the presets (any name works; these are what docs/GAME_CODE.md listens for): `Hit` (value = which hit), `Charge` (`start` / `full`), `Fire`, `Shoot`, `Reload`, `Grab`, `Land`, `Window` (end of each step of a long combo: the game stops the track there unless attack was pressed again; value = step number; each step's own marker is `Hit`, or `Fire` / `Shoot` for ranged steps, also valued with the step number), and `Move` with value `"<forward|back|left|right|up> <speed studs/s> <seconds>"` for moves that should actually displace the character (animations never move the HumanoidRootPart).
 
 ## Keyframes
 

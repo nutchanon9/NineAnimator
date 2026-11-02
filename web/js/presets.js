@@ -176,9 +176,12 @@
 
   /**
    * Long combo as one animation. Each step: windup `w` -> (optional `mid`
-   * keys) -> strike `s` -> hold. Adds "Hit" at each strike and "Window" at the
-   * end of every step except the last: a game script stops the track there
-   * unless the player pressed attack again (docs/GAME_CODE.md section 6).
+   * keys) -> strike `s` -> hold. Adds the step's event marker at each strike
+   * (`event`, default "Hit"; "Fire"/"Shoot" for ranged steps) with the step
+   * number as value, and "Window" at the end of every step except the last: a
+   * game script stops the track there unless the player pressed attack again
+   * (docs/GAME_CODE.md section 6). `marks`: extra markers at the windup or
+   * strike, e.g. { at: 'windup', name: 'Charge', value: 'start' }.
    */
   function combo(name, start, steps, end) {
     let t = 0;
@@ -187,12 +190,14 @@
     steps.forEach((st, i) => {
       t += st.tw || 0.16;
       keys.push(kf(r(t), st.w, 'Cubic', st.mid ? 'Out' : 'In'));
+      const windupAt = t;
       const strikeStart = t;
       for (const m of st.mid || []) { t += st.tm || 0.08; keys.push(kf(r(t), m, 'Linear')); }
       t += st.ts || 0.12;
       keys.push(kf(r(t), st.s, 'Cubic', 'Out'));
-      markers.push({ time: r(t - 0.02), name: 'Hit', value: String(i + 1) });
+      markers.push({ time: r(t - 0.02), name: st.event || 'Hit', value: String(i + 1) });
       if (st.move) markers.push({ time: r(strikeStart), name: 'Move', value: st.move });
+      for (const m of st.marks || []) markers.push({ time: r((m.at === 'windup' ? windupAt : t - 0.02) + (m.dt || 0)), name: m.name, value: m.value || '' });
       t += st.th || 0.14;
       keys.push(kf(r(t), st.h || st.s, 'Cubic', 'InOut'));
       if (i < steps.length - 1) markers.push({ time: r(t), name: 'Window', value: String(i + 1) });
@@ -1221,6 +1226,63 @@
           { w: g(merge(turn(-5, 25), { RightUpperArm: rot(20, 0, 10), RightLowerArm: rot(110), RightHand: rot(-110) })), tw: 0.14, s: merge(shield, legs(30, -50, { spread: 8 }), { LowerTorso: pos(-6, 0, 0, [0, -0.25, -0.3]) }, turn(-10, -15), { RightUpperArm: rot(90, 0, -5), RightLowerArm: rot(5), RightHand: rot(-90) }) },
           { w: g(merge(turn(-15, 20), legs(30, -55), { RightUpperArm: rot(10, 0, -30), RightLowerArm: rot(40), RightHand: rot(-90) })), tw: 0.16, s: g(merge(turn(8, -25), { RightUpperArm: rot(150, 0, 15), RightLowerArm: rot(20), RightHand: rot(0) })), ts: 0.12, th: 0.25 },
         ], start);
+      },
+    },
+
+    {
+      id: 'cb_heavygun', cat: 'combo', label: 'คอมโบปืนใหญ่ 5 จังหวะ', prop: 'heavygun',
+      make: () => {
+        const w = wielder(HG_GRIP, { gun: true });
+        const L = legs(25, -45, { spread: 12 });
+        const aim = (b) => merge(w(turn(-5 - b, 10), [-0.1, -0.65, -0.55], [0, 0, -1]), L);
+        const kick = () => merge(w(turn(8, 8), [0, -0.5, -0.45], [0, 0.3, -0.95]), L);
+        const start = merge(HG.hold(0), L);
+        return combo('ComboHeavyGun5', start, [
+          { w: aim(0), tw: 0.12, s: kick(), ts: 0.06, th: 0.22, event: 'Fire' },
+          { w: aim(1), tw: 0.14, s: kick(), ts: 0.06, th: 0.22, event: 'Fire' },
+          { // stock bash
+            w: merge(w(turn(5, 25), [0.4, 0, -0.4], [0, 0.75, 0.65]), L), tw: 0.2,
+            mid: [merge(w(turn(-4, 0), [0.25, -0.15, -0.7], [0, 0.6, 0.8]), L)], tm: 0.07,
+            s: merge(w(turn(-12, -25), [0.05, -0.3, -1.0], [0, 0.35, 0.94]), legs(30, -50, { spread: 12 })), ts: 0.07, th: 0.2,
+          },
+          { // swing the gun like a club, right to left
+            w: merge(w(turn(0, -40), [0.75, -0.3, -0.45], [0.8, 0, 0.6]), legs(25, -45, { spread: 12, twist: -15 })), tw: 0.22,
+            s: merge(w(turn(-5, 40), [-0.2, -0.3, -0.9], [-0.8, 0, -0.6]), legs(30, -55, { spread: 12, twist: 15 })), ts: 0.14, th: 0.22,
+          },
+          { // point-blank blast with a big kick back
+            w: merge(w(turn(-14, 8), [-0.1, -0.7, -0.6], [0, 0.05, -1]), legs(40, -75, { spread: 14 })), tw: 0.3,
+            s: merge(w(turn(16, 5), [0, -0.4, -0.3], [0, 0.5, -0.85]), legs(30, -55, { spread: 14 }), { LowerTorso: pos(6, 0, 0, [0, -0.3, 0.35]) }),
+            ts: 0.06, th: 0.4, event: 'Fire', move: 'back 18 0.2',
+          },
+        ], start);
+      },
+    },
+    {
+      id: 'cb_bow', cat: 'combo', label: 'คอมโบธนู 5 จังหวะ', prop: 'bow',
+      make: () => {
+        const aim = (lean) => ({ UpperTorso: rot(lean || 0, -50), Head: rot(-(lean || 0), 45), LeftUpperArm: rot(0, -40, -88), LeftLowerArm: rot(0), LeftHand: rot(0) });
+        const draw = (lean, extra) => merge(aim(lean), { RightUpperArm: rot(0, -40, 88), RightLowerArm: rot(150) }, extra || {});
+        const loose = (lean, extra) => merge(aim(lean), { RightUpperArm: rot(0, -60, 95), RightLowerArm: rot(95) }, extra || {});
+        const rest = merge(STAND, { UpperTorso: rot(0), Head: rot(0), LeftUpperArm: rot(20, 0, -8), LeftLowerArm: rot(20), LeftHand: rot(0), RightUpperArm: rot(0), RightLowerArm: rot(0) });
+        const hop = { LowerTorso: pos(6, 0, 0, [0, 0.2, 0.45]), RightUpperLeg: rot(20, 0, 5), LeftUpperLeg: rot(-5, 0, -5), RightLowerLeg: rot(-45), LeftLowerLeg: rot(-30), RightFoot: rot(15), LeftFoot: rot(25) };
+        return combo('ComboBow5', rest, [
+          { w: draw(0, STAND), tw: 0.3, s: loose(0, STAND), ts: 0.06, th: 0.1, event: 'Shoot' },
+          { w: draw(0, STAND), tw: 0.2, s: loose(0, STAND), ts: 0.06, th: 0.1, event: 'Shoot' },
+          { // swing the bow limb at a close enemy
+            w: merge(STAND, { UpperTorso: rot(0, -60), Head: rot(0, 40), LeftUpperArm: rot(10, 0, -70), LeftLowerArm: rot(30), LeftHand: rot(0), RightUpperArm: rot(20, 0, 10), RightLowerArm: rot(60) }), tw: 0.18,
+            s: merge(legs(20, -35, { spread: 8 }), { UpperTorso: rot(-10, 30), Head: rot(5, -20), LeftUpperArm: rot(80, 0, 40), LeftLowerArm: rot(10), LeftHand: rot(0), RightUpperArm: rot(10, 0, 20), RightLowerArm: rot(50) }), ts: 0.12, th: 0.16,
+          },
+          { // hop back and shoot while landing
+            w: draw(0, hop), tw: 0.22,
+            s: loose(0, merge(legs(35, -60, { spread: 10 }), { LowerTorso: pos(0, 0, 0, [0, -0.3, 0.7]) })), ts: 0.08, th: 0.18, event: 'Shoot', move: 'back 22 0.22',
+          },
+          { // long draw, then a power shot
+            w: draw(3, STAND), tw: 0.3,
+            mid: [draw(4, merge(STAND, { RightUpperArm: rot(0, -43, 88) })), draw(5, merge(STAND, { RightUpperArm: rot(0, -41, 88) })), draw(5, merge(STAND, { RightUpperArm: rot(0, -44, 88) }))], tm: 0.2,
+            s: loose(2, merge(STAND, { UpperTorso: rot(8, -55), RightUpperArm: rot(0, -70, 100), RightLowerArm: rot(80) })), ts: 0.06, th: 0.35, event: 'Shoot',
+            marks: [{ at: 'windup', name: 'Charge', value: 'start' }, { at: 'windup', dt: 0.6, name: 'Charge', value: 'full' }],
+          },
+        ], rest);
       },
     },
   ];
