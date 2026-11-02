@@ -1,0 +1,183 @@
+{
+  "format": "nineanimator/1",
+  "name": "BossDoubleSlam",
+  "rig": "R6",
+  "loop": false,
+  "priority": "Action",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-12, 0, 0],
+          "pos": [0, -0.13, 0.03]
+        },
+        "Head": {
+          "rot": [10, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [15, 0, 25]
+        },
+        "Left Arm": {
+          "rot": [15, 0, -25]
+        },
+        "Right Leg": {
+          "rot": [25, 0, 16]
+        },
+        "Left Leg": {
+          "rot": [25, 0, -16]
+        }
+      }
+    },
+    {
+      "time": 0.8,
+      "easing": "Linear",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [15, 0, 0],
+          "pos": [0, -0.02, 0.06]
+        },
+        "Head": {
+          "rot": [-5, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [170, 0, 10]
+        },
+        "Left Arm": {
+          "rot": [170, 0, -10]
+        },
+        "Right Leg": {
+          "rot": [10, 0, 16]
+        },
+        "Left Leg": {
+          "rot": [10, 0, -16]
+        }
+      }
+    },
+    {
+      "time": 0.95,
+      "easing": "Cubic",
+      "direction": "In",
+      "poses": {
+        "Torso": {
+          "rot": [18, 0, 0],
+          "pos": [0, -0.02, 0.06]
+        },
+        "Head": {
+          "rot": [-5, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [170, 0, 10]
+        },
+        "Left Arm": {
+          "rot": [170, 0, -10]
+        },
+        "Right Leg": {
+          "rot": [10, 0, 16]
+        },
+        "Left Leg": {
+          "rot": [10, 0, -16]
+        }
+      }
+    },
+    {
+      "time": 1.05,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "Torso": {
+          "rot": [-60, 0, 0],
+          "pos": [0, -0.62, 0.02]
+        },
+        "Head": {
+          "rot": [35, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [70, 0, -5]
+        },
+        "Left Arm": {
+          "rot": [70, 0, 5]
+        },
+        "Right Leg": {
+          "rot": [70, 0, 18]
+        },
+        "Left Leg": {
+          "rot": [70, 0, -18]
+        }
+      }
+    },
+    {
+      "time": 1.5,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-60, 0, 0],
+          "pos": [0, -0.62, 0.02]
+        },
+        "Head": {
+          "rot": [35, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [70, 0, -5]
+        },
+        "Left Arm": {
+          "rot": [70, 0, 5]
+        },
+        "Right Leg": {
+          "rot": [70, 0, 18]
+        },
+        "Left Leg": {
+          "rot": [70, 0, -18]
+        }
+      }
+    },
+    {
+      "time": 2,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-12, 0, 0],
+          "pos": [0, -0.13, 0.03]
+        },
+        "Head": {
+          "rot": [10, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [15, 0, 25]
+        },
+        "Left Arm": {
+          "rot": [15, 0, -25]
+        },
+        "Right Leg": {
+          "rot": [25, 0, 16]
+        },
+        "Left Leg": {
+          "rot": [25, 0, -16]
+        }
+      }
+    }
+  ],
+  "markers": [
+    {
+      "time": 0.15,
+      "name": "Warn",
+      "value": "Slam"
+    },
+    {
+      "time": 1.03,
+      "name": "Hit",
+      "value": "Slam"
+    },
+    {
+      "time": 1.05,
+      "name": "Land",
+      "value": ""
+    }
+  ],
+  "length": 2
+}

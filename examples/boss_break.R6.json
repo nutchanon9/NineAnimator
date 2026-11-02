@@ -1,0 +1,178 @@
+{
+  "format": "nineanimator/1",
+  "name": "BossBreak",
+  "rig": "R6",
+  "loop": false,
+  "priority": "Action3",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "Torso": {
+          "rot": [-12, 0, 0],
+          "pos": [0, -0.13, 0.03]
+        },
+        "Head": {
+          "rot": [10, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [15, 0, 25]
+        },
+        "Left Arm": {
+          "rot": [15, 0, -25]
+        },
+        "Right Leg": {
+          "rot": [25, 0, 16]
+        },
+        "Left Leg": {
+          "rot": [25, 0, -16]
+        }
+      }
+    },
+    {
+      "time": 0.12,
+      "easing": "Cubic",
+      "direction": "In",
+      "poses": {
+        "Torso": {
+          "rot": [28, 0, 0],
+          "pos": [0, 0, 0.3]
+        },
+        "Head": {
+          "rot": [25, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [30, 0, 40]
+        },
+        "Left Arm": {
+          "rot": [30, 0, -40]
+        },
+        "Right Leg": {
+          "rot": [25, 0, 16]
+        },
+        "Left Leg": {
+          "rot": [25, 0, -16]
+        }
+      }
+    },
+    {
+      "time": 0.4,
+      "easing": "Bounce",
+      "direction": "Out",
+      "poses": {
+        "Torso": {
+          "rot": [-30, 0, 8],
+          "pos": [0, -0.85, 0]
+        },
+        "Head": {
+          "rot": [-15, 10, 0]
+        },
+        "Right Arm": {
+          "rot": [10, 0, 15]
+        },
+        "Left Arm": {
+          "rot": [35, 0, -10]
+        },
+        "Right Leg": {
+          "rot": [0, 0, 8]
+        },
+        "Left Leg": {
+          "rot": [90, 0, -8]
+        }
+      }
+    },
+    {
+      "time": 1.4,
+      "easing": "Linear",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-26, 0, 8],
+          "pos": [0, -0.85, 0]
+        },
+        "Head": {
+          "rot": [-11, 10, 0]
+        },
+        "Right Arm": {
+          "rot": [10, 0, 15]
+        },
+        "Left Arm": {
+          "rot": [35, 0, -10]
+        },
+        "Right Leg": {
+          "rot": [0, 0, 8]
+        },
+        "Left Leg": {
+          "rot": [90, 0, -8]
+        }
+      }
+    },
+    {
+      "time": 2,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-30, 0, 8],
+          "pos": [0, -0.85, 0]
+        },
+        "Head": {
+          "rot": [-15, 10, 0]
+        },
+        "Right Arm": {
+          "rot": [10, 0, 15]
+        },
+        "Left Arm": {
+          "rot": [35, 0, -10]
+        },
+        "Right Leg": {
+          "rot": [0, 0, 8]
+        },
+        "Left Leg": {
+          "rot": [90, 0, -8]
+        }
+      }
+    },
+    {
+      "time": 2.6,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "Torso": {
+          "rot": [-12, 0, 0],
+          "pos": [0, -0.13, 0.03]
+        },
+        "Head": {
+          "rot": [10, 0, 0]
+        },
+        "Right Arm": {
+          "rot": [15, 0, 25]
+        },
+        "Left Arm": {
+          "rot": [15, 0, -25]
+        },
+        "Right Leg": {
+          "rot": [25, 0, 16]
+        },
+        "Left Leg": {
+          "rot": [25, 0, -16]
+        }
+      }
+    }
+  ],
+  "markers": [
+    {
+      "time": 0.4,
+      "name": "Break",
+      "value": ""
+    },
+    {
+      "time": 0.4,
+      "name": "Land",
+      "value": ""
+    }
+  ],
+  "length": 2.6
+}

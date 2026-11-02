@@ -212,6 +212,11 @@
   const LS = { guard: (b) => wield(turn(-2 - b, 15), [0, -0.35 - b * 0.005, -1.0], [0, 0.57, -0.82], LS_GRIP) };
   const GS = { low: (b) => wield(turn(-6 - b, 10), [0, -0.6 - b * 0.01, -0.9], [0, -0.45, -0.89], GS_GRIP) };
   const HG = { hold: (b) => wield(turn(-5 - b, 10), [-0.1, -0.65 - b * 0.01, -0.55], [0, 0, -1], HG_GRIP, { gun: true }) };
+  // Boss base poses: wide, hunched, arms hanging forward; kneel on the right knee.
+  const BOSS = {
+    idle: (b) => merge(legs(25, -45, { spread: 16 }), { UpperTorso: rot(-12 + b * 3), Head: rot(10 - b * 2), RightUpperArm: rot(15, 0, 25 + b * 3), LeftUpperArm: rot(15, 0, -25 - b * 3), RightLowerArm: rot(30), LeftLowerArm: rot(30) }),
+    kneel: { LowerTorso: pos(0, 0, 0, [0, -0.85, 0]), RightUpperLeg: rot(0, 0, 8), RightLowerLeg: rot(-90), RightFoot: rot(0), LeftUpperLeg: rot(90, 0, -8), LeftLowerLeg: rot(-90), LeftFoot: rot(0) },
+  };
   // Dual blades: both arms low and forward, blades forward.
   const DB_GUARD = { UpperTorso: rot(-8), Head: rot(6), RightUpperArm: rot(25, 0, 25), RightLowerArm: rot(50), RightHand: rot(-50), LeftUpperArm: rot(25, 0, -25), LeftLowerArm: rot(50), LeftHand: rot(-50) };
 
@@ -1453,6 +1458,149 @@
         ]);
       },
     },
+
+    // ===== Boss / monster (v0.10). Attacks start with a "Warn" marker for telegraph effects. =====
+    {
+      id: 'boss_idle', cat: 'boss', label: 'บอส: ยืนข่ม (Idle)', prop: 'none',
+      make: () => anim('BossIdle', 'Idle', true, 2.0, [kf(0, BOSS.idle(0)), kf(1.0, BOSS.idle(1)), kf(2.0, BOSS.idle(0))]),
+    },
+    {
+      id: 'boss_roar', cat: 'boss', label: 'บอส: คำราม (Roar)', prop: 'none',
+      make: () => {
+        const roar = (b) => merge(legs(20, -35, { spread: 18 }), { UpperTorso: rot(20 + b, 0), Head: rot(35 + b, 0), RightUpperArm: rot(-30, 0, 75 + b), LeftUpperArm: rot(-30, 0, -75 - b), RightLowerArm: rot(20), LeftLowerArm: rot(20) });
+        return anim('BossRoar', 'Action', false, 2.4, [
+          kf(0, BOSS.idle(0)),
+          kf(0.5, merge(legs(35, -65, { spread: 16 }), { UpperTorso: rot(-25), Head: rot(-10), RightUpperArm: rot(-20, 0, 20), LeftUpperArm: rot(-20, 0, -20), RightLowerArm: rot(60), LeftLowerArm: rot(60) }), 'Cubic', 'Out'),
+          kf(0.9, roar(0), 'Linear'), kf(1.1, roar(2), 'Linear'), kf(1.3, roar(0), 'Linear'), kf(1.5, roar(2), 'Linear'), kf(1.9, roar(0), 'Cubic', 'InOut'),
+          kf(2.4, BOSS.idle(0)),
+        ], [{ time: 0.9, name: 'Roar', value: '' }]);
+      },
+    },
+    {
+      id: 'boss_slam', cat: 'boss', label: 'บอส: ทุบพื้นสองมือ (Double slam)', prop: 'none',
+      make: () => {
+        const up = (b) => merge(legs(10, -15, { spread: 16 }), { UpperTorso: rot(15 + b), Head: rot(-5), RightUpperArm: rot(170, 0, 10), LeftUpperArm: rot(170, 0, -10), RightLowerArm: rot(40), LeftLowerArm: rot(40) });
+        const down = merge(legs(55, -100, { spread: 18, lean: -15 }), { UpperTorso: rot(-45), Head: rot(35), RightUpperArm: rot(70, 0, -5), LeftUpperArm: rot(70, 0, 5), RightLowerArm: rot(5), LeftLowerArm: rot(5) });
+        return anim('BossDoubleSlam', 'Action', false, 2.0, [
+          kf(0, BOSS.idle(0), 'Cubic', 'InOut'), kf(0.8, up(0), 'Linear'), kf(0.95, up(3), 'Cubic', 'In'),
+          kf(1.05, down, 'Cubic', 'Out'), kf(1.5, down, 'Cubic', 'InOut'), kf(2.0, BOSS.idle(0)),
+        ], [{ time: 0.15, name: 'Warn', value: 'Slam' }, { time: 1.03, name: 'Hit', value: 'Slam' }, { time: 1.05, name: 'Land', value: '' }]);
+      },
+    },
+    {
+      id: 'boss_swipe', cat: 'boss', label: 'บอส: ตบกวาด (Swipe)', prop: 'none',
+      make: () => anim('BossSwipe', 'Action', false, 1.8, [
+        kf(0, BOSS.idle(0), 'Cubic', 'InOut'),
+        kf(0.6, merge(legs(30, -55, { spread: 16, twist: -20 }), turn(0, -60), { RightUpperArm: rot(40, 0, 85), RightLowerArm: rot(20), LeftUpperArm: rot(20, 0, -30), LeftLowerArm: rot(40) }), 'Cubic', 'In'),
+        kf(0.8, merge(legs(35, -65, { spread: 16, twist: 20 }), turn(-10, 60), { RightUpperArm: rot(80, 0, -40), RightLowerArm: rot(10), LeftUpperArm: rot(10, 0, -40), LeftLowerArm: rot(30) }), 'Cubic', 'Out'),
+        kf(1.1, merge(legs(35, -65, { spread: 16, twist: 22 }), turn(-10, 62), { RightUpperArm: rot(78, 0, -42), RightLowerArm: rot(12), LeftUpperArm: rot(10, 0, -40), LeftLowerArm: rot(30) }), 'Cubic', 'InOut'),
+        kf(1.8, BOSS.idle(0)),
+      ], [{ time: 0.1, name: 'Warn', value: 'Swipe' }, { time: 0.75, name: 'Hit', value: 'Swipe' }]),
+    },
+    {
+      id: 'boss_rush', cat: 'boss', label: 'บอส: พุ่งชน (Charge rush)', prop: 'none',
+      make: () => {
+        const g = gait({ hip: 50, hipBias: 15, kneeBase: 20, knee: 80, arm: 0, armOut: 0, elbow: 0, elbowSwing: 0, twist: 8, lean: -25, chest: -15, bounce: 0.15 });
+        const run = (ph) => merge(g(ph), { Head: rot(30), RightUpperArm: rot(-40, 0, 20), LeftUpperArm: rot(-40, 0, -20), RightLowerArm: rot(30), LeftLowerArm: rot(30) });
+        const keys = [kf(0, BOSS.idle(0), 'Cubic', 'InOut'),
+          kf(0.6, merge(legs(40, -75, { spread: 14, lean: -25 }), { UpperTorso: rot(-20), Head: rot(30), RightUpperArm: rot(-40, 0, 20), LeftUpperArm: rot(-40, 0, -20), RightLowerArm: rot(30), LeftLowerArm: rot(30) }), 'Cubic', 'In')];
+        for (let i = 0; i < 6; i++) keys.push(kf(r(0.75 + i * 0.12), run((i % 4) * Math.PI / 2), 'Linear'));
+        keys.push(kf(1.55, merge(legs(40, -75, { spread: 16 }), { UpperTorso: rot(5), Head: rot(0), RightUpperArm: rot(20, 0, 40), LeftUpperArm: rot(20, 0, -40), RightLowerArm: rot(20), LeftLowerArm: rot(20) }), 'Cubic', 'Out'));
+        keys.push(kf(2.2, BOSS.idle(0)));
+        return anim('BossRush', 'Action', false, 2.2, keys, [
+          { time: 0.1, name: 'Warn', value: 'Rush' }, { time: 0.7, name: 'Move', value: 'forward 50 0.75' }, { time: 1.0, name: 'Hit', value: 'Rush' },
+        ]);
+      },
+    },
+    {
+      id: 'boss_stomp', cat: 'boss', label: 'บอส: กระโดดกระทืบ (Jump stomp)', prop: 'none',
+      make: () => {
+        const air = (h) => ({ LowerTorso: pos(0, 0, 0, [0, h, 0]), RightUpperLeg: rot(60, 0, 10), LeftUpperLeg: rot(60, 0, -10), RightLowerLeg: rot(-90), LeftLowerLeg: rot(-90), RightFoot: rot(20), LeftFoot: rot(20), UpperTorso: rot(5), Head: rot(-10), RightUpperArm: rot(150, 0, 30), LeftUpperArm: rot(150, 0, -30), RightLowerArm: rot(30), LeftLowerArm: rot(30) });
+        const land = merge(legs(60, -110, { spread: 18 }), { UpperTorso: rot(-20), Head: rot(15), RightUpperArm: rot(30, 0, 60), LeftUpperArm: rot(30, 0, -60), RightLowerArm: rot(20), LeftLowerArm: rot(20) });
+        return anim('BossJumpStomp', 'Action', false, 2.2, [
+          kf(0, BOSS.idle(0), 'Cubic', 'In'),
+          kf(0.5, merge(legs(55, -100, { spread: 16 }), { UpperTorso: rot(-20), Head: rot(15), RightUpperArm: rot(-30, 0, 20), LeftUpperArm: rot(-30, 0, -20), RightLowerArm: rot(30), LeftLowerArm: rot(30) }), 'Cubic', 'In'),
+          kf(0.58, merge(legs(20, -30, { spread: 14 }), { UpperTorso: rot(-5), Head: rot(5), RightUpperArm: rot(70, 0, 25), LeftUpperArm: rot(70, 0, -25), RightLowerArm: rot(30), LeftLowerArm: rot(30) }), 'Linear'),
+          kf(0.7, air(2.0), 'Cubic', 'Out'), kf(1.0, air(2.2), 'Cubic', 'In'),
+          kf(1.2, land, 'Cubic', 'Out'), kf(1.6, land, 'Cubic', 'InOut'), kf(2.2, BOSS.idle(0)),
+        ], [{ time: 0.2, name: 'Warn', value: 'Stomp' }, { time: 0.55, name: 'Move', value: 'up 45 0.25' }, { time: 1.18, name: 'Hit', value: 'Stomp' }, { time: 1.2, name: 'Land', value: '' }]);
+      },
+    },
+    {
+      id: 'boss_spin', cat: 'boss', label: 'บอส: หมุนตัวฟาดรอบตัว (Spin)', prop: 'none',
+      make: () => {
+        const arms = { RightUpperArm: rot(10, 0, 85), LeftUpperArm: rot(10, 0, -85), RightLowerArm: rot(10), LeftLowerArm: rot(10), UpperTorso: rot(-10), Head: rot(5) };
+        const k = (t, y) => kf(t, merge(arms, legs(25, -45, { spread: 16 }), { LowerTorso: pos(0, y, 0, [0, -0.15, 0]) }), 'Linear');
+        const keys = [kf(0, BOSS.idle(0), 'Cubic', 'In'), kf(0.4, merge(legs(30, -55, { spread: 16 }), turn(-5, 40), { RightUpperArm: rot(10, 0, 85), LeftUpperArm: rot(10, 0, -85), RightLowerArm: rot(10), LeftLowerArm: rot(10) }), 'Cubic', 'In')];
+        [-90, 180, 90, 0, -90, 180, 90, 0].forEach((y, i) => keys.push(k(r(0.5 + i * 0.075), y)));
+        keys.push(kf(1.4, merge(legs(30, -55, { spread: 16 }), { UpperTorso: rot(-20, 0, 8), Head: rot(15, 0, -10), RightUpperArm: rot(20, 0, 40), LeftUpperArm: rot(20, 0, -40), RightLowerArm: rot(20), LeftLowerArm: rot(20) }), 'Cubic', 'Out'));
+        keys.push(kf(2.0, BOSS.idle(0)));
+        return anim('BossSpin', 'Action', false, 2.0, keys, [{ time: 0.1, name: 'Warn', value: 'Spin' }, { time: 0.8, name: 'Hit', value: '1' }, { time: 1.1, name: 'Hit', value: '2' }]);
+      },
+    },
+    {
+      id: 'boss_enrage', cat: 'boss', label: 'บอส: คลั่ง/เปลี่ยนเฟส (Enrage)', prop: 'none',
+      make: () => {
+        const kneel = (b) => merge(BOSS.kneel, { UpperTorso: rot(-35 - b), Head: rot(-20), RightUpperArm: rot(20, 0, 10 + b), LeftUpperArm: rot(20, 0, -10 - b), RightLowerArm: rot(100), LeftLowerArm: rot(100) });
+        const rise = (b) => merge(legs(25, -45, { spread: 18 }), { UpperTorso: rot(15 + b), Head: rot(25 + b), RightUpperArm: rot(150, 0, 40 + b), LeftUpperArm: rot(150, 0, -40 - b), RightLowerArm: rot(40), LeftLowerArm: rot(40) });
+        return anim('BossEnrage', 'Action', false, 3.0, [
+          kf(0, BOSS.idle(0), 'Cubic', 'Out'), kf(0.4, kneel(0), 'Linear'), kf(0.8, kneel(3), 'Linear'), kf(1.2, kneel(0), 'Cubic', 'In'),
+          kf(1.8, rise(0), 'Linear'), kf(2.0, rise(3), 'Linear'), kf(2.2, rise(0), 'Linear'), kf(2.5, rise(2), 'Cubic', 'InOut'),
+          kf(3.0, BOSS.idle(0)),
+        ], [{ time: 0.4, name: 'Charge', value: 'start' }, { time: 1.8, name: 'Phase', value: '2' }, { time: 1.85, name: 'Roar', value: '' }]);
+      },
+    },
+    {
+      id: 'boss_break', cat: 'boss', label: 'บอส: เสียหลักคุกเข่า (Break)', prop: 'none',
+      make: () => {
+        const down = (b) => merge(BOSS.kneel, { UpperTorso: rot(-30 + b, 0, 8), Head: rot(-15 + b, 10), RightUpperArm: rot(10, 0, 15), LeftUpperArm: rot(35, 0, -10), RightLowerArm: rot(20), LeftLowerArm: rot(30) });
+        return anim('BossBreak', 'Action3', false, 2.6, [
+          kf(0, BOSS.idle(0), 'Cubic', 'Out'),
+          kf(0.12, merge(legs(25, -45, { spread: 16 }), { LowerTorso: pos(8, 0, 0, [0, 0, 0.3]), UpperTorso: rot(20), Head: rot(25), RightUpperArm: rot(30, 0, 40), LeftUpperArm: rot(30, 0, -40) }), 'Cubic', 'In'),
+          kf(0.4, down(0), 'Bounce', 'Out'), kf(1.4, down(4), 'Linear'), kf(2.0, down(0), 'Cubic', 'InOut'),
+          kf(2.6, BOSS.idle(0)),
+        ], [{ time: 0.4, name: 'Break', value: '' }, { time: 0.4, name: 'Land', value: '' }]);
+      },
+    },
+    {
+      id: 'boss_death', cat: 'boss', label: 'บอส: ล้มตาย (Death)', prop: 'none',
+      make: () => {
+        const knees = { LowerTorso: pos(0, 0, 0, [0, -0.95, 0]), RightUpperLeg: rot(0, 0, 6), LeftUpperLeg: rot(0, 0, -6), RightLowerLeg: rot(-90), LeftLowerLeg: rot(-90), RightFoot: rot(0), LeftFoot: rot(0) };
+        const prone = { LowerTorso: pos(-85, 0, 0, [0, -1.6, -0.6]), RightUpperLeg: rot(0, 0, 8), LeftUpperLeg: rot(0, 0, -8), RightLowerLeg: rot(-10), LeftLowerLeg: rot(-15), RightFoot: rot(20), LeftFoot: rot(20), UpperTorso: rot(0), Head: rot(5, 60), RightUpperArm: rot(160, 0, 25), LeftUpperArm: rot(40, 0, -20), RightLowerArm: rot(10), LeftLowerArm: rot(20) };
+        return anim('BossDeath', 'Action4', false, 3.0, [
+          kf(0, BOSS.idle(0), 'Cubic', 'Out'),
+          kf(0.3, merge(legs(20, -35, { spread: 16 }), { LowerTorso: pos(6, 0, 0, [0, -0.1, 0.3]), UpperTorso: rot(15), Head: rot(25), RightUpperArm: rot(20, 0, 30), LeftUpperArm: rot(20, 0, -30) }), 'Cubic', 'In'),
+          kf(0.9, merge(knees, { UpperTorso: rot(-10), Head: rot(-15), RightUpperArm: rot(5, 0, 10), LeftUpperArm: rot(5, 0, -10) }), 'Bounce', 'Out'),
+          kf(1.6, merge(knees, { UpperTorso: rot(-15, 0, 5), Head: rot(-25, 10), RightUpperArm: rot(5, 0, 10), LeftUpperArm: rot(5, 0, -10) }), 'Cubic', 'In'),
+          kf(1.95, merge(prone, { LowerTorso: pos(-45, 0, 0, [0, -1.3, -0.4]), RightUpperLeg: rot(40, 0, 8), LeftUpperLeg: rot(40, 0, -8), RightLowerLeg: rot(-60), LeftLowerLeg: rot(-60), RightUpperArm: rot(90, 0, 20), LeftUpperArm: rot(60, 0, -20) }), 'Cubic', 'In'),
+          kf(2.2, prone, 'Bounce', 'Out'), kf(3.0, prone),
+        ], [{ time: 0.9, name: 'Land', value: 'knees' }, { time: 2.2, name: 'Land', value: 'body' }]);
+      },
+    },
+    {
+      id: 'boss_summon', cat: 'boss', label: 'บอส: ร่ายเวทเรียกลูกน้อง (Summon)', prop: 'none',
+      make: () => {
+        const up = (b) => merge(legs(20, -35, { spread: 16 }), { UpperTorso: rot(15 + b), Head: rot(25 + b), RightUpperArm: rot(160, 0, 30), LeftUpperArm: rot(160, 0, -30), RightLowerArm: rot(20), LeftLowerArm: rot(20), RightHand: rot(30), LeftHand: rot(30) });
+        return anim('BossSummon', 'Action', false, 2.4, [
+          kf(0, BOSS.idle(0)),
+          kf(0.5, merge(legs(35, -65, { spread: 16 }), { UpperTorso: rot(-25), Head: rot(-15), RightUpperArm: rot(40, 0, -35), LeftUpperArm: rot(40, 0, 35), RightLowerArm: rot(90), LeftLowerArm: rot(90) }), 'Cubic', 'In'),
+          kf(1.2, up(0), 'Linear'), kf(1.5, up(3), 'Linear'), kf(1.8, up(0), 'Cubic', 'InOut'),
+          kf(2.4, BOSS.idle(0)),
+        ], [{ time: 0.5, name: 'Charge', value: 'start' }, { time: 1.2, name: 'Summon', value: '' }]);
+      },
+    },
+    {
+      id: 'boss_grab', cat: 'boss', label: 'บอส: คว้าแล้วขว้าง (Grab & throw)', prop: 'none',
+      make: () => anim('BossGrabThrow', 'Action', false, 2.6, [
+        kf(0, BOSS.idle(0), 'Cubic', 'In'),
+        kf(0.5, merge(legs(40, -70, { spread: 16, lean: -15 }), { UpperTorso: rot(-25), Head: rot(25), RightUpperArm: rot(80, 0, -10), RightLowerArm: rot(10), RightHand: rot(0), LeftUpperArm: rot(10, 0, -30), LeftLowerArm: rot(30) }), 'Cubic', 'Out'),
+        kf(0.8, merge(legs(30, -55, { spread: 16 }), { UpperTorso: rot(-10), Head: rot(10), RightUpperArm: rot(40, 0, -10), RightLowerArm: rot(110), LeftUpperArm: rot(10, 0, -30), LeftLowerArm: rot(30) }), 'Cubic', 'InOut'),
+        kf(1.3, merge(legs(15, -25, { spread: 16 }), turn(15, -20), { RightUpperArm: rot(175, 0, 10), RightLowerArm: rot(30), LeftUpperArm: rot(30, 0, -30), LeftLowerArm: rot(30) }), 'Cubic', 'In'),
+        kf(1.55, merge(legs(35, -65, { spread: 16, twist: 15 }), turn(-20, 25), { RightUpperArm: rot(60, 0, -20), RightLowerArm: rot(10), LeftUpperArm: rot(-20, 0, -30), LeftLowerArm: rot(30) }), 'Cubic', 'Out'),
+        kf(1.9, merge(legs(35, -65, { spread: 16, twist: 15 }), turn(-18, 23), { RightUpperArm: rot(55, 0, -20), RightLowerArm: rot(12), LeftUpperArm: rot(-20, 0, -30), LeftLowerArm: rot(30) }), 'Cubic', 'InOut'),
+        kf(2.6, BOSS.idle(0)),
+      ], [{ time: 0.1, name: 'Warn', value: 'Grab' }, { time: 0.5, name: 'Grab', value: '' }, { time: 1.52, name: 'Throw', value: '' }]),
+    },
   ];
 
   const CATEGORIES = [
@@ -1468,6 +1616,7 @@
     ['sns', 'อาวุธ: ดาบโล่'],
     ['combo', 'คอมโบยาว'],
     ['skill', 'สกิลพิเศษ (อัลติเมต)'],
+    ['boss', 'บอส / มอนสเตอร์'],
   ];
 
   return {

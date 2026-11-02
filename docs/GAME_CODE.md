@@ -434,6 +434,74 @@ skillTrack:GetMarkerReachedSignal("Fire"):Connect(function(value)
 end)
 ```
 
+## 8. บอส: เตือนก่อนโจมตี (marker `Warn`)
+
+ท่าในหมวด **บอส / มอนสเตอร์** ทุกท่าโจมตีเริ่มด้วย marker `Warn` (ค่าคือชื่อท่า เช่น `Slam`, `Swipe`, `Rush`, `Stomp`, `Spin`, `Grab`) ประมาณ 0.5 วินาทีก่อน `Hit` เพื่อให้ผู้เล่นมีเวลาหลบ ส่วน marker อื่น เช่น `Roar`, `Phase`, `Break`, `Summon`, `Throw` ใช้เล่นเอฟเฟกต์หรือเริ่มเหตุการณ์ในเกม
+
+```lua
+-- Script ใน Model ของบอส (ฝั่ง server): สุ่มท่าโจมตี + วงเตือนสีแดงบนพื้น
+local boss = script.Parent
+local humanoid = boss:WaitForChild("Humanoid")
+local root = boss:WaitForChild("HumanoidRootPart")
+local animator = humanoid:WaitForChild("Animator")
+
+local ATTACKS = { -- ใส่ AnimationId ที่อัปโหลดแล้ว และรัศมีวงเตือน (stud)
+	{ id = "rbxassetid://0", radius = 14 }, -- BossDoubleSlam
+	{ id = "rbxassetid://0", radius = 10 }, -- BossSwipe
+	{ id = "rbxassetid://0", radius = 18 }, -- BossJumpStomp
+}
+
+local function warnCircle(radius, seconds)
+	local disc = Instance.new("Part")
+	disc.Shape = Enum.PartType.Cylinder
+	disc.Size = Vector3.new(0.2, radius * 2, radius * 2)
+	disc.CFrame = CFrame.new(root.Position - Vector3.new(0, 2.9, 0)) * CFrame.Angles(0, 0, math.rad(90))
+	disc.Anchored = true
+	disc.CanCollide = false
+	disc.Material = Enum.Material.Neon
+	disc.Color = Color3.fromRGB(220, 40, 40)
+	disc.Transparency = 0.6
+	disc.Parent = workspace
+	task.delay(seconds, function()
+		disc:Destroy()
+	end)
+end
+
+local function hurtAround(radius, damage)
+	for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+		local character = player.Character
+		local hrp = character and character:FindFirstChild("HumanoidRootPart")
+		local hum = character and character:FindFirstChildOfClass("Humanoid")
+		if hrp and hum and (hrp.Position - root.Position).Magnitude <= radius then
+			hum:TakeDamage(damage)
+		end
+	end
+end
+
+local tracks = {}
+for i, attack in ipairs(ATTACKS) do
+	local anim = Instance.new("Animation")
+	anim.AnimationId = attack.id
+	local track = animator:LoadAnimation(anim)
+	track:GetMarkerReachedSignal("Warn"):Connect(function()
+		warnCircle(attack.radius, 0.9)
+	end)
+	track:GetMarkerReachedSignal("Hit"):Connect(function()
+		hurtAround(attack.radius, 30)
+	end)
+	tracks[i] = track
+end
+
+while humanoid.Health > 0 do
+	task.wait(math.random(20, 35) / 10)
+	local track = tracks[math.random(1, #tracks)]
+	track:Play(0.1)
+	track.Stopped:Wait()
+end
+```
+
+บอสส่วนใหญ่มักเป็นตัว R15 ที่ขยายขนาดให้ใหญ่ขึ้น แอนิเมชันใช้กับตัวที่ขยายแล้วได้เลย เพราะการหมุนข้อต่อยังเหมือนเดิม แต่ระยะเลื่อนตัว เช่น การย่อตัวหรือกระโดด จะไม่ขยายตามขนาดตัว ถ้าบอสใหญ่มาก ให้เพิ่มความเร็วในค่า `Move` แทน
+
 ## Priority ใช้ตัวไหน
 
 | ท่า | Priority | เหตุผล |

@@ -1,0 +1,333 @@
+{
+  "format": "nineanimator/1",
+  "name": "BossDeath",
+  "rig": "R15",
+  "loop": false,
+  "priority": "Action4",
+  "keyframes": [
+    {
+      "time": 0,
+      "easing": "Cubic",
+      "direction": "Out",
+      "poses": {
+        "LowerTorso": {
+          "rot": [0, 0, 0],
+          "pos": [0, -0.13, 0.03]
+        },
+        "RightUpperLeg": {
+          "rot": [25, 0, 16]
+        },
+        "RightLowerLeg": {
+          "rot": [-45, 0, 0]
+        },
+        "RightFoot": {
+          "rot": [20, 0, 0]
+        },
+        "LeftUpperLeg": {
+          "rot": [25, 0, -16]
+        },
+        "LeftLowerLeg": {
+          "rot": [-45, 0, 0]
+        },
+        "LeftFoot": {
+          "rot": [20, 0, 0]
+        },
+        "UpperTorso": {
+          "rot": [-12, 0, 0]
+        },
+        "Head": {
+          "rot": [10, 0, 0]
+        },
+        "RightUpperArm": {
+          "rot": [15, 0, 25]
+        },
+        "LeftUpperArm": {
+          "rot": [15, 0, -25]
+        },
+        "RightLowerArm": {
+          "rot": [30, 0, 0]
+        },
+        "LeftLowerArm": {
+          "rot": [30, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 0.3,
+      "easing": "Cubic",
+      "direction": "In",
+      "poses": {
+        "LowerTorso": {
+          "rot": [6, 0, 0],
+          "pos": [0, -0.1, 0.3]
+        },
+        "RightUpperLeg": {
+          "rot": [20, 0, 16]
+        },
+        "RightLowerLeg": {
+          "rot": [-35, 0, 0]
+        },
+        "RightFoot": {
+          "rot": [15, 0, 0]
+        },
+        "LeftUpperLeg": {
+          "rot": [20, 0, -16]
+        },
+        "LeftLowerLeg": {
+          "rot": [-35, 0, 0]
+        },
+        "LeftFoot": {
+          "rot": [15, 0, 0]
+        },
+        "UpperTorso": {
+          "rot": [15, 0, 0]
+        },
+        "Head": {
+          "rot": [25, 0, 0]
+        },
+        "RightUpperArm": {
+          "rot": [20, 0, 30]
+        },
+        "LeftUpperArm": {
+          "rot": [20, 0, -30]
+        }
+      }
+    },
+    {
+      "time": 0.9,
+      "easing": "Bounce",
+      "direction": "Out",
+      "poses": {
+        "LowerTorso": {
+          "rot": [0, 0, 0],
+          "pos": [0, -0.95, 0]
+        },
+        "RightUpperLeg": {
+          "rot": [0, 0, 6]
+        },
+        "LeftUpperLeg": {
+          "rot": [0, 0, -6]
+        },
+        "RightLowerLeg": {
+          "rot": [-90, 0, 0]
+        },
+        "LeftLowerLeg": {
+          "rot": [-90, 0, 0]
+        },
+        "RightFoot": {
+          "rot": [0, 0, 0]
+        },
+        "LeftFoot": {
+          "rot": [0, 0, 0]
+        },
+        "UpperTorso": {
+          "rot": [-10, 0, 0]
+        },
+        "Head": {
+          "rot": [-15, 0, 0]
+        },
+        "RightUpperArm": {
+          "rot": [5, 0, 10]
+        },
+        "LeftUpperArm": {
+          "rot": [5, 0, -10]
+        }
+      }
+    },
+    {
+      "time": 1.6,
+      "easing": "Cubic",
+      "direction": "In",
+      "poses": {
+        "LowerTorso": {
+          "rot": [0, 0, 0],
+          "pos": [0, -0.95, 0]
+        },
+        "RightUpperLeg": {
+          "rot": [0, 0, 6]
+        },
+        "LeftUpperLeg": {
+          "rot": [0, 0, -6]
+        },
+        "RightLowerLeg": {
+          "rot": [-90, 0, 0]
+        },
+        "LeftLowerLeg": {
+          "rot": [-90, 0, 0]
+        },
+        "RightFoot": {
+          "rot": [0, 0, 0]
+        },
+        "LeftFoot": {
+          "rot": [0, 0, 0]
+        },
+        "UpperTorso": {
+          "rot": [-15, 0, 5]
+        },
+        "Head": {
+          "rot": [-25, 10, 0]
+        },
+        "RightUpperArm": {
+          "rot": [5, 0, 10]
+        },
+        "LeftUpperArm": {
+          "rot": [5, 0, -10]
+        }
+      }
+    },
+    {
+      "time": 1.95,
+      "easing": "Cubic",
+      "direction": "In",
+      "poses": {
+        "LowerTorso": {
+          "rot": [-45, 0, 0],
+          "pos": [0, -1.3, -0.4]
+        },
+        "RightUpperLeg": {
+          "rot": [40, 0, 8]
+        },
+        "LeftUpperLeg": {
+          "rot": [40, 0, -8]
+        },
+        "RightLowerLeg": {
+          "rot": [-60, 0, 0]
+        },
+        "LeftLowerLeg": {
+          "rot": [-60, 0, 0]
+        },
+        "RightFoot": {
+          "rot": [20, 0, 0]
+        },
+        "LeftFoot": {
+          "rot": [20, 0, 0]
+        },
+        "UpperTorso": {
+          "rot": [0, 0, 0]
+        },
+        "Head": {
+          "rot": [5, 60, 0]
+        },
+        "RightUpperArm": {
+          "rot": [90, 0, 20]
+        },
+        "LeftUpperArm": {
+          "rot": [60, 0, -20]
+        },
+        "RightLowerArm": {
+          "rot": [10, 0, 0]
+        },
+        "LeftLowerArm": {
+          "rot": [20, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 2.2,
+      "easing": "Bounce",
+      "direction": "Out",
+      "poses": {
+        "LowerTorso": {
+          "rot": [-85, 0, 0],
+          "pos": [0, -1.6, -0.6]
+        },
+        "RightUpperLeg": {
+          "rot": [0, 0, 8]
+        },
+        "LeftUpperLeg": {
+          "rot": [0, 0, -8]
+        },
+        "RightLowerLeg": {
+          "rot": [-10, 0, 0]
+        },
+        "LeftLowerLeg": {
+          "rot": [-15, 0, 0]
+        },
+        "RightFoot": {
+          "rot": [20, 0, 0]
+        },
+        "LeftFoot": {
+          "rot": [20, 0, 0]
+        },
+        "UpperTorso": {
+          "rot": [0, 0, 0]
+        },
+        "Head": {
+          "rot": [5, 60, 0]
+        },
+        "RightUpperArm": {
+          "rot": [160, 0, 25]
+        },
+        "LeftUpperArm": {
+          "rot": [40, 0, -20]
+        },
+        "RightLowerArm": {
+          "rot": [10, 0, 0]
+        },
+        "LeftLowerArm": {
+          "rot": [20, 0, 0]
+        }
+      }
+    },
+    {
+      "time": 3,
+      "easing": "Cubic",
+      "direction": "InOut",
+      "poses": {
+        "LowerTorso": {
+          "rot": [-85, 0, 0],
+          "pos": [0, -1.6, -0.6]
+        },
+        "RightUpperLeg": {
+          "rot": [0, 0, 8]
+        },
+        "LeftUpperLeg": {
+          "rot": [0, 0, -8]
+        },
+        "RightLowerLeg": {
+          "rot": [-10, 0, 0]
+        },
+        "LeftLowerLeg": {
+          "rot": [-15, 0, 0]
+        },
+        "RightFoot": {
+          "rot": [20, 0, 0]
+        },
+        "LeftFoot": {
+          "rot": [20, 0, 0]
+        },
+        "UpperTorso": {
+          "rot": [0, 0, 0]
+        },
+        "Head": {
+          "rot": [5, 60, 0]
+        },
+        "RightUpperArm": {
+          "rot": [160, 0, 25]
+        },
+        "LeftUpperArm": {
+          "rot": [40, 0, -20]
+        },
+        "RightLowerArm": {
+          "rot": [10, 0, 0]
+        },
+        "LeftLowerArm": {
+          "rot": [20, 0, 0]
+        }
+      }
+    }
+  ],
+  "markers": [
+    {
+      "time": 0.9,
+      "name": "Land",
+      "value": "knees"
+    },
+    {
+      "time": 2.2,
+      "name": "Land",
+      "value": "body"
+    }
+  ],
+  "length": 3
+}

@@ -192,3 +192,14 @@ test('long combos: numbered steps (Hit/Fire/Shoot), a Window after every step bu
     windows.forEach((w, i) => assert.ok(w.time > hits[i].time && w.time < hits[i + 1].time, `${p.id} window ${i + 1}`));
   }
 });
+
+test('boss attacks warn at least 0.4 s before they hit', () => {
+  for (const p of P.LIST.filter((x) => x.cat === 'boss')) {
+    const a = p.make();
+    const hits = a.markers.filter((m) => m.name === 'Hit');
+    if (!hits.length) continue;
+    const warn = a.markers.find((m) => m.name === 'Warn');
+    assert.ok(warn, `${p.id} has Hit but no Warn`);
+    assert.ok(hits[0].time - warn.time >= 0.4, `${p.id}: warn ${warn.time}s, hit ${hits[0].time}s`);
+  }
+});
